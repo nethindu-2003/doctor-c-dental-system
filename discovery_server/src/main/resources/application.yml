@@ -1,0 +1,14 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: discovery-server
+
+eureka:
+  client:
+    register-with-eureka: false # It is the server, so it doesn't register with itself
+    fetch-registry: false
+  server:
+    enable-self-preservation: false # Turn off the red warning for dev
+    wait-time-in-ms-when-sync-empty: 5
