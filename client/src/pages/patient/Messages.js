@@ -1,269 +1,216 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Box, Grid, Paper, Typography, List, ListItem, ListItemAvatar, ListItemText, 
-  Avatar, TextField, IconButton, Badge, Divider, Stack, InputAdornment 
+  Avatar, TextField, IconButton, Divider, Stack, CircularProgress, Menu, MenuItem
 } from '@mui/material';
 import { 
-  Send, Search, AttachFile, MoreVert, Circle, SentimentSatisfiedAlt 
+  Send, Search, MoreVert, Circle, EmojiEmotions, Edit, Delete, Close 
 } from '@mui/icons-material';
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
+import EmojiPicker from 'emoji-picker-react';
+import axios from '../../api/axios';
+import { useAuth } from '../../context/AuthContext'; 
+import dayjs from 'dayjs';
 
-// --- MOCK DATA ---
-const contacts = [
-  { 
-    id: 1, 
-    name: 'Dr. Chasika Waduge', 
-    role: 'Lead Surgeon', 
-    avatar: 'https://img.freepik.com/free-photo/pleased-young-female-doctor-wearing-medical-robe-stethoscope-around-neck-standing-with-closed-posture_409827-254.jpg?w=200', 
-    status: 'online',
-    unread: 2,
-    lastMessage: 'Please take the prescribed medication.',
-    time: '10:05 AM'
-  },
-  { 
-    id: 2, 
-    name: 'Dr. Emily Carter', 
-    role: 'Restorative Dentist', 
-    avatar: 'https://img.freepik.com/free-photo/woman-doctor-wearing-lab-coat-with-stethoscope-isolated_1303-29791.jpg?w=200', 
-    status: 'offline',
-    unread: 0,
-    lastMessage: 'See you next Tuesday!',
-    time: 'Yesterday'
-  },
-  { 
-    id: 3, 
-    name: 'Front Desk / Admin', 
-    role: 'Support', 
-    avatar: '', // Fallback avatar
-    status: 'online',
-    unread: 0,
-    lastMessage: 'Your payment receipt has been sent.',
-    time: 'Jul 10'
-  }
-];
+const PatientMessages = () => {
+  const { user } = useAuth();
+  const patientId = user?.id || 1;
 
-const initialMessages = {
-  1: [
-    { id: 1, sender: 'doctor', text: 'Hi Sophia, how is your tooth feeling after the root canal?', time: '09:00 AM' },
-    { id: 2, sender: 'me', text: 'It feels much better, thank you Dr. Chasika! Just a little sensitivity to cold.', time: '09:05 AM' },
-    { id: 3, sender: 'doctor', text: 'That is normal for a few days. Are you taking the painkillers?', time: '09:10 AM' },
-    { id: 4, sender: 'me', text: 'Yes, I took one this morning.', time: '09:15 AM' },
-    { id: 5, sender: 'doctor', text: 'Great. Please take the prescribed medication if the pain persists. Let me know if swelling occurs.', time: '10:05 AM' },
-  ],
-  2: [
-    { id: 1, sender: 'me', text: 'Hi Dr. Emily, can I reschedule my appointment?', time: 'Yesterday' },
-    { id: 2, sender: 'doctor', text: 'Sure Sophia, we have a slot next Tuesday at 2 PM. Does that work?', time: 'Yesterday' },
-    { id: 3, sender: 'doctor', text: 'See you next Tuesday!', time: 'Yesterday' },
-  ],
-  3: [
-    { id: 1, sender: 'doctor', text: 'Your payment receipt has been sent to your email.', time: 'Jul 10' },
-  ]
-};
+  // STRICT RULE: Only fetch Dentists. No patients allowed here.
+  const [dentists, setDentists] = useState([]);
+  const [selectedDentistId, setSelectedDentistId] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
-const Messages = () => {
-  const [selectedContactId, setSelectedContactId] = useState(1);
-  const [inputText, setInputText] = useState('');
+  // Chat Actions
+  const [newMessage, setNewMessage] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [editingMessage, setEditingMessage] = useState(null);
   
-  // Get current active chat data
-  const activeContact = contacts.find(c => c.id === selectedContactId);
-  const activeMessages = initialMessages[selectedContactId] || [];
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedMsgForMenu, setSelectedMsgForMenu] = useState(null);
 
-  const handleSendMessage = () => {
-    if (!inputText.trim()) return;
-    // In a real app, you would push this to the backend/state
-    alert(`Sent: "${inputText}"`); 
-    setInputText('');
+  const stompClientRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    axios.get('/auth/dentists')
+      .then(res => {
+        setDentists(res.data);
+        if (res.data.length > 0) setSelectedDentistId(res.data[0].id);
+      })
+      .catch(err => console.error("Failed to load dentists", err));
+  }, []);
+
+  useEffect(() => {
+    if (!selectedDentistId) return;
+
+    setLoadingHistory(true);
+    axios.get(`/chat/history/${patientId}/${selectedDentistId}`)
+      .then(res => setMessages(res.data))
+      .catch(err => console.error("Failed to fetch history", err))
+      .finally(() => setLoadingHistory(false));
+
+    const client = new Client({
+      webSocketFactory: () => new SockJS('http://localhost:8080/ws-chat'),
+      onConnect: () => {
+        setIsConnected(true);
+        const room = `/topic/messages/${patientId}/${selectedDentistId}`;
+        client.subscribe(room, (message) => {
+          const received = JSON.parse(message.body);
+          setMessages((prev) => {
+            if (received.action === 'DELETE') {
+              return prev.map(m => m.messageId === received.messageId ? { ...m, content: '🚫 This message was deleted', isDeleted: true } : m);
+            }
+            if (received.action === 'EDIT') {
+              return prev.map(m => m.messageId === received.messageId ? { ...m, content: received.content, isEdited: true } : m);
+            }
+            if (!prev.find(m => m.messageId === received.messageId)) return [...prev, received];
+            return prev;
+          });
+        });
+      },
+      onDisconnect: () => setIsConnected(false),
+    });
+
+    client.activate();
+    stompClientRef.current = client;
+
+    return () => { if (client) client.deactivate(); };
+  }, [selectedDentistId, patientId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSendOrEdit = () => {
+    if (!newMessage.trim() || !stompClientRef.current?.connected) return;
+
+    const payload = {
+      messageId: editingMessage ? editingMessage.messageId : null,
+      patientId: patientId,
+      dentistId: selectedDentistId,
+      senderType: 'PATIENT',
+      receiverType: 'DENTIST',
+      content: newMessage,
+      action: editingMessage ? 'EDIT' : 'SEND'
+    };
+
+    stompClientRef.current.publish({ destination: '/app/chat.sendMessage', body: JSON.stringify(payload) });
+    setNewMessage(''); setEditingMessage(null); setShowEmojiPicker(false);
   };
 
-  return (
-    <Box sx={{ height: 'calc(100vh - 140px)' }}> {/* Fill remaining height */}
-      <Typography variant="h4" fontFamily="Playfair Display" fontWeight="bold" color="primary.dark" sx={{ mb: 3 }}>
-        Messages
-      </Typography>
+  const handleDelete = (msgId) => {
+    const payload = { messageId: msgId, patientId: patientId, dentistId: selectedDentistId, action: 'DELETE' };
+    stompClientRef.current.publish({ destination: '/app/chat.sendMessage', body: JSON.stringify(payload) });
+    setAnchorEl(null);
+  };
 
-      <Paper 
-        elevation={0} 
-        sx={{ 
-          height: '100%', 
-          borderRadius: 4, 
-          border: '1px solid #e0e0e0', 
-          overflow: 'hidden',
-          display: 'flex' 
-        }}
-      >
-        {/* --- LEFT SIDE: CONTACTS LIST --- */}
-        <Box sx={{ 
-          width: 320, 
-          borderRight: '1px solid #e0e0e0', 
-          display: { xs: 'none', md: 'flex' }, 
-          flexDirection: 'column',
-          bgcolor: '#FAFAFA'
-        }}>
-          {/* Search Bar */}
-          <Box sx={{ p: 2 }}>
-            <TextField 
-              fullWidth 
-              size="small" 
-              placeholder="Search conversations..." 
-              InputProps={{ startAdornment: <Search color="action" sx={{ mr: 1 }} /> }}
-              sx={{ bgcolor: 'white', borderRadius: 1 }}
-            />
-          </Box>
+  const activeDentist = dentists.find(d => d.id === selectedDentistId);
+
+  return (
+    <Box sx={{ height: 'calc(100vh - 140px)' }}> 
+      <Typography variant="h4" fontFamily="Playfair Display" fontWeight="bold" color="#0E4C5C" sx={{ mb: 3 }}>Secure Messages</Typography>
+
+      <Paper elevation={0} sx={{ height: '100%', borderRadius: 4, border: '1px solid #e0e0e0', display: 'flex' }}>
+        
+        {/* LEFT SIDE: DENTISTS ONLY */}
+        <Box sx={{ width: 320, borderRight: '1px solid #e0e0e0', display: { xs: 'none', md: 'flex' }, flexDirection: 'column', bgcolor: '#FAFAFA' }}>
+          <Box sx={{ p: 2 }}><TextField fullWidth size="small" placeholder="Search clinic staff..." InputProps={{ startAdornment: <Search sx={{ mr: 1 }} /> }} /></Box>
           <Divider />
-          
-          {/* List */}
           <List sx={{ flexGrow: 1, overflowY: 'auto', p: 0 }}>
-            {contacts.map((contact) => (
-              <React.Fragment key={contact.id}>
-                <ListItem 
-                  button 
-                  selected={selectedContactId === contact.id}
-                  onClick={() => setSelectedContactId(contact.id)}
-                  sx={{ 
-                    py: 2, 
-                    bgcolor: selectedContactId === contact.id ? 'white' : 'transparent',
-                    borderLeft: selectedContactId === contact.id ? '4px solid #0E4C5C' : '4px solid transparent'
-                  }}
-                >
-                  <ListItemAvatar>
-                    <Badge
-                      overlap="circular"
-                      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                      variant="dot"
-                      sx={{ '& .MuiBadge-badge': { bgcolor: contact.status === 'online' ? '#44b700' : 'grey', boxShadow: '0 0 0 2px white' } }}
-                    >
-                      <Avatar src={contact.avatar} alt={contact.name} />
-                    </Badge>
-                  </ListItemAvatar>
-                  <ListItemText 
-                    primary={
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="subtitle2" fontWeight="bold" noWrap sx={{ maxWidth: 120 }}>{contact.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">{contact.time}</Typography>
-                      </Box>
-                    }
-                    secondary={
-                      <Typography variant="body2" color="text.secondary" noWrap>
-                        {contact.lastMessage}
-                      </Typography>
-                    }
-                  />
-                  {contact.unread > 0 && (
-                     <Badge badgeContent={contact.unread} color="error" sx={{ ml: 1 }} />
-                  )}
-                </ListItem>
-                <Divider component="li" />
-              </React.Fragment>
+            {dentists.map((dentist) => (
+              <ListItem button key={dentist.id} selected={selectedDentistId === dentist.id} onClick={() => setSelectedDentistId(dentist.id)} sx={{ borderLeft: selectedDentistId === dentist.id ? '4px solid #0E4C5C' : '4px solid transparent' }}>
+                <ListItemAvatar><Avatar sx={{ bgcolor: '#0E4C5C' }}>{dentist.name.charAt(0)}</Avatar></ListItemAvatar>
+                <ListItemText primary={`Dr. ${dentist.name}`} secondary={dentist.specialization} />
+              </ListItem>
             ))}
           </List>
         </Box>
 
-        {/* --- RIGHT SIDE: CHAT WINDOW --- */}
-        <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', bgcolor: 'white' }}>
-          
-          {/* Chat Header */}
-          <Box sx={{ p: 2, borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar src={activeContact.avatar} sx={{ width: 48, height: 48 }} />
-              <Box>
-                <Typography variant="subtitle1" fontWeight="bold">{activeContact.name}</Typography>
-                <Stack direction="row" alignItems="center" spacing={0.5}>
-                   <Circle sx={{ fontSize: 10, color: activeContact.status === 'online' ? '#44b700' : 'grey' }} />
-                   <Typography variant="caption" color="text.secondary">
-                     {activeContact.status === 'online' ? 'Online' : 'Offline'} • {activeContact.role}
-                   </Typography>
+        {/* RIGHT SIDE: CHAT */}
+        <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', bgcolor: 'white', position: 'relative' }}>
+          {activeDentist ? (
+            <>
+              {/* Header */}
+              <Box sx={{ p: 2, borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center' }}>
+                <Avatar sx={{ bgcolor: '#0E4C5C', mr: 2 }}>{activeDentist.name.charAt(0)}</Avatar>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="bold">Dr. {activeDentist.name}</Typography>
+                  <Stack direction="row" alignItems="center" spacing={0.5}>
+                     <Circle sx={{ fontSize: 10, color: isConnected ? '#4CAF50' : '#9E9E9E' }} />
+                     <Typography variant="caption" color="text.secondary">{isConnected ? 'Online' : 'Offline'} • {activeDentist.specialization}</Typography>
+                  </Stack>
+                </Box>
+              </Box>
+
+              {/* Messages Area */}
+              <Box sx={{ flexGrow: 1, p: 3, overflowY: 'auto', bgcolor: '#F4F7F6' }}>
+                {loadingHistory ? <Box textAlign="center"><CircularProgress /></Box> : (
+                  messages.map((msg, index) => {
+                    const isPatient = msg.senderType === 'PATIENT';
+                    return (
+                      <Box key={index} sx={{ display: 'flex', justifyContent: isPatient ? 'flex-end' : 'flex-start', mb: 2 }}>
+                        <Paper elevation={0} sx={{ 
+                          p: 1.5, px: 2, maxWidth: '70%', borderRadius: 3, position: 'relative',
+                          borderTopRightRadius: isPatient ? 0 : 12, borderTopLeftRadius: isPatient ? 12 : 0,
+                          bgcolor: isPatient ? '#0E4C5C' : 'white', color: isPatient ? 'white' : 'text.primary',
+                        }}>
+                          <Typography variant="body1" sx={{ fontStyle: msg.isDeleted ? 'italic' : 'normal', opacity: msg.isDeleted ? 0.7 : 1 }}>
+                            {msg.content}
+                          </Typography>
+                          <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{ mt: 0.5 }}>
+                            {msg.isEdited && !msg.isDeleted && <Typography variant="caption" sx={{ opacity: 0.6, fontSize: '0.65rem' }}>(edited)</Typography>}
+                            <Typography variant="caption" sx={{ opacity: 0.8, fontSize: '0.65rem' }}>{msg.sentAt ? dayjs(msg.sentAt).format('h:mm A') : 'Now'}</Typography>
+                          </Stack>
+                          {isPatient && !msg.isDeleted && (
+                            <IconButton size="small" onClick={(e) => { setAnchorEl(e.currentTarget); setSelectedMsgForMenu(msg); }} sx={{ position: 'absolute', top: 0, right: -30, color: 'text.secondary' }}>
+                              <MoreVert fontSize="small" />
+                            </IconButton>
+                          )}
+                        </Paper>
+                      </Box>
+                    );
+                  })
+                )}
+                <div ref={messagesEndRef} />
+              </Box>
+
+              {/* Context Menu & Emoji */}
+              <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+                <MenuItem onClick={() => { setEditingMessage(selectedMsgForMenu); setNewMessage(selectedMsgForMenu.content); setAnchorEl(null); }}><Edit fontSize="small" sx={{ mr: 1 }} /> Edit</MenuItem>
+                <MenuItem onClick={() => handleDelete(selectedMsgForMenu.messageId)} sx={{ color: 'error.main' }}><Delete fontSize="small" sx={{ mr: 1 }} /> Delete</MenuItem>
+              </Menu>
+              {showEmojiPicker && <Box sx={{ position: 'absolute', bottom: 80, right: 20, zIndex: 10 }}><EmojiPicker onEmojiClick={(e) => setNewMessage(prev => prev + e.emoji)} /></Box>}
+
+              {/* Input Area */}
+              <Box sx={{ p: 2, borderTop: '1px solid #f0f0f0' }}>
+                {editingMessage && (
+                  <Stack direction="row" justifyContent="space-between" sx={{ mb: 1, p: 1, bgcolor: '#FFF9C4', borderRadius: 1 }}>
+                    <Typography variant="caption" color="black">Editing message...</Typography>
+                    <IconButton size="small" onClick={() => { setEditingMessage(null); setNewMessage(''); }}><Close fontSize="small" /></IconButton>
+                  </Stack>
+                )}
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <IconButton onClick={() => setShowEmojiPicker(!showEmojiPicker)}><EmojiEmotions color="action" /></IconButton>
+                  <TextField 
+                    fullWidth size="small" variant="outlined" placeholder="Type a message..."
+                    value={newMessage} onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSendOrEdit()}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 50, bgcolor: '#f9f9f9' } }}
+                  />
+                  <IconButton onClick={handleSendOrEdit} sx={{ bgcolor: '#0E4C5C', color: 'white', '&:hover': { bgcolor: '#083642' } }}><Send /></IconButton>
                 </Stack>
               </Box>
-            </Box>
-            <IconButton><MoreVert /></IconButton>
-          </Box>
-
-          {/* Messages Area */}
-          <Box sx={{ flexGrow: 1, p: 3, overflowY: 'auto', bgcolor: '#F4F7F6', display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {activeMessages.map((msg) => {
-              const isMe = msg.sender === 'me';
-              return (
-                <Box 
-                  key={msg.id} 
-                  sx={{ 
-                    display: 'flex', 
-                    justifyContent: isMe ? 'flex-end' : 'flex-start' 
-                  }}
-                >
-                  <Paper 
-                    elevation={0}
-                    sx={{ 
-                      p: 2, 
-                      maxWidth: '70%', 
-                      borderRadius: 3,
-                      borderTopRightRadius: isMe ? 0 : 12,
-                      borderTopLeftRadius: isMe ? 12 : 0,
-                      bgcolor: isMe ? 'primary.main' : 'white',
-                      color: isMe ? 'white' : 'text.primary',
-                      boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
-                    }}
-                  >
-                    <Typography variant="body1">{msg.text}</Typography>
-                    <Typography 
-                      variant="caption" 
-                      sx={{ 
-                        display: 'block', 
-                        mt: 0.5, 
-                        textAlign: 'right', 
-                        opacity: 0.8,
-                        fontSize: '0.7rem' 
-                      }}
-                    >
-                      {msg.time}
-                    </Typography>
-                  </Paper>
-                </Box>
-              );
-            })}
-          </Box>
-
-          {/* Input Area */}
-          <Box sx={{ p: 2, borderTop: '1px solid #f0f0f0' }}>
-            <Grid container spacing={1} alignItems="center">
-              <Grid item>
-                <IconButton color="primary"><AttachFile /></IconButton>
-              </Grid>
-              <Grid item xs>
-                <TextField 
-                  fullWidth 
-                  placeholder="Type a message..." 
-                  size="small"
-                  variant="outlined"
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  sx={{ 
-                    '& .MuiOutlinedInput-root': { borderRadius: 50, bgcolor: '#f9f9f9' } 
-                  }}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton size="small"><SentimentSatisfiedAlt /></IconButton>
-                      </InputAdornment>
-                    )
-                  }}
-                />
-              </Grid>
-              <Grid item>
-                <IconButton 
-                  color="primary" 
-                  sx={{ bgcolor: 'secondary.main', color: 'primary.dark', '&:hover': { bgcolor: 'secondary.dark' } }}
-                  onClick={handleSendMessage}
-                >
-                  <Send />
-                </IconButton>
-              </Grid>
-            </Grid>
-          </Box>
-
+            </>
+          ) : (
+            <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Typography>Select a doctor</Typography></Box>
+          )}
         </Box>
       </Paper>
     </Box>
   );
 };
-
-export default Messages;
+export default PatientMessages;

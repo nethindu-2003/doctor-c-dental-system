@@ -17,18 +17,23 @@ public class Treatment {
 
     @ManyToOne
     @JoinColumn(name = "patient_id")
-    @JsonIgnore // Prevents loop: Patient -> Treatment -> Patient
+    @JsonIgnore
     private Patient patient;
 
+    @ManyToOne
+    @JoinColumn(name = "dentist_id")
+    @JsonIgnore // Prevents looping issues when fetching dentists
+    private Dentist dentist;
+
     @Column(name = "treatment_name")
-    private String treatmentName; // e.g., "Root Canal"
+    private String treatmentName;
 
     private String diagnosis;
 
-    private String status; // IN_PROGRESS, COMPLETED
+    private String status;
 
     @Column(name = "total_cost")
-    private Double totalCost; // Total Estimated Cost of the whole plan
+    private Double totalCost;
 
     @Column(name = "start_date")
     private LocalDate startDate;
@@ -36,7 +41,6 @@ public class Treatment {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    // This fetches all sessions automatically when you load a Treatment
     @OneToMany(mappedBy = "treatment", cascade = CascadeType.ALL)
     private List<TreatmentSession> sessions;
 }

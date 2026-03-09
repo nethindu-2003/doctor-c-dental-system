@@ -32,7 +32,8 @@ public class AuthConfig {
                                 "/auth/verify-email",
                                 "/auth/forgot-password",
                                 "/auth/reset-password",
-                                "/auth/setup-dentist"
+                                "/auth/setup-dentist",
+                                "/auth/dentists"
                         ).permitAll()
 
                         // 2. ALLOW PRE-FLIGHT CHECKS (CORS)

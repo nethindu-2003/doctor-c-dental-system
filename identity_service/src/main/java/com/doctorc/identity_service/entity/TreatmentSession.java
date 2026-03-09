@@ -20,7 +20,6 @@ public class TreatmentSession {
     @JsonIgnore // Prevents loop: Treatment -> Session -> Treatment
     private Treatment treatment;
 
-    // --- NEW LINK ---
     // Links this session to the calendar.
     // If null, it means the session is planned but not yet scheduled.
     @OneToOne

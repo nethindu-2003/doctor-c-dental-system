@@ -1,68 +1,115 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, 
   TableHead, TableRow, Chip, IconButton, Stack, Button, TextField, 
   InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, 
-  MenuItem, Grid, Tooltip 
+  MenuItem, Grid, Tooltip, CircularProgress, Alert
 } from '@mui/material';
 import { 
   Search, Edit, Cancel, EventAvailable, CheckCircle, Person 
 } from '@mui/icons-material';
-
-// --- MOCK DATA (Based on Prototype Page 4)  ---
-const initialAppointments = [
-  { id: 1, patient: 'Sophia Clark', dentist: 'Dr. Emily Carter', date: '2024-03-15', time: '10:00 AM', status: 'Confirmed' },
-  { id: 2, patient: 'Ethan Miller', dentist: 'Dr. David Lee', date: '2024-03-15', time: '11:30 AM', status: 'Pending' },
-  { id: 3, patient: 'Olivia Brown', dentist: 'Dr. Emily Carter', date: '2024-03-16', time: '09:00 AM', status: 'Confirmed' },
-  { id: 4, patient: 'Liam Davis', dentist: 'Dr. David Lee', date: '2024-03-16', time: '10:30 AM', status: 'Cancelled' },
-  { id: 5, patient: 'Ava Wilson', dentist: 'Dr. Emily Carter', date: '2024-03-17', time: '12:00 PM', status: 'Confirmed' },
-];
+import dayjs from 'dayjs';
+import axios from '../../api/axios'; 
 
 const AdminAppointments = () => {
-  const [appointments, setAppointments] = useState(initialAppointments);
+  const [appointments, setAppointments] = useState([]);
+  const [dentists, setDentists] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
   const [searchTerm, setSearchTerm] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   
   // Edit Dialog State
   const [openDialog, setOpenDialog] = useState(false);
   const [currentAppt, setCurrentAppt] = useState(null);
 
-  // --- HANDLERS ---
+  // --- FETCH DATA ---
+  useEffect(() => {
+      fetchData();
+  }, []);
 
-  // Open Edit Modal (For Reschedule / Reassign / Confirm)
+  const fetchData = async () => {
+      try {
+          const [apptsRes, dentistsRes] = await Promise.all([
+              axios.get('/admin/appointments'),
+              axios.get('/dentists')
+          ]);
+          setAppointments(apptsRes.data);
+          setDentists(dentistsRes.data);
+      } catch (err) {
+          console.error("Error fetching data:", err);
+      } finally {
+          setLoading(false);
+      }
+  };
+
+  // --- HANDLERS ---
   const handleEditClick = (appt) => {
-    setCurrentAppt({ ...appt }); // Copy data to avoid direct mutation
+    setCurrentAppt({
+        ...appt,
+        dentistId: appt.dentistId || '' // Uses the flat ID from the new DTO
+    });
     setOpenDialog(true);
   };
 
-  // Quick Cancel Action
-  const handleCancelClick = (id) => {
-    if (window.confirm("Are you sure you want to cancel this appointment?")) {
-      setAppointments(appointments.map(a => 
-        a.id === id ? { ...a, status: 'Cancelled' } : a
-      ));
+  const handleCancelClick = async (id) => {
+    if (window.confirm("Are you sure you want to cancel this appointment? The patient will be notified via email.")) {
+      try {
+          const res = await axios.put(`/admin/appointments/${id}/cancel`);
+          setAppointments(appointments.map(a => a.appointmentId === id ? res.data : a));
+          showSuccess("Appointment cancelled and patient notified.");
+      } catch (err) {
+          alert("Failed to cancel appointment.");
+      }
     }
   };
 
-  // Quick Confirm Action
-  const handleConfirmClick = (id) => {
-    setAppointments(appointments.map(a => 
-      a.id === id ? { ...a, status: 'Confirmed' } : a
-    ));
+  const handleConfirmClick = async (appt) => {
+      try {
+          const payload = {
+              appointmentDate: appt.appointmentDate,
+              appointmentTime: appt.appointmentTime,
+              status: 'CONFIRMED',
+              dentistId: appt.dentistId || null
+          };
+          const res = await axios.put(`/admin/appointments/${appt.appointmentId}`, payload);
+          setAppointments(appointments.map(a => a.appointmentId === appt.appointmentId ? res.data : a));
+          showSuccess("Appointment Confirmed.");
+      } catch (err) {
+          alert("Failed to confirm.");
+      }
   };
 
-  // Save Changes from Dialog
-  const handleSaveChanges = () => {
-    setAppointments(appointments.map(a => 
-      a.id === currentAppt.id ? currentAppt : a
-    ));
-    setOpenDialog(false);
+  const handleSaveChanges = async () => {
+      try {
+          const payload = {
+              appointmentDate: currentAppt.appointmentDate,
+              appointmentTime: currentAppt.appointmentTime,
+              status: currentAppt.status,
+              dentistId: currentAppt.dentistId || null
+          };
+          
+          const res = await axios.put(`/admin/appointments/${currentAppt.appointmentId}`, payload);
+          setAppointments(appointments.map(a => a.appointmentId === currentAppt.appointmentId ? res.data : a));
+          setOpenDialog(false);
+          showSuccess("Changes saved successfully. If rescheduled, the patient has been notified.");
+      } catch (err) {
+          alert("Failed to update appointment.");
+      }
   };
 
-  // Filter Logic
-  const filteredAppointments = appointments.filter(a => 
-    a.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    a.dentist.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const showSuccess = (msg) => {
+      setSuccessMsg(msg);
+      setTimeout(() => setSuccessMsg(''), 5000);
+  };
+
+  // --- FILTER LOGIC ---
+  const filteredAppointments = appointments.filter(a => {
+    // Now we can easily search against the flat strings!
+    const patientName = a.patientName?.toLowerCase() || '';
+    const dentistName = a.dentistName?.toLowerCase() || '';
+    return patientName.includes(searchTerm.toLowerCase()) || dentistName.includes(searchTerm.toLowerCase());
+  });
 
   return (
     <Box>
@@ -70,108 +117,121 @@ const AdminAppointments = () => {
         Appointment Management
       </Typography>
 
-      {/* 1. DISTRIBUTION CHART (Visual Mock)  */}
-      <Paper elevation={2} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-        <Typography variant="h6" fontWeight="bold" gutterBottom>Weekly Distribution</Typography>
-        <Box sx={{ display: 'flex', alignItems: 'flex-end', height: 100, gap: 2, mt: 2 }}>
-           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => (
-             <Box key={day} sx={{ flex: 1, textAlign: 'center' }}>
-               <Box 
-                 sx={{ 
-                   height: `${[40, 60, 80, 50, 90, 70, 30][i]}%`, 
-                   bgcolor: '#5C6BC0', 
-                   borderRadius: '4px 4px 0 0',
-                   mx: 'auto',
-                   width: '60%'
-                 }} 
-               />
-               <Typography variant="caption" fontWeight="bold">{day}</Typography>
-             </Box>
-           ))}
-        </Box>
+      {successMsg && <Alert severity="success" sx={{ mb: 3 }}>{successMsg}</Alert>}
+
+      <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: 2, border: '1px solid #e0e0e0' }}>
+        <Stack direction="row" spacing={2}>
+          <TextField
+            placeholder="Search by Patient or Dentist Name..."
+            size="small"
+            fullWidth
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }}
+            sx={{ bgcolor: 'white' }}
+          />
+        </Stack>
       </Paper>
 
-      {/* 2. SEARCH & FILTER [cite: 561] */}
-      <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
-        <TextField
-          placeholder="Search by Patient or Dentist..."
-          size="small"
-          fullWidth
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }}
-          sx={{ bgcolor: 'white' }}
-        />
-        {/* Add Date Filter here if needed */}
-      </Stack>
-
-      {/* 3. APPOINTMENT TABLE  */}
-      <Paper elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
-        <TableContainer>
-          <Table>
-            <TableHead sx={{ bgcolor: '#E8EAF6' }}>
-              <TableRow>
-                <TableCell><strong>Patient</strong></TableCell>
-                <TableCell><strong>Dentist</strong></TableCell>
-                <TableCell><strong>Date & Time</strong></TableCell>
-                <TableCell><strong>Status</strong></TableCell>
-                <TableCell align="center"><strong>Actions</strong></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredAppointments.map((row) => (
-                <TableRow key={row.id} hover>
-                  <TableCell>
-                     <Stack direction="row" alignItems="center" spacing={1}>
-                        <Person fontSize="small" color="action" />
-                        <Typography variant="body2" fontWeight="500">{row.patient}</Typography>
-                     </Stack>
-                  </TableCell>
-                  <TableCell>{row.dentist}</TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight="bold">{row.time}</Typography>
-                    <Typography variant="caption" color="text.secondary">{row.date}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={row.status} 
-                      size="small"
-                      color={row.status === 'Confirmed' ? 'success' : (row.status === 'Pending' ? 'warning' : 'error')}
-                      variant={row.status === 'Pending' ? 'outlined' : 'filled'}
-                      sx={{ fontWeight: 'bold' }}
-                    />
-                  </TableCell>
-                  <TableCell align="center">
-                    <Stack direction="row" justifyContent="center" spacing={1}>
-                      {/* Confirm Button (Only for Pending) */}
-                      {row.status === 'Pending' && (
-                        <Tooltip title="Confirm Appointment">
-                          <IconButton size="small" color="success" onClick={() => handleConfirmClick(row.id)}>
-                            <CheckCircle fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      
-                      {/* Edit/Reschedule Button */}
-                      <Tooltip title="Edit / Reschedule">
-                         <IconButton size="small" color="primary" onClick={() => handleEditClick(row)}>
-                           <Edit fontSize="small" />
-                         </IconButton>
-                      </Tooltip>
-
-                      {/* Cancel Button */}
-                      <Tooltip title="Cancel">
-                        <IconButton size="small" color="error" onClick={() => handleCancelClick(row.id)}>
-                          <Cancel fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
-                  </TableCell>
+      <Paper elevation={0} sx={{ borderRadius: 3, overflow: 'hidden', border: '1px solid #e0e0e0' }}>
+        {loading ? (
+            <Box sx={{ p: 5, textAlign: 'center' }}><CircularProgress /></Box>
+        ) : (
+            <TableContainer>
+            <Table>
+                <TableHead sx={{ bgcolor: '#F4F7F6' }}>
+                <TableRow>
+                    <TableCell><strong>Patient</strong></TableCell>
+                    <TableCell><strong>Dentist</strong></TableCell>
+                    <TableCell><strong>Reason for Visit</strong></TableCell>
+                    <TableCell><strong>Date & Time</strong></TableCell>
+                    <TableCell><strong>Status</strong></TableCell>
+                    <TableCell align="center"><strong>Actions</strong></TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                </TableHead>
+                <TableBody>
+                {filteredAppointments.map((row) => {
+                    const apptDateTime = dayjs(`${row.appointmentDate}T${row.appointmentTime}`);
+                    const isPast = apptDateTime.isBefore(dayjs());
+
+                    return (
+                    <TableRow key={row.appointmentId} hover>
+                    <TableCell>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <Person fontSize="small" color="action" />
+                            <Typography variant="body2" fontWeight="500">
+                                {row.patientName || 'Walk-in Guest'} 
+                            </Typography>
+                        </Stack>
+                    </TableCell>
+                    <TableCell>
+                        {row.dentistName ? `Dr. ${row.dentistName}` : 'Unassigned'}
+                    </TableCell>
+                    <TableCell>{row.reasonForVisit}</TableCell>
+                    <TableCell>
+                        <Typography variant="body2" fontWeight="bold" color={isPast ? 'text.disabled' : 'text.primary'}>
+                            {dayjs('2023-01-01 ' + row.appointmentTime).format('h:mm A')}
+                        </Typography>
+                        <Typography variant="caption" color={isPast ? 'text.disabled' : 'text.secondary'}>
+                            {dayjs(row.appointmentDate).format('MMM D, YYYY')}
+                        </Typography>
+                    </TableCell>
+                    <TableCell>
+                        <Chip 
+                        label={isPast && row.status !== 'CANCELLED' ? 'COMPLETED' : row.status} 
+                        size="small"
+                        color={row.status === 'CONFIRMED' ? 'success' : (row.status === 'PENDING' ? 'warning' : 'default')}
+                        variant={row.status === 'PENDING' ? 'outlined' : 'filled'}
+                        sx={{ fontWeight: 'bold' }}
+                        />
+                    </TableCell>
+                    <TableCell align="center">
+                        <Stack direction="row" justifyContent="center" spacing={1}>
+                        
+                        {/* Confirm Button */}
+                        {row.status === 'PENDING' && (
+                            <Tooltip title={isPast ? "Past appointment" : "Confirm Appointment"}>
+                                <span>
+                                    <IconButton size="small" color="success" onClick={() => handleConfirmClick(row)} disabled={isPast}>
+                                        <CheckCircle fontSize="small" />
+                                    </IconButton>
+                                </span>
+                            </Tooltip>
+                        )}
+                        
+                        {/* Edit Button */}
+                        <Tooltip title={isPast ? "Cannot edit past appointments" : "Edit / Reschedule"}>
+                            <span>
+                                <IconButton size="small" color="primary" onClick={() => handleEditClick(row)} disabled={isPast}>
+                                    <Edit fontSize="small" />
+                                </IconButton>
+                            </span>
+                        </Tooltip>
+
+                        {/* Cancel Button */}
+                        {row.status !== 'CANCELLED' && (
+                            <Tooltip title={isPast ? "Cannot cancel past appointments" : "Cancel Appointment"}>
+                                <span>
+                                    <IconButton size="small" color="error" onClick={() => handleCancelClick(row.appointmentId)} disabled={isPast}>
+                                        <Cancel fontSize="small" />
+                                    </IconButton>
+                                </span>
+                            </Tooltip>
+                        )}
+                        </Stack>
+                    </TableCell>
+                    </TableRow>
+                    );
+                })}
+                {filteredAppointments.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={6} align="center" sx={{ py: 3 }}>No appointments found.</TableCell>
+                    </TableRow>
+                )}
+                </TableBody>
+            </Table>
+            </TableContainer>
+        )}
       </Paper>
 
       {/* 4. EDIT/RESCHEDULE DIALOG */}
@@ -181,23 +241,22 @@ const AdminAppointments = () => {
         </DialogTitle>
         <DialogContent dividers>
           {currentAppt && (
-            <Stack spacing={2} sx={{ mt: 1 }}>
-              <TextField label="Patient Name" fullWidth value={currentAppt.patient} disabled />
+            <Stack spacing={3} sx={{ mt: 1 }}>
+              <TextField label="Patient Name" fullWidth value={currentAppt.patientName || 'Walk-in Guest'} disabled />
               
-              {/* Reassign Dentist */}
               <TextField 
                 select 
                 label="Assign Dentist" 
                 fullWidth 
-                value={currentAppt.dentist} 
-                onChange={(e) => setCurrentAppt({...currentAppt, dentist: e.target.value})}
+                value={currentAppt.dentistId} 
+                onChange={(e) => setCurrentAppt({...currentAppt, dentistId: e.target.value})}
               >
-                <MenuItem value="Dr. Emily Carter">Dr. Emily Carter</MenuItem>
-                <MenuItem value="Dr. David Lee">Dr. David Lee</MenuItem>
-                <MenuItem value="Dr. Sarah Smith">Dr. Sarah Smith</MenuItem>
+                <MenuItem value=""><em>Unassigned / Any Available</em></MenuItem>
+                {dentists.map(d => (
+                    <MenuItem key={d.dentistId} value={d.dentistId}>Dr. {d.name}</MenuItem>
+                ))}
               </TextField>
 
-              {/* Reschedule Date & Time */}
               <Grid container spacing={2}>
                 <Grid item xs={6}>
                    <TextField 
@@ -205,8 +264,8 @@ const AdminAppointments = () => {
                      type="date" 
                      fullWidth 
                      InputLabelProps={{ shrink: true }}
-                     value={currentAppt.date} 
-                     onChange={(e) => setCurrentAppt({...currentAppt, date: e.target.value})}
+                     value={currentAppt.appointmentDate} 
+                     onChange={(e) => setCurrentAppt({...currentAppt, appointmentDate: e.target.value})}
                    />
                 </Grid>
                 <Grid item xs={6}>
@@ -215,13 +274,12 @@ const AdminAppointments = () => {
                      type="time" 
                      fullWidth 
                      InputLabelProps={{ shrink: true }}
-                     // Note: mock data uses "10:00 AM", input type="time" needs "10:00" format. 
-                     // In real app, handle format conversion.
+                     value={currentAppt.appointmentTime} 
+                     onChange={(e) => setCurrentAppt({...currentAppt, appointmentTime: e.target.value})}
                    />
                 </Grid>
               </Grid>
 
-              {/* Update Status */}
               <TextField 
                 select 
                 label="Status" 
@@ -229,22 +287,17 @@ const AdminAppointments = () => {
                 value={currentAppt.status} 
                 onChange={(e) => setCurrentAppt({...currentAppt, status: e.target.value})}
               >
-                <MenuItem value="Confirmed">Confirmed</MenuItem>
-                <MenuItem value="Pending">Pending</MenuItem>
-                <MenuItem value="Cancelled">Cancelled</MenuItem>
-                <MenuItem value="Completed">Completed</MenuItem>
+                <MenuItem value="CONFIRMED">Confirmed</MenuItem>
+                <MenuItem value="PENDING">Pending</MenuItem>
+                <MenuItem value="CANCELLED">Cancelled</MenuItem>
+                <MenuItem value="COMPLETED">Completed</MenuItem>
               </TextField>
             </Stack>
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setOpenDialog(false)} color="inherit">Cancel</Button>
-          <Button 
-            variant="contained" 
-            onClick={handleSaveChanges} 
-            startIcon={<EventAvailable />}
-            sx={{ bgcolor: '#1A237E' }}
-          >
+          <Button variant="contained" onClick={handleSaveChanges} startIcon={<EventAvailable />} sx={{ bgcolor: '#1A237E' }}>
             Save Changes
           </Button>
         </DialogActions>

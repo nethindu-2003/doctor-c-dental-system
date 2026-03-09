@@ -48,4 +48,7 @@ public class Patient {
 
     @Column(name = "email_notifications")
     private Boolean emailNotifications = true;
+
+    @Column(name = "is_active")
+    private Boolean isActive = true;
 }

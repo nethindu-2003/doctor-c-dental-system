@@ -1,5 +1,7 @@
 package com.doctorc.identity_service.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DentistDTO {
+    @JsonProperty("dentistId")
     private Integer id;
     private String name;
     private String specialization;

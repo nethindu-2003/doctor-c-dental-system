@@ -1,0 +1,9 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "tasklist": true,
+        "/^Write-Output \"Checking JAR files\\.\\.\\.\"; Get-ChildItem -Path \"\\*_server\\\\target\\\\\\*SNAPSHOT\\.jar\", \"identity_service\\\\target\\\\\\*SNAPSHOT\\.jar\" -ErrorAction SilentlyContinue \\| ForEach-Object \\{ Write-Output \"Found: \\$\\(\\$_\\.Name\\)\" \\}$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

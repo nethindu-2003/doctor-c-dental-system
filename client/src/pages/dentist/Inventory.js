@@ -1,69 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, 
-  TableHead, TableRow, Chip, IconButton, Stack, Button, TextField, 
-  InputAdornment, Grid, Dialog, DialogTitle, DialogContent, DialogActions, 
-  MenuItem, Card, CardContent 
+  TableHead, TableRow, Chip, Stack, TextField, InputAdornment, Grid, 
+  Dialog, DialogTitle, DialogContent, DialogActions, Card, CardContent, 
+  CircularProgress, Button, Divider, IconButton
 } from '@mui/material';
 import { 
-  Add, Search, Edit, Delete, Inventory as InventoryIcon, Warning, CheckCircle, ErrorOutline 
+  Search, Inventory as InventoryIcon, Warning, CheckCircle, ErrorOutline, 
+  History, Close, Assignment 
 } from '@mui/icons-material';
+import axios from '../../api/axios'; // Adjust path as needed
 
-// --- MOCK DATA (Based on Prototype Page 6) ---
-const initialInventory = [
-  { id: 1, name: 'Dental Floss', category: 'Consumables', quantity: 200, unit: 'Units', lastUpdated: '2024-08-15', status: 'OK' },
-  { id: 2, name: 'Mouthwash', category: 'Consumables', quantity: 50, unit: 'Bottles', lastUpdated: '2024-08-10', status: 'OK' },
-  { id: 3, name: 'Toothpaste', category: 'Consumables', quantity: 15, unit: 'Tubes', lastUpdated: '2024-08-05', status: 'Low Stock' }, // [cite: 312-316]
-  { id: 4, name: 'Dental Mirrors', category: 'Equipment', quantity: 10, unit: 'Units', lastUpdated: '2024-07-25', status: 'OK' },
-  { id: 5, name: 'Prophy Paste', category: 'Consumables', quantity: 15, unit: 'Jars', lastUpdated: '2024-07-20', status: 'Low Stock' }, // [cite: 328-331]
-  { id: 6, name: 'Impression Material', category: 'Consumables', quantity: 0, unit: 'Kits', lastUpdated: '2024-07-10', status: 'Out of Stock' }, // [cite: 343-349]
-  { id: 7, name: 'Gloves', category: 'Consumables', quantity: 1000, unit: 'Pairs', lastUpdated: '2024-07-01', status: 'OK' },
-];
-
-const getStatusColor = (status) => {
-  if (status === 'Out of Stock') return 'error';
-  if (status === 'Low Stock') return 'warning';
-  return 'success';
-};
-
-const Inventory = () => {
-  const [items, setItems] = useState(initialInventory);
+const DentistInventory = () => {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [openDialog, setOpenDialog] = useState(false);
   
-  // Form State for Add/Edit
-  const [currentItem, setCurrentItem] = useState({ name: '', category: '', quantity: '', unit: '' });
+  // Usage Modal State
+  const [openUsageDialog, setOpenUsageDialog] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
-  // Filter Logic
+  // --- FETCH DATA ---
+  useEffect(() => {
+      fetchInventory();
+  }, []);
+
+  const fetchInventory = async () => {
+      try {
+          const res = await axios.get('/dentist/inventory');
+          setItems(res.data);
+      } catch (err) {
+          console.error("Error fetching inventory", err);
+      } finally {
+          setLoading(false);
+      }
+  };
+
+  // --- HANDLERS ---
+  const handleRowClick = (item) => {
+      setSelectedItem(item);
+      setOpenUsageDialog(true);
+  };
+
+  // --- FILTER & CALCULATIONS ---
   const filteredItems = items.filter(item => 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    item.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Stats Calculation [cite: 271-274]
-  const lowStockCount = items.filter(i => i.status === 'Low Stock' || i.status === 'Out of Stock').length;
+  const lowStockCount = items.filter(i => i.stockQuantity <= (i.threshold || 20)).length;
+
+  if (loading) return <CircularProgress sx={{ display: 'block', mx: 'auto', mt: 10 }} />;
 
   return (
     <Box>
       {/* --- HEADER --- */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-        <Box>
-           <Typography variant="h4" fontFamily="Playfair Display" fontWeight="bold" color="#0E4C5C">Inventory Management</Typography>
-           <Typography variant="body2" color="text.secondary">Track clinic supplies and equipment</Typography>
-        </Box>
-        <Button 
-          variant="contained" 
-          startIcon={<Add />} 
-          onClick={() => setOpenDialog(true)}
-          sx={{ bgcolor: '#0E4C5C' }}
-        >
-          Add New Item
-        </Button>
-      </Stack>
+      <Box sx={{ mb: 4 }}>
+         <Typography variant="h4" fontFamily="Playfair Display" fontWeight="bold" color="#0E4C5C">
+             Clinical Inventory
+         </Typography>
+         <Typography variant="body2" color="text.secondary">
+             Check availability of clinic supplies and track your treatment usage.
+         </Typography>
+      </Box>
 
-      {/* --- SUMMARY CARDS  --- */}
+      {/* --- SUMMARY CARDS --- */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <Card elevation={2} sx={{ borderRadius: 2, bgcolor: '#E0F2F1' }}>
+          <Card elevation={0} sx={{ borderRadius: 3, bgcolor: '#E0F2F1', border: '1px solid #B2DFDB' }}>
             <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Box>
                 <Typography variant="subtitle2" color="text.secondary" fontWeight="bold">TOTAL ITEMS</Typography>
@@ -74,10 +78,10 @@ const Inventory = () => {
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Card elevation={2} sx={{ borderRadius: 2, bgcolor: '#FFEBEE' }}>
+          <Card elevation={0} sx={{ borderRadius: 3, bgcolor: '#FFEBEE', border: '1px solid #FFCDD2' }}>
             <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Box>
-                <Typography variant="subtitle2" color="text.secondary" fontWeight="bold">LOW STOCK ALERTS</Typography>
+                <Typography variant="subtitle2" color="text.secondary" fontWeight="bold">LOW STOCK WARNINGS</Typography>
                 <Typography variant="h4" fontWeight="bold" color="#C62828">{lowStockCount}</Typography>
               </Box>
               <Warning sx={{ fontSize: 40, color: '#E57373' }} />
@@ -86,13 +90,13 @@ const Inventory = () => {
         </Grid>
       </Grid>
 
-      {/* --- INVENTORY TABLE [cite: 284-376] --- */}
-      <Paper elevation={3} sx={{ borderRadius: 3, p: 2 }}>
-        {/* Search Bar [cite: 269] */}
-        <Box sx={{ mb: 2, maxWidth: 400 }}>
+      {/* --- INVENTORY TABLE --- */}
+      <Paper elevation={0} sx={{ borderRadius: 3, p: 3, border: '1px solid #e0e0e0' }}>
+        
+        <Box sx={{ mb: 3, maxWidth: 400 }}>
           <TextField
             fullWidth
-            placeholder="Search for items..."
+            placeholder="Search by item name or category..."
             variant="outlined"
             size="small"
             value={searchTerm}
@@ -100,87 +104,133 @@ const Inventory = () => {
             InputProps={{
               startAdornment: <InputAdornment position="start"><Search /></InputAdornment>,
             }}
+            sx={{ bgcolor: '#F8FAFC' }}
           />
         </Box>
 
         <TableContainer>
           <Table>
-            <TableHead sx={{ bgcolor: '#F5F5F5' }}>
+            <TableHead sx={{ bgcolor: '#F4F7F6' }}>
               <TableRow>
                 <TableCell><strong>Item Name</strong></TableCell>
                 <TableCell><strong>Category</strong></TableCell>
-                <TableCell><strong>Quantity</strong></TableCell>
-                <TableCell><strong>Unit</strong></TableCell>
-                <TableCell><strong>Last Updated</strong></TableCell>
+                <TableCell><strong>Stock Quantity</strong></TableCell>
                 <TableCell><strong>Status</strong></TableCell>
-                <TableCell align="center"><strong>Actions</strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredItems.map((row) => (
-                <TableRow key={row.id} hover>
-                  <TableCell fontWeight="500">{row.name}</TableCell>
-                  <TableCell>{row.category}</TableCell>
-                  <TableCell>
-                    <Typography fontWeight="bold" color={row.quantity === 0 ? 'error' : 'inherit'}>
-                      {row.quantity}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>{row.unit}</TableCell>
-                  <TableCell>{row.lastUpdated}</TableCell>
-                  <TableCell>
-                    <Chip 
-                      icon={row.status === 'OK' ? <CheckCircle fontSize="small" /> : (row.status === 'Out of Stock' ? <ErrorOutline fontSize="small" /> : <Warning fontSize="small" />)}
-                      label={row.status} 
-                      color={getStatusColor(row.status)} 
-                      size="small" 
-                      variant="outlined"
-                      sx={{ fontWeight: 'bold', border: 'none', bgcolor: getStatusColor(row.status) + '.main', color: '#fff', '& .MuiChip-icon': { color: '#fff' } }}
-                    />
-                  </TableCell>
-                  <TableCell align="center">
-                    <Stack direction="row" justifyContent="center">
-                      <IconButton size="small" color="primary"><Edit fontSize="small" /></IconButton>
-                      <IconButton size="small" color="error"><Delete fontSize="small" /></IconButton>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {filteredItems.map((row) => {
+                const isLowStock = row.stockQuantity <= (row.threshold || 20);
+                const isOutOfStock = row.stockQuantity === 0;
+
+                let statusLabel = 'In Stock';
+                let statusColor = 'success';
+                let StatusIcon = CheckCircle;
+
+                if (isOutOfStock) {
+                    statusLabel = 'Out of Stock';
+                    statusColor = 'error';
+                    StatusIcon = ErrorOutline;
+                } else if (isLowStock) {
+                    statusLabel = 'Low Stock';
+                    statusColor = 'warning';
+                    StatusIcon = Warning;
+                }
+
+                return (
+                  <TableRow 
+                    key={row.equipmentId} 
+                    hover 
+                    onClick={() => handleRowClick(row)}
+                    sx={{ cursor: 'pointer', transition: '0.2s', '&:hover': { bgcolor: '#F0F4F8' } }}
+                  >
+                    <TableCell>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <InventoryIcon fontSize="small" color="action" />
+                            <Typography fontWeight="bold" color="#0E4C5C">{row.name}</Typography>
+                        </Stack>
+                    </TableCell>
+                    <TableCell>{row.category}</TableCell>
+                    <TableCell>
+                      <Typography fontWeight="bold" color={isOutOfStock ? 'error' : (isLowStock ? 'warning.main' : 'inherit')}>
+                        {row.stockQuantity} Units
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip 
+                        icon={<StatusIcon fontSize="small" />}
+                        label={statusLabel} 
+                        color={statusColor} 
+                        size="small" 
+                        variant={isOutOfStock ? "filled" : "outlined"}
+                        sx={{ fontWeight: 'bold', '& .MuiChip-icon': { color: 'inherit' } }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {filteredItems.length === 0 && (
+                  <TableRow>
+                      <TableCell colSpan={4} align="center" sx={{ py: 3 }}>No items found in inventory.</TableCell>
+                  </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>
       </Paper>
 
-      {/* --- ADD/UPDATE ITEM DIALOG [cite: 276-283] --- */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullWidth maxWidth="sm">
-        <DialogTitle fontWeight="bold">Add Inventory Item</DialogTitle>
+      {/* --- USAGE HISTORY DIALOG --- */}
+      <Dialog open={openUsageDialog} onClose={() => setOpenUsageDialog(false)} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#F4F7F6' }}>
+            <Typography variant="h6" fontWeight="bold" color="#0E4C5C">
+                Item Usage History
+            </Typography>
+            <IconButton onClick={() => setOpenUsageDialog(false)} size="small"><Close /></IconButton>
+        </DialogTitle>
         <DialogContent dividers>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField label="Item Name" fullWidth variant="outlined" placeholder="e.g. Anesthetic" />
-            <TextField select label="Category" fullWidth defaultValue="">
-               <MenuItem value="Consumables">Consumables</MenuItem>
-               <MenuItem value="Equipment">Equipment</MenuItem>
-               <MenuItem value="Instruments">Instruments</MenuItem>
-            </TextField>
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                 <TextField label="Quantity" type="number" fullWidth />
-              </Grid>
-              <Grid item xs={6}>
-                 <TextField label="Unit" fullWidth placeholder="e.g. Boxes, Vials" />
-              </Grid>
-            </Grid>
-            <TextField label="Restock Date" type="date" fullWidth InputLabelProps={{ shrink: true }} />
-          </Stack>
+            {selectedItem && (
+                <Box>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+                        <Box>
+                            <Typography variant="h5" fontWeight="bold">{selectedItem.name}</Typography>
+                            <Typography variant="body2" color="text.secondary">Category: {selectedItem.category}</Typography>
+                        </Box>
+                        <Box textAlign="right">
+                            <Typography variant="caption" color="text.secondary" display="block">CURRENT STOCK</Typography>
+                            <Typography variant="h6" fontWeight="bold" color={selectedItem.stockQuantity === 0 ? 'error' : 'primary'}>
+                                {selectedItem.stockQuantity} Units
+                            </Typography>
+                        </Box>
+                    </Stack>
+
+                    <Divider sx={{ mb: 3 }} />
+
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+                        <History color="primary" />
+                        <Typography variant="subtitle1" fontWeight="bold">Recent Treatments Involving This Item</Typography>
+                    </Stack>
+                    
+                    {/* Placeholder for Treatment Module Integration */}
+                    <Paper elevation={0} sx={{ bgcolor: '#F8FAFC', p: 4, textAlign: 'center', borderRadius: 2, border: '1px dashed #B0BEC5' }}>
+                        <Assignment sx={{ fontSize: 40, color: '#90A4AE', mb: 1 }} />
+                        <Typography variant="body2" color="text.secondary" fontWeight="500">
+                            No recent usage records found.
+                        </Typography>
+                        <Typography variant="caption" color="primary" sx={{ display: 'block', mt: 1 }}>
+                            Usage logs will appear here once this item is deducted during patient treatments.
+                        </Typography>
+                    </Paper>
+                </Box>
+            )}
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setOpenDialog(false)} color="inherit">Cancel</Button>
-          <Button variant="contained" onClick={() => setOpenDialog(false)} sx={{ bgcolor: '#0E4C5C' }}>Save Item</Button>
+        <DialogActions sx={{ p: 2, bgcolor: '#F4F7F6' }}>
+            <Button onClick={() => setOpenUsageDialog(false)} variant="contained" sx={{ bgcolor: '#0E4C5C', textTransform: 'none', fontWeight: 'bold' }}>
+                Close Window
+            </Button>
         </DialogActions>
       </Dialog>
-
     </Box>
   );
 };
 
-export default Inventory;
+export default DentistInventory;

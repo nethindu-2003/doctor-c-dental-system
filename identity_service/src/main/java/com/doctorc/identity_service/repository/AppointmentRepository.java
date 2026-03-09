@@ -16,4 +16,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
 
     // Get all taken slots for a specific date
     List<Appointment> findByAppointmentDateAndStatusNot(LocalDate date, String status);
+
+    // Fetch all appointments for a specific dentist
+    List<Appointment> findByDentist_IdOrderByAppointmentDateAscAppointmentTimeAsc(Integer dentistId);
 }

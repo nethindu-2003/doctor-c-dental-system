@@ -1,17 +1,19 @@
 package com.doctorc.identity_service.service;
 
-import com.doctorc.identity_service.entity.Patient;
-import com.doctorc.identity_service.entity.Dentist;
-import com.doctorc.identity_service.entity.Admin;
-import com.doctorc.identity_service.repository.PatientRepository;
-import com.doctorc.identity_service.repository.AdminRepository;
-import com.doctorc.identity_service.repository.DentistRepository;
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import java.util.Optional;
-import java.time.LocalDateTime;
-import java.util.UUID;
+
+import com.doctorc.identity_service.entity.Admin;
+import com.doctorc.identity_service.entity.Dentist;
+import com.doctorc.identity_service.entity.Patient;
+import com.doctorc.identity_service.repository.AdminRepository;
+import com.doctorc.identity_service.repository.DentistRepository;
+import com.doctorc.identity_service.repository.PatientRepository;
 
 @Service
 public class AuthService {
@@ -127,34 +129,47 @@ public class AuthService {
     }
 
     public String forgotPassword(String email, String role) {
-        String token = UUID.randomUUID().toString();
-        LocalDateTime expiry = LocalDateTime.now().plusMinutes(15); // Token valid for 15 mins
+        try {
+            if (role == null || role.trim().isEmpty()) {
+                throw new RuntimeException("Role must be provided (patient or dentist).");
+            }
 
-        if (role.equalsIgnoreCase("patient")) {
-            Optional<Patient> patientOpt = patientRepository.findByEmail(email);
-            if (patientOpt.isEmpty()) throw new RuntimeException("Patient not found");
+            String token = UUID.randomUUID().toString();
+            LocalDateTime expiry = LocalDateTime.now().plusMinutes(15);
 
-            Patient patient = patientOpt.get();
-            patient.setResetToken(token);
-            patient.setResetTokenExpiryDate(expiry);
-            patientRepository.save(patient);
+            if (role.equalsIgnoreCase("patient")) {
+                // 1. Explicitly check if the patient exists, throw an error if they don't
+                Patient patient = patientRepository.findByEmail(email)
+                        .orElseThrow(() -> new RuntimeException("No patient account found with this email address."));
 
-        } else if (role.equalsIgnoreCase("dentist")) {
-            Optional<Dentist> dentistOpt = dentistRepository.findByEmail(email);
-            if (dentistOpt.isEmpty()) throw new RuntimeException("Dentist not found");
+                patient.setResetToken(token);
+                patient.setResetTokenExpiryDate(expiry);
+                patientRepository.save(patient);
 
-            Dentist dentist = dentistOpt.get();
-            dentist.setResetToken(token);
-            dentist.setResetTokenExpiryDate(expiry);
-            dentistRepository.save(dentist);
+                emailService.sendPasswordResetEmail(email, token, role);
+                return "Password reset link sent to your email.";
 
-        } else {
-            throw new RuntimeException("Invalid role for password reset");
+            } else if (role.equalsIgnoreCase("dentist")) {
+                // 2. Explicitly check if the dentist exists, throw an error if they don't
+                Dentist dentist = dentistRepository.findByEmail(email)
+                        .orElseThrow(() -> new RuntimeException("No dentist account found with this email address."));
+
+                dentist.setResetToken(token);
+                dentist.setResetTokenExpiryDate(expiry);
+                dentistRepository.save(dentist);
+
+                emailService.sendPasswordResetEmail(email, token, role);
+                return "Password reset link sent to your email.";
+
+            } else {
+                throw new RuntimeException("Invalid role for password reset.");
+            }
+
+        } catch (Exception e) {
+            // Print to console for debugging, but send the clean message back to React
+            e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
         }
-
-        // Send Email
-        emailService.sendPasswordResetEmail(email, token, role);
-        return "Reset link sent successfully.";
     }
 
     public String resetPassword(String token, String newPassword) {

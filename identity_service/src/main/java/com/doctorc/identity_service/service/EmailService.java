@@ -3,6 +3,7 @@ package com.doctorc.identity_service.service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,9 @@ public class EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
+
+    @Value("${spring.mail.username}")
+    private String fromEmail;
 
     // --- 1. PATIENT VERIFICATION EMAIL ---
     public void sendVerificationEmail(String toEmail, String token) {
@@ -116,6 +120,56 @@ public class EmailService {
         sendHtmlEmail(toEmail, "Reminder: Upcoming Treatment Session", htmlContent);
     }
 
+    // --- 7. PATIENT INVITATION EMAIL ---
+    public void sendPatientInviteEmail(String toEmail, String name, String token) {
+        // This link directs them to a page where they type in a new password
+        String link = "http://localhost:3000/patient/setup-password?token=" + token;
+
+        String htmlContent = getHtmlTemplate(
+                "Welcome to Doctor C, " + name + "!",
+                "An administrator has created your patient profile at Doctor C Dental Clinic.<br>" +
+                        "Please click the button below to set up your secure password and access your patient dashboard.",
+                "Set Password & Activate",
+                link
+        );
+
+        sendHtmlEmail(toEmail, "Doctor C Dental - Patient Account Invitation", htmlContent);
+    }
+
+    // --- 8. APPOINTMENT CANCELLATION EMAIL ---
+    public void sendCancellationEmail(String toEmail, String patientName, String date, String time) {
+        String link = "http://localhost:3000/login";
+        String message = String.format(
+                "Dear %s,<br><br>We regret to inform you that your appointment scheduled for <b>%s at %s</b> has been cancelled by the clinic administration.<br><br>" +
+                        "If you would like to book a new appointment, please log in to your dashboard or contact the clinic directly.",
+                patientName, date, time
+        );
+
+        String htmlContent = getHtmlTemplate(
+                "Appointment Cancelled", message, "Book New Appointment", link
+        );
+
+        sendHtmlEmail(toEmail, "Notice: Appointment Cancelled - Doctor C Dental", htmlContent);
+    }
+
+    // --- 9. APPOINTMENT RESCHEDULE EMAIL ---
+    public void sendRescheduleEmail(String toEmail, String patientName, String oldDate, String oldTime, String newDate, String newTime) {
+        String link = "http://localhost:3000/login";
+        String message = String.format(
+                "Dear %s,<br><br>Your upcoming appointment has been rescheduled by the clinic.<br><br>" +
+                        "<b>Old Appointment:</b> %s at %s<br>" +
+                        "<b>New Appointment:</b> <span style='color: #0E4C5C; font-weight: bold;'>%s at %s</span><br><br>" +
+                        "If this new time does not work for you, please log in to reschedule.",
+                patientName, oldDate, oldTime, newDate, newTime
+        );
+
+        String htmlContent = getHtmlTemplate(
+                "Appointment Rescheduled", message, "View Appointment", link
+        );
+
+        sendHtmlEmail(toEmail, "Notice: Appointment Rescheduled - Doctor C Dental", htmlContent);
+    }
+
     // --- HELPER: SEND THE ACTUAL EMAIL ---
     private void sendHtmlEmail(String to, String subject, String htmlBody) {
         try {
@@ -123,13 +177,19 @@ public class EmailService {
             // 'true' = multipart (needed for HTML)
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
+            helper.setFrom(fromEmail);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlBody, true); // 'true' = isHtml
 
             mailSender.send(message);
-        } catch (MessagingException e) {
-            throw new RuntimeException("Failed to send email", e);
+            System.out.println("Email sent successfully to: " + to);
+        } catch (jakarta.mail.AuthenticationFailedException e) {
+            System.err.println("Email authentication failed. Check SMTP credentials.");
+            throw new RuntimeException("Email service authentication failed. Please contact support.", e);
+        } catch (jakarta.mail.MessagingException e) {
+            System.err.println("Failed to send email to " + to + ": " + e.getMessage());
+            throw new RuntimeException("Failed to send email: " + e.getMessage(), e);
         }
     }
 
