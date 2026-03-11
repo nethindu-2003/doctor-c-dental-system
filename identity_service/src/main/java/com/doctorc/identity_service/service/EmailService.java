@@ -36,7 +36,10 @@ public class EmailService {
         String link = "http://localhost:3000/login?token=" + token;
 
         // Capitalize Role for display (e.g., "patient" -> "Patient")
-        String displayRole = role.substring(0, 1).toUpperCase() + role.substring(1).toLowerCase();
+        String displayRole = "User"; // Default fallback
+        if (role != null && !role.trim().isEmpty()) {
+            displayRole = role.substring(0, 1).toUpperCase() + role.substring(1).toLowerCase();
+        }
 
         String htmlContent = getHtmlTemplate(
                 "Reset Your Password",

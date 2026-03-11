@@ -11,10 +11,17 @@ spring:
               predicates:
                 - Path=/auth/**
 
-            - id: chat-service
+            # Route for standard HTTP REST API (history, edit, delete)
+            - id: chat-service-rest
               uri: lb://CHAT-SERVICE
               predicates:
-                - Path=/chat/**, /ws-chat/**
+                - Path=/api/chat/**
+
+            # Explicit route for WebSocket traffic
+            - id: chat-service-websocket
+              uri: lb://CHAT-SERVICE   # Notice the 'ws' here. This tells the gateway to upgrade the connection.
+              predicates:
+                - Path=/ws-chat/**
 
 server:
   port: 8080

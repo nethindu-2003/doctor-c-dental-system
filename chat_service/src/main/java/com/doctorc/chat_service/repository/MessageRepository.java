@@ -7,9 +7,8 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface MessageRepository extends JpaRepository<Message, Integer> {
+public interface MessageRepository extends JpaRepository<Message, Long> {
 
-    // Fetches the conversation history between a specific patient and dentist
-    List<Message> findByPatientIdAndDentistIdOrderBySentAtAsc(Integer patientId, Integer dentistId);
-
+    // Fetch chat history between a specific patient and dentist
+    List<Message> findByPatientIdAndDentistIdOrderBySentAtAsc(Long patientId, Long dentistId);
 }

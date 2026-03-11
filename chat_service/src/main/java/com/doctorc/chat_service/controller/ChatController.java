@@ -1,71 +1,66 @@
 package com.doctorc.chat_service.controller;
 
 import com.doctorc.chat_service.entity.Message;
-import com.doctorc.chat_service.repository.MessageRepository;
+import com.doctorc.chat_service.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
-@RequestMapping("/chat")
-@CrossOrigin(origins = "*")
+@RequestMapping("/api/chat")
 public class ChatController {
 
     @Autowired
-    private MessageRepository messageRepository;
+    private MessageService messageService;
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    @GetMapping("/history/{patientId}/{dentistId}")
-    public List<Message> getChatHistory(@PathVariable Integer patientId, @PathVariable Integer dentistId) {
-        return messageRepository.findByPatientIdAndDentistIdOrderBySentAtAsc(patientId, dentistId);
+    // --- WEBSOCKET ENDPOINT ---
+
+    @MessageMapping("/sendMessage")
+    public void receiveAndBroadcastMessage(@Payload Message message) {
+        // 1. Save message to database
+        Message savedMessage = messageService.saveMessage(message);
+
+        // 2. Create a unique channel for this patient-dentist pair (e.g., /topic/chat/1/2)
+        String chatChannel = "/topic/chat/" + message.getPatientId() + "/" + message.getDentistId();
+
+        // 3. Broadcast the saved message to both users subscribed to this channel
+        messagingTemplate.convertAndSend(chatChannel, savedMessage);
     }
 
-    @MessageMapping("/chat.sendMessage")
-    public void handleMessageAction(@Payload Message incomingMessage) {
-        Message messageToBroadcast;
-        String action = incomingMessage.getAction();
+    // --- REST ENDPOINTS ---
 
-        if ("DELETE".equalsIgnoreCase(action) && incomingMessage.getMessageId() != null) {
-            // 1. Handle Delete
-            Optional<Message> existingOpt = messageRepository.findById(incomingMessage.getMessageId());
-            if (existingOpt.isPresent()) {
-                Message existing = existingOpt.get();
-                existing.setDeleted(true);
-                existing.setContent("🚫 This message was deleted");
-                existing.setAction("DELETE"); // Pass action back to React to trigger state update
-                messageToBroadcast = messageRepository.save(existing);
-            } else {
-                return; // Message not found, do nothing
-            }
+    @GetMapping("/history")
+    public ResponseEntity<List<Message>> getHistory(@RequestParam Long patientId, @RequestParam Long dentistId) {
+        return ResponseEntity.ok(messageService.getChatHistory(patientId, dentistId));
+    }
 
-        } else if ("EDIT".equalsIgnoreCase(action) && incomingMessage.getMessageId() != null) {
-            // 2. Handle Edit
-            Optional<Message> existingOpt = messageRepository.findById(incomingMessage.getMessageId());
-            if (existingOpt.isPresent()) {
-                Message existing = existingOpt.get();
-                existing.setContent(incomingMessage.getContent()); // Update with new text
-                existing.setEdited(true);
-                existing.setAction("EDIT"); // Pass action back to React
-                messageToBroadcast = messageRepository.save(existing);
-            } else {
-                return; // Message not found, do nothing
-            }
+    @PutMapping("/edit/{messageId}")
+    public ResponseEntity<Message> editMessage(@PathVariable Long messageId, @RequestBody String newContent) {
+        Message updatedMessage = messageService.editMessage(messageId, newContent);
 
-        } else {
-            // 3. Handle Standard Send
-            incomingMessage.setAction("SEND");
-            messageToBroadcast = messageRepository.save(incomingMessage);
-        }
+        // Broadcast the update so the UI changes in real-time
+        String chatChannel = "/topic/chat/" + updatedMessage.getPatientId() + "/" + updatedMessage.getDentistId();
+        messagingTemplate.convertAndSend(chatChannel, updatedMessage);
 
-        // Broadcast the saved message back to the active WebSocket room
-        String room = "/topic/messages/" + messageToBroadcast.getPatientId() + "/" + messageToBroadcast.getDentistId();
-        messagingTemplate.convertAndSend(room, messageToBroadcast);
+        return ResponseEntity.ok(updatedMessage);
+    }
+
+    @DeleteMapping("/delete/{messageId}")
+    public ResponseEntity<Message> deleteMessage(@PathVariable Long messageId) {
+        Message deletedMessage = messageService.deleteMessage(messageId);
+
+        // Broadcast the deletion so the UI changes in real-time
+        String chatChannel = "/topic/chat/" + deletedMessage.getPatientId() + "/" + deletedMessage.getDentistId();
+        messagingTemplate.convertAndSend(chatChannel, deletedMessage);
+
+        return ResponseEntity.ok(deletedMessage);
     }
 }

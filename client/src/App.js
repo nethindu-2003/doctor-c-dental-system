@@ -22,7 +22,7 @@ import PatientLayout from './components/Layout/PatientLayout';
 import PatientDashboard from './pages/patient/Dashboard';
 import BookAppointment from './pages/patient/BookAppointment';
 import TreatmentHistory from './pages/patient/TreatmentHistory';
-import Messages from './pages/patient/Messages';
+import PatientMessages from './pages/patient/Messages';
 import PaymentHistory from './pages/patient/PaymentHistory';
 import Profile from './pages/patient/ProfileSettings';
 
@@ -33,7 +33,7 @@ import DentistAppointments from './pages/dentist/Appointments';
 import DentistTreatments from './pages/dentist/Treatments';
 import Patients from './pages/dentist/Patients';
 import Inventory from './pages/dentist/Inventory';
-import DentistMessages from './pages/patient/Messages';
+import DentistMessages from './pages/dentist/Messages';
 import DentistProfile from './pages/dentist/Profile';
 
 // Private Dashboards (Admin)
@@ -53,59 +53,62 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline /> {/* Normalizes CSS */}
       <AuthProvider>
-      <Router>
-        <ScrollToTop />
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/service/:id" element={<ServiceDetailPage />} />
+        <Router>
+          <ScrollToTop />
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/service/:id" element={<ServiceDetailPage />} />
 
-          <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/dentist/setup-password" element={<DentistSetup />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/dentist/setup-password" element={<DentistSetup />} />
 
-          <Route element={<ProtectedRoute allowedRoles={['patient']} />}>
-            <Route path="/patient" element={<PatientLayout />}>
-              <Route path="dashboard" element={<PatientDashboard />} />
-              <Route path="appointments" element={<BookAppointment />} /> 
-              <Route path="treatments" element={<TreatmentHistory />} />   
-              <Route path="messages" element={<Messages />} />  
-              <Route path="payments" element={<PaymentHistory />} />   
-              <Route path="profile" element={<Profile />} />      
+            {/* Patient Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['patient']} />}>
+              <Route path="/patient" element={<PatientLayout />}>
+                <Route path="dashboard" element={<PatientDashboard />} />
+                <Route path="appointments" element={<BookAppointment />} /> 
+                <Route path="treatments" element={<TreatmentHistory />} />   
+                <Route path="messages" element={<PatientMessages />} /> 
+                <Route path="payments" element={<PaymentHistory />} />   
+                <Route path="profile" element={<Profile />} />      
+              </Route>
             </Route>
-          </Route>
-          
-          <Route element={<ProtectedRoute allowedRoles={['dentist']} />}>
-            <Route path="/dentist" element={<DentistLayout />}>
-              <Route path="dashboard" element={<DentistDashboard />} />
-              <Route path="appointments" element={<DentistAppointments />} />
-              <Route path="treatments" element={<DentistTreatments />} />
-              <Route path="patients" element={<Patients />} />
-              <Route path="inventory" element={<Inventory />} />
-              <Route path="messages" element={<DentistMessages />} />
-              <Route path="profile" element={<DentistProfile />} />
+            
+            {/* Dentist Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['dentist']} />}>
+              <Route path="/dentist" element={<DentistLayout />}>
+                <Route path="dashboard" element={<DentistDashboard />} />
+                <Route path="appointments" element={<DentistAppointments />} />
+                <Route path="treatments" element={<DentistTreatments />} />
+                <Route path="patients" element={<Patients />} />
+                <Route path="inventory" element={<Inventory />} />
+                <Route path="messages" element={<DentistMessages />} />
+                <Route path="profile" element={<DentistProfile />} />
+              </Route>
             </Route>
-          </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route path="dashboard" element={<AdminDashboard />} /> 
-              <Route path="patients" element={<AdminPatients />} />
-              <Route path="appointments" element={<AdminAppointments />} />
-              <Route path="inventory" element={<AdminInventory />} />
-              <Route path="financial" element={<AdminFinancial />} />
-              <Route path="reports" element={<AdminReports />} />
-              <Route path="add-dentist" element={<AddDentist />} />
+            {/* Admin Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route path="dashboard" element={<AdminDashboard />} /> 
+                <Route path="patients" element={<AdminPatients />} />
+                <Route path="appointments" element={<AdminAppointments />} />
+                <Route path="inventory" element={<AdminInventory />} />
+                <Route path="financial" element={<AdminFinancial />} />
+                <Route path="reports" element={<AdminReports />} />
+                <Route path="add-dentist" element={<AddDentist />} />
+              </Route>
             </Route>
-          </Route>
-          
-          {/* Fallback */}
-          <Route path="*" element={<LandingPage />} />
-        </Routes>
-      </Router>
+            
+            {/* Fallback */}
+            <Route path="*" element={<LandingPage />} />
+          </Routes>
+        </Router>
       </AuthProvider>
     </ThemeProvider>
   );

@@ -19,4 +19,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
 
     // Fetch all appointments for a specific dentist
     List<Appointment> findByDentist_IdOrderByAppointmentDateAscAppointmentTimeAsc(Integer dentistId);
+
+    // Get today's appointments for a specific dentist
+    List<Appointment> findByDentist_IdAndAppointmentDateOrderByAppointmentTimeAsc(Integer dentistId, LocalDate date);
+
+    // Count today's appointments
+    int countByDentist_IdAndAppointmentDate(Integer dentistId, LocalDate date);
 }

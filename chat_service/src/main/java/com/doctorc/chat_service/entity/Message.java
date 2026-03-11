@@ -1,51 +1,52 @@
 package com.doctorc.chat_service.entity;
 
-import jakarta.persistence.*;
-import lombok.Data;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 @Entity
-@Data
 @Table(name = "message")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Message {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "message_id")
-    private Integer messageId;
+    private Long messageId;
 
-    @Column(name = "patient_id", nullable = false)
-    private Integer patientId;
-
-    @Column(name = "dentist_id", nullable = false)
-    private Integer dentistId;
-
-    @Column(name = "sender_type", nullable = false)
-    private String senderType;
-
-    @Column(name = "receiver_type", nullable = false)
-    private String receiverType;
-
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "sent_at")
+    @CreationTimestamp
+    @Column(updatable = false)
     private LocalDateTime sentAt;
 
-    // --- NEW FIELDS FOR UI STATE ---
-    @Column(name = "is_edited")
+    @Column(nullable = false)
+    private String senderType;
+
+    @Column(nullable = false)
+    private String receiverType;
+
+    @Column(nullable = false)
+    private Long patientId;
+
+    @Column(nullable = false)
+    private Long dentistId;
+
+    @Column(nullable = false)
     private boolean isEdited = false;
 
-    @Column(name = "is_deleted")
+    @Column(nullable = false)
     private boolean isDeleted = false;
-
-    // @Transient tells Hibernate to ignore this field when saving to MySQL,
-    // but allows Spring to read it from the React JSON payload.
-    @Transient
-    private String action;
-
-    @PrePersist
-    protected void onCreate() {
-        this.sentAt = LocalDateTime.now();
-    }
 }

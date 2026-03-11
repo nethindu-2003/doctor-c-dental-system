@@ -51,7 +51,7 @@ const SetupPassword = () => {
     // 4. Send to Backend
     setLoading(true);
     try {
-      await axios.post('/auth/patient/setup-password', {
+      await axios.post('/patient/setup-password', {
         token: token,
         password: password
       });

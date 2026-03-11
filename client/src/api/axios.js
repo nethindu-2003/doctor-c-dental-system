@@ -1,44 +1,76 @@
 import axios from 'axios';
 
+// ---------------------------------------------------------
+// 1. EXISTING API INSTANCE (Untouched for other services)
+// ---------------------------------------------------------
 const api = axios.create({
-  baseURL: 'http://localhost:8080/auth',
+  baseURL: 'http://localhost:8080/auth', // Kept exactly as you had it
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// 2. Add a "Request Interceptor"
-// This runs before EVERY request to attach the Token
+// ---------------------------------------------------------
+// 2. CHAT API INSTANCE (Corrected to route through Gateway)
+// ---------------------------------------------------------
+const chatApi = axios.create({
+  baseURL: 'http://localhost:8080', // <-- Changed from 8082 to 8080
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// ---------------------------------------------------------
+// REQUEST INTERCEPTORS (Attach Tokens)
+// ---------------------------------------------------------
 api.interceptors.request.use(
-    (config) => {
-        // Get token from Session Storage (saved during Login)
-        const token = sessionStorage.getItem('token');
-        
-        // If token exists, add it to the Header
-        if (token) {
-            config.headers['Authorization'] = `Bearer ${token}`;
-        }
-        
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+  (config) => {
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => Promise.reject(error)
 );
 
-// 3. Add a "Response Interceptor" 
-// If the backend says "403 Forbidden" (Token expired), force logout
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response && error.response.status === 403) {
-            // Token invalid/expired -> Clear storage & Redirect
-            // localStorage.removeItem('token');
-            // window.location.href = '/login';
-        }
-        return Promise.reject(error);
+chatApi.interceptors.request.use(
+  (config) => {
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// ---------------------------------------------------------
+// RESPONSE INTERCEPTORS (Handle Expired Tokens)
+// ---------------------------------------------------------
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 403) {
+      // localStorage.removeItem('token');
+      // window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+chatApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 403) {
+      // localStorage.removeItem('token');
+      // window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
 );
 
 export default api;
+export { chatApi };

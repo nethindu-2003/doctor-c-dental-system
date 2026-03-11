@@ -8,4 +8,9 @@ import java.util.List;
 public interface TreatmentRepository extends JpaRepository<Treatment, Integer> {
     // Find all treatments for a specific patient, ordered by start date (newest first)
     List<Treatment> findByPatientOrderByStartDateDesc(Patient patient);
+
+    // Assuming Treatment has a relation to Dentist and a status field (like "ONGOING" or "COMPLETED")
+    List<Treatment> findByDentist_IdAndStatus(Integer dentistId, String status);
+
+    int countByDentist_IdAndStatus(Integer dentistId, String status);
 }
