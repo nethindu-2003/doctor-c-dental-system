@@ -1,7 +1,4 @@
-import React, { useState } from 'react';
-import { 
-  AppBar, Toolbar, Box, Typography, Button, Stack, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText 
-} from '@mui/material';
+import React, { useState, useEffect } from 'react';
 import { Menu as MenuIcon, Close as CloseIcon } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -9,6 +6,15 @@ const PublicHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -32,107 +38,110 @@ const PublicHeader = () => {
 
   const navItems = [
     { label: 'Home', path: '/' },
-    { label: 'Services', path: '#services' }, // Updated Path
+    { label: 'Services', path: '#services' },
     { label: 'About Us', path: '/about' },
     { label: 'Contact', path: '/contact' }
   ];
 
   return (
     <>
-      <AppBar 
-        position="fixed" 
-        sx={{ 
-          bgcolor: 'rgba(255,255,255,0.9)', 
-          backdropFilter: 'blur(20px)', 
-          boxShadow: '0 4px 30px rgba(0,0,0,0.05)',
-          borderBottom: '1px solid rgba(0,0,0,0.05)',
-          height: 80,
-          justifyContent: 'center'
-        }}
+      <header 
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled 
+            ? 'bg-white/90 backdrop-blur-md shadow-sm py-3' 
+            : 'bg-white py-5'
+        }`}
       >
-        <Box sx={{ maxWidth: 'lg', width: '100%', mx: 'auto', px: { xs: 2, sm: 3 } }}>
-          <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-10">
             
             {/* Logo */}
-            <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/')}>
-              <Box sx={{ 
-                width: 40, height: 40, bgcolor: 'primary.main', borderRadius: 1, 
-                display: 'flex', alignItems: 'center', justifyContent: 'center', mr: 2 
-              }}>
-                <Typography variant="h5" color="white" fontWeight="bold">C</Typography>
-              </Box>
-              <Typography variant="h5" color="primary.dark" sx={{ fontFamily: 'Playfair Display', fontWeight: 700 }}>
+            <div 
+              className="flex items-center cursor-pointer group" 
+              onClick={() => navigate('/')}
+            >
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-3 shadow-md group-hover:bg-primary-dark transition-colors">
+                <span className="text-xl font-bold text-white">C</span>
+              </div>
+              <span className="text-xl md:text-2xl font-poppins font-bold text-primary-dark tracking-tight">
                 Doctor C
-              </Typography>
-            </Box>
+              </span>
+            </div>
 
             {/* Desktop Navigation */}
-            <Stack direction="row" spacing={5} sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
+            <nav className="hidden md:flex items-center space-x-8">
               {navItems.map((item) => (
-                <Typography 
+                <button
                   key={item.label} 
-                  variant="body1" 
                   onClick={() => handleNavigation(item.path)}
-                  sx={{ 
-                    cursor: 'pointer', fontWeight: 500, color: 'text.secondary', 
-                    transition: '0.2s', '&:hover': { color: 'primary.main' } 
-                  }}
+                  className="text-slate-600 hover:text-primary font-medium text-sm transition-colors duration-200"
                 >
                   {item.label}
-                </Typography>
+                </button>
               ))}
-              <Button 
-                variant="contained" 
-                color="primary" 
+              <button 
                 onClick={() => navigate('/login')} 
-                sx={{ borderRadius: 50, px: 4, fontWeight: 'bold' }}
+                className="bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
               >
                 Portal Login
-              </Button>
-            </Stack>
+              </button>
+            </nav>
 
             {/* Mobile Hamburger Icon */}
-            <IconButton 
-              color="primary" 
-              edge="start" 
-              onClick={handleDrawerToggle} 
-              sx={{ display: { md: 'none' } }}
+            <button 
+              className="md:hidden p-2 text-primary hover:bg-slate-50 rounded-lg transition-colors"
+              onClick={handleDrawerToggle}
             >
-              <MenuIcon fontSize="large" />
-            </IconButton>
+              <MenuIcon fontSize="medium" />
+            </button>
+          </div>
+        </div>
+      </header>
 
-          </Toolbar>
-        </Box>
-      </AppBar>
+      {/* Mobile Drawer Overlay */}
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 md:hidden transition-opacity"
+          onClick={handleDrawerToggle}
+        />
+      )}
 
       {/* Mobile Drawer */}
-      <Drawer
-        anchor="right"
-        open={mobileOpen}
-        onClose={handleDrawerToggle}
-        ModalProps={{ keepMounted: true }}
-        PaperProps={{ sx: { width: 280, bgcolor: 'background.default' } }}
+      <div 
+        className={`fixed top-0 right-0 bottom-0 w-[280px] bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col md:hidden ${
+          mobileOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
       >
-        <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end' }}>
-          <IconButton onClick={handleDrawerToggle}>
+        <div className="p-4 flex justify-end">
+          <button 
+            onClick={handleDrawerToggle}
+            className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
+          >
             <CloseIcon />
-          </IconButton>
-        </Box>
-        <List>
+          </button>
+        </div>
+
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
           {navItems.map((item) => (
-            <ListItem key={item.label} disablePadding>
-              <ListItemButton onClick={() => handleNavigation(item.path)}>
-                <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: 600, fontSize: '1.2rem' }} />
-              </ListItemButton>
-            </ListItem>
+            <button
+              key={item.label} 
+              onClick={() => handleNavigation(item.path)}
+              className="w-full text-left px-4 py-3 text-lg font-semibold text-slate-800 hover:text-primary hover:bg-slate-50 rounded-xl transition-colors"
+            >
+              {item.label}
+            </button>
           ))}
-          <Box sx={{ p: 2, mt: 2 }}>
-            <Button fullWidth variant="contained" size="large" onClick={() => { navigate('/login'); handleDrawerToggle(); }}>
+          
+          <div className="mt-8 px-4 pt-6 border-t border-slate-100">
+            <button 
+              onClick={() => { navigate('/login'); handleDrawerToggle(); }}
+              className="w-full bg-primary hover:bg-primary-dark text-white px-6 py-3.5 rounded-xl font-semibold shadow-md transition-colors"
+            >
               Portal Login
-            </Button>
-          </Box>
-        </List>
-      </Drawer>
+            </button>
+          </div>
+        </nav>
+      </div>
     </>
   );
 };

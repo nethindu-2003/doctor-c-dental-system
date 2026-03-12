@@ -1,15 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Box, Typography, Grid, Card, CardContent, Button, TextField, 
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
-  Chip, Stack, Avatar, Paper, MenuItem, IconButton, Tooltip, Divider,
-  Dialog, DialogTitle, DialogContent, DialogActions 
-} from '@mui/material';
-import { 
   Download, Search, ReceiptLong, AttachMoney, CreditCard, History, Payment, Close 
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
-import axios from '../../api/axios'; // Ensure this points to your configured Axios instance
+import axios from '../../api/axios';
 
 const PaymentHistory = () => {
   const [payments, setPayments] = useState([]);
@@ -76,246 +70,246 @@ const PaymentHistory = () => {
   };
 
   return (
-    <Box>
-      <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'start', md: 'center' }} sx={{ mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontFamily="Playfair Display" fontWeight="bold" color="primary.dark">
+    <div className="font-sans text-slate-800 animate-fade-in p-2 md:p-6 lg:p-8 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 md:gap-0">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-poppins font-bold text-primary-dark mb-2">
             Payment History
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
+          </h1>
+          <p className="text-slate-500 text-lg">
             Manage your invoices and track your dental expenses.
-          </Typography>
-        </Box>
-        <Button 
-          variant="contained" 
-          startIcon={<Download />} 
-          sx={{ mt: { xs: 2, md: 0 }, borderRadius: 50, px: 3 }}
+          </p>
+        </div>
+        <button 
           onClick={() => alert("Statement generation coming soon!")}
+          className="bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-full font-bold shadow-md transition-all flex items-center space-x-2 transform hover:-translate-y-0.5"
         >
-          Statement (PDF)
-        </Button>
-      </Stack>
+          <Download fontSize="small" />
+          <span>Statement (PDF)</span>
+        </button>
+      </div>
 
       {/* --- 1. SUMMARY CARDS --- */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={4}>
-          <Card sx={{ borderRadius: 4, bgcolor: '#E8F5E9', border: '1px solid #C8E6C9' }}>
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
-                <Avatar sx={{ bgcolor: 'success.main', color: 'white' }}><AttachMoney /></Avatar>
-                <Typography variant="subtitle2" color="text.secondary">Total Paid</Typography>
-              </Stack>
-              <Typography variant="h4" fontWeight="bold" color="success.dark">LKR {totalPaid.toLocaleString()}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-green-50/50 border border-green-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center space-x-3 mb-2">
+            <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center shrink-0">
+              <AttachMoney fontSize="small" />
+            </div>
+            <h3 className="text-slate-600 font-semibold text-sm uppercase tracking-wider">Total Paid</h3>
+          </div>
+          <h2 className="text-3xl font-bold text-green-700 ml-13">LKR {totalPaid.toLocaleString()}</h2>
+        </div>
 
-        <Grid item xs={12} sm={4}>
-          <Card sx={{ borderRadius: 4, bgcolor: '#FFEBEE', border: '1px solid #FFCDD2' }}>
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
-                <Avatar sx={{ bgcolor: 'error.main', color: 'white' }}><Payment /></Avatar>
-                <Typography variant="subtitle2" color="text.secondary">Pending Payments</Typography>
-              </Stack>
-              <Typography variant="h4" fontWeight="bold" color="error.dark">LKR {totalPending.toLocaleString()}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+        <div className="bg-red-50/50 border border-red-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center space-x-3 mb-2">
+            <div className="w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center shrink-0">
+              <Payment fontSize="small" />
+            </div>
+            <h3 className="text-slate-600 font-semibold text-sm uppercase tracking-wider">Pending</h3>
+          </div>
+          <h2 className="text-3xl font-bold text-red-600 ml-13">LKR {totalPending.toLocaleString()}</h2>
+        </div>
 
-        <Grid item xs={12} sm={4}>
-          <Card sx={{ borderRadius: 4, bgcolor: '#E3F2FD', border: '1px solid #BBDEFB' }}>
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
-                <Avatar sx={{ bgcolor: 'primary.main', color: 'white' }}><History /></Avatar>
-                <Typography variant="subtitle2" color="text.secondary">Last Payment</Typography>
-              </Stack>
-              <Typography variant="h5" fontWeight="bold" color="primary.dark">{lastPaymentDate}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+        <div className="bg-blue-50/50 border border-blue-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center space-x-3 mb-2">
+            <div className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center shrink-0">
+              <History fontSize="small" />
+            </div>
+            <h3 className="text-slate-600 font-semibold text-sm uppercase tracking-wider">Last Payment</h3>
+          </div>
+          <h2 className="text-2xl font-bold text-primary-dark mt-1 ml-13">{lastPaymentDate}</h2>
+        </div>
+      </div>
 
       {/* --- 2. TRANSACTIONS TABLE --- */}
-      <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid #e0e0e0' }}>
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 md:p-8">
         
         {/* Search & Filter Toolbar */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} md={6}>
-            <TextField 
-              fullWidth 
-              size="small" 
-              placeholder="Search by description or dentist..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{ startAdornment: <Search color="action" sx={{ mr: 1 }} /> }}
-            />
-          </Grid>
-          <Grid item xs={6} md={3}>
-            <TextField 
-              select 
-              fullWidth 
-              size="small" 
-              label="Payment Status"
-              value={statusFilter} 
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <MenuItem value="All">All Status</MenuItem>
-              <MenuItem value="COMPLETED">Paid</MenuItem>
-              <MenuItem value="PENDING">Pending</MenuItem>
-            </TextField>
-          </Grid>
-        </Grid>
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="relative flex-grow">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <Search fontSize="small" />
+              </div>
+              <input 
+                  type="text" 
+                  placeholder="Search by description or dentist..." 
+                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+              />
+          </div>
+          <div className="w-full sm:w-48 shrink-0">
+              <select 
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm appearance-none"
+                  value={statusFilter} 
+                  onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                  <option value="All">All Status</option>
+                  <option value="COMPLETED">Paid</option>
+                  <option value="PENDING">Pending</option>
+              </select>
+          </div>
+        </div>
 
-        <TableContainer>
-          <Table>
-            <TableHead sx={{ bgcolor: '#F4F7F6' }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Dentist</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Amount</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Method</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold' }}>Receipt</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left whitespace-nowrap">
+            <thead className="bg-slate-50 text-slate-600 text-sm border-y border-slate-200">
+              <tr>
+                <th className="px-4 py-3 font-semibold rounded-tl-xl">Date</th>
+                <th className="px-4 py-3 font-semibold">Description</th>
+                <th className="px-4 py-3 font-semibold">Dentist</th>
+                <th className="px-4 py-3 font-semibold">Amount</th>
+                <th className="px-4 py-3 font-semibold">Method</th>
+                <th className="px-4 py-3 font-semibold">Status</th>
+                <th className="px-4 py-3 font-semibold text-center rounded-tr-xl">Action</th>
+              </tr>
+            </thead>
+            <tbody className="text-sm divide-y divide-slate-100">
               {filteredPayments.map((row) => (
-                <TableRow 
+                <tr 
                     key={row.paymentId} 
-                    hover 
+                    className="hover:bg-slate-50 transition-colors cursor-pointer"
                     onClick={() => handleOpenDetails(row)}
-                    sx={{ cursor: 'pointer' }}
                 >
-                  <TableCell>{dayjs(row.paymentDate).format('MMM D, YYYY')}</TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight="bold">{getDescription(row)}</Typography>
-                    <Typography variant="caption" color="text.secondary">
+                  <td className="px-4 py-4 text-slate-500">{dayjs(row.paymentDate).format('MMM D, YYYY')}</td>
+                  <td className="px-4 py-4">
+                    <p className="font-bold text-slate-800">{getDescription(row)}</p>
+                    <p className="text-xs text-slate-500">
                         {row.paymentType === 'BOOKING_FEE' ? 'Online Booking' : 'Clinic Service'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>{getDentistName(row)}</TableCell>
-                  <TableCell>LKR {row.amount?.toLocaleString()}</TableCell>
-                  <TableCell>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                       {row.paymentType === 'BOOKING_FEE' ? <CreditCard fontSize="small" color="action" /> : <AttachMoney fontSize="small" color="action" />}
-                       <Typography variant="body2">{row.paymentType === 'BOOKING_FEE' ? 'Online' : 'Cash/Card at Clinic'}</Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={row.status === 'COMPLETED' ? 'Paid' : 'Pending'} 
-                      size="small" 
-                      color={row.status === 'COMPLETED' ? 'success' : 'warning'} 
-                      variant={row.status === 'COMPLETED' ? 'outlined' : 'filled'}
-                    />
-                  </TableCell>
-                  <TableCell align="center" onClick={(e) => e.stopPropagation()}>
+                    </p>
+                  </td>
+                  <td className="px-4 py-4 text-slate-600">{getDentistName(row)}</td>
+                  <td className="px-4 py-4 font-bold text-slate-700">LKR {row.amount?.toLocaleString()}</td>
+                  <td className="px-4 py-4 text-slate-600">
+                    <div className="flex items-center space-x-2">
+                       {row.paymentType === 'BOOKING_FEE' ? <CreditCard fontSize="small" className="text-slate-400" /> : <AttachMoney fontSize="small" className="text-slate-400" />}
+                       <span>{row.paymentType === 'BOOKING_FEE' ? 'Online' : 'Cash/Card at Clinic'}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                     <span className={`px-3 py-1 text-xs font-semibold rounded-lg ${row.status === 'COMPLETED' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-yellow-100 text-yellow-800'}`}>
+                        {row.status === 'COMPLETED' ? 'Paid' : 'Pending'}
+                     </span>
+                  </td>
+                  <td className="px-4 py-4 text-center" onClick={(e) => e.stopPropagation()}>
                     {row.status === 'COMPLETED' ? (
-                      <Tooltip title="Download Receipt">
-                        <IconButton color="primary" size="small" onClick={() => alert("Downloading Receipt...")}>
-                            <ReceiptLong />
-                        </IconButton>
-                      </Tooltip>
+                        <button 
+                            className="p-2 text-primary hover:bg-primary-light/20 rounded-full transition-colors focus:outline-none"
+                            onClick={() => alert("Downloading Receipt...")}
+                            title="Download Receipt"
+                        >
+                            <ReceiptLong fontSize="small" />
+                        </button>
                     ) : (
-                      <Button 
-                        variant="contained" 
-                        size="small" 
-                        color="error"
-                        sx={{ borderRadius: 20, fontSize: '0.75rem', px: 2 }}
+                      <button 
+                        className="bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 px-4 py-1.5 rounded-full text-xs font-bold transition-colors focus:outline-none"
                         onClick={() => alert(`Redirecting to payment gateway for LKR ${row.amount}`)}
                       >
                         Pay Now
-                      </Button>
+                      </button>
                     )}
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))}
               {filteredPayments.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                    <Typography variant="body2" color="text.secondary">No transactions found.</Typography>
-                  </TableCell>
-                </TableRow>
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                    No transactions found.
+                  </td>
+                </tr>
               )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* --- 3. PAYMENT DETAILS MODAL --- */}
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: 'primary.dark', color: 'white' }}>
-            Transaction Details
-            <IconButton onClick={() => setOpenModal(false)} sx={{ color: 'white' }}><Close /></IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-            {selectedPayment && (
-                <Stack spacing={3}>
-                    {/* Header Info */}
-                    <Box textAlign="center" sx={{ mb: 2 }}>
-                        <Typography variant="h3" fontWeight="bold" color="primary.main">
-                            LKR {selectedPayment.amount?.toLocaleString()}
-                        </Typography>
-                        <Chip 
-                            label={selectedPayment.status === 'COMPLETED' ? 'Successfully Paid' : 'Payment Pending'} 
-                            color={selectedPayment.status === 'COMPLETED' ? 'success' : 'warning'} 
-                            sx={{ mt: 1 }}
-                        />
-                    </Box>
+      {openModal && selectedPayment && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                 <div className="bg-primary-dark text-white px-6 py-4 flex justify-between items-center shrink-0">
+                     <h3 className="text-lg font-bold font-poppins">Transaction Details</h3>
+                     <button onClick={() => setOpenModal(false)} className="text-white/80 hover:text-white transition-colors focus:outline-none">
+                         <Close />
+                     </button>
+                 </div>
+                 
+                 <div className="p-6 overflow-y-auto flex-grow space-y-6">
+                     {/* Header Info */}
+                     <div className="text-center">
+                         <h2 className={`text-4xl font-bold ${selectedPayment.status === 'COMPLETED' ? 'text-primary' : 'text-slate-800'}`}>
+                             LKR {selectedPayment.amount?.toLocaleString()}
+                         </h2>
+                         <div className="mt-3 inline-block">
+                             <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${selectedPayment.status === 'COMPLETED' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
+                                 {selectedPayment.status === 'COMPLETED' ? 'Successfully Paid' : 'Payment Pending'}
+                             </span>
+                         </div>
+                     </div>
+ 
+                     <hr className="border-slate-100" />
+ 
+                     {/* Transaction Details */}
+                     <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                         <div>
+                             <p className="text-slate-500 font-semibold mb-1">Transaction ID</p>
+                             <p className="font-bold text-slate-800">#TXN-00{selectedPayment.paymentId}</p>
+                         </div>
+                         <div>
+                             <p className="text-slate-500 font-semibold mb-1">Date &amp; Time</p>
+                             <p className="font-bold text-slate-800">
+                                 {dayjs(selectedPayment.paymentDate).format('MMM D, YYYY h:mm A')}
+                             </p>
+                         </div>
+                         <div className="col-span-2">
+                             <p className="text-slate-500 font-semibold mb-1">Description</p>
+                             <p className="font-bold text-slate-800">{getDescription(selectedPayment)}</p>
+                         </div>
+                         <div>
+                             <p className="text-slate-500 font-semibold mb-1">Attending Doctor</p>
+                             <p className="font-bold text-slate-800">{getDentistName(selectedPayment)}</p>
+                         </div>
+                         <div>
+                             <p className="text-slate-500 font-semibold mb-1">Payment Method</p>
+                             <p className="font-bold text-slate-800">
+                                 {selectedPayment.paymentType === 'BOOKING_FEE' ? 'Online / Credit Card' : 'Settled at Clinic'}
+                             </p>
+                         </div>
+                     </div>
+ 
+                     {/* Contextual Box based on type */}
+                     {selectedPayment.paymentType === 'BOOKING_FEE' && selectedPayment.appointment && (
+                         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                             <h4 className="font-bold text-primary-dark mb-2 text-sm uppercase tracking-wider">Associated Appointment</h4>
+                             <div className="space-y-1 text-sm text-slate-600">
+                                 <p><span className="font-semibold text-slate-700">Date:</span> {selectedPayment.appointment.appointmentDate}</p>
+                                 <p><span className="font-semibold text-slate-700">Time:</span> {selectedPayment.appointment.appointmentTime}</p>
+                                 <p><span className="font-semibold text-slate-700">Reason:</span> {selectedPayment.appointment.reasonForVisit}</p>
+                             </div>
+                         </div>
+                     )}
+                 </div>
+                 
+                 <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0 space-x-3">
+                     <button 
+                         onClick={() => setOpenModal(false)}
+                         className="px-6 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-colors focus:outline-none"
+                     >
+                         Close
+                     </button>
+                     {selectedPayment?.status === 'COMPLETED' && (
+                         <button className="flex items-center space-x-2 bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-xl font-bold shadow-sm transition-colors focus:outline-none block">
+                             <ReceiptLong fontSize="small" />
+                             <span>Download Receipt</span>
+                         </button>
+                     )}
+                 </div>
+             </div>
+          </div>
+      )}
 
-                    <Divider />
-
-                    {/* Transaction Details */}
-                    <Grid container spacing={2}>
-                        <Grid item xs={6}>
-                            <Typography variant="caption" color="text.secondary">Transaction ID</Typography>
-                            <Typography variant="body1" fontWeight="bold">#TXN-00{selectedPayment.paymentId}</Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <Typography variant="caption" color="text.secondary">Date & Time</Typography>
-                            <Typography variant="body1" fontWeight="bold">
-                                {dayjs(selectedPayment.paymentDate).format('MMM D, YYYY h:mm A')}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={12}>
-                            <Typography variant="caption" color="text.secondary">Description</Typography>
-                            <Typography variant="body1" fontWeight="bold">{getDescription(selectedPayment)}</Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <Typography variant="caption" color="text.secondary">Attending Doctor</Typography>
-                            <Typography variant="body1" fontWeight="bold">{getDentistName(selectedPayment)}</Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <Typography variant="caption" color="text.secondary">Payment Method</Typography>
-                            <Typography variant="body1" fontWeight="bold">
-                                {selectedPayment.paymentType === 'BOOKING_FEE' ? 'Online / Credit Card' : 'Settled at Clinic'}
-                            </Typography>
-                        </Grid>
-                    </Grid>
-
-                    {/* Contextual Box based on type */}
-                    {selectedPayment.paymentType === 'BOOKING_FEE' && selectedPayment.appointment && (
-                        <Box sx={{ bgcolor: '#F5F5F5', p: 2, borderRadius: 2 }}>
-                            <Typography variant="subtitle2" color="primary.dark" sx={{ mb: 1 }}>Associated Appointment</Typography>
-                            <Typography variant="body2">Date: {selectedPayment.appointment.appointmentDate}</Typography>
-                            <Typography variant="body2">Time: {selectedPayment.appointment.appointmentTime}</Typography>
-                            <Typography variant="body2">Reason: {selectedPayment.appointment.reasonForVisit}</Typography>
-                        </Box>
-                    )}
-                </Stack>
-            )}
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setOpenModal(false)} color="inherit">Close</Button>
-            {selectedPayment?.status === 'COMPLETED' && (
-                <Button variant="contained" startIcon={<ReceiptLong />}>
-                    Download Receipt
-                </Button>
-            )}
-        </DialogActions>
-      </Dialog>
-    </Box>
+    </div>
   );
 };
 

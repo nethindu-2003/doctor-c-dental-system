@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, 
-  TableHead, TableRow, Chip, IconButton, Stack, Button, TextField, 
-  InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, 
-  MenuItem, Grid, Alert, CircularProgress, Divider
-} from '@mui/material';
-import { 
-  Search, Add, Edit, Delete, Warning, CheckCircle, Inventory as InventoryIcon, History 
+  Search, Add, Edit, Delete, Warning, CheckCircle, Inventory as InventoryIcon, History, Close 
 } from '@mui/icons-material';
 import axios from '../../api/axios';
 
@@ -73,7 +67,8 @@ const AdminInventory = () => {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e) => {
+    e.preventDefault();
     try {
         if (isEditMode) {
             const res = await axios.put(`/admin/inventory/${currentItem.equipmentId}`, currentItem);
@@ -94,195 +89,316 @@ const AdminInventory = () => {
   );
 
   return (
-    <Box>
-      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-        <Box>
-          <Typography variant="h4" fontFamily="Playfair Display" fontWeight="bold" color="#1A237E">Inventory Management</Typography>
-          <Typography variant="body2" color="text.secondary">Track clinic supplies, equipment, and stock levels</Typography>
-        </Box>
-        <Button variant="contained" startIcon={<Add />} onClick={handleOpenAdd} sx={{ bgcolor: '#1A237E' }}>
-          Add Item
-        </Button>
-      </Stack>
+    <div className="font-sans text-slate-800 animate-fade-in p-2 md:p-6 lg:p-8 max-w-7xl mx-auto">
+      {/* HEADER SECTION */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-poppins font-bold text-[#1A237E] mb-2">Inventory Management</h1>
+          <p className="text-slate-500 text-sm md:text-base">Track clinic supplies, equipment, and stock levels</p>
+        </div>
+        <button 
+          onClick={handleOpenAdd}
+          className="flex items-center justify-center px-6 py-3 bg-[#1A237E] hover:bg-[#12185c] text-white rounded-xl font-bold transition-transform hover:-translate-y-0.5 shadow-md focus:outline-none whitespace-nowrap"
+        >
+          <Add fontSize="small" className="mr-2" /> Add Item
+        </button>
+      </div>
 
       {/* SEARCH BAR */}
-      <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: 2, border: '1px solid #e0e0e0' }}>
-        <TextField
-          fullWidth placeholder="Search for items..." size="small"
-          value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }}
-        />
-      </Paper>
+      <div className="bg-white p-4 mb-6 rounded-2xl shadow-sm border border-slate-200">
+        <div className="relative max-w-xl">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+            <Search fontSize="small" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search for items..."
+            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 outline-none transition-all text-sm font-medium"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
 
       {/* INVENTORY TABLE */}
-      <Paper elevation={0} sx={{ borderRadius: 3, overflow: 'hidden', border: '1px solid #e0e0e0' }}>
+      <div className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm relative">
         {loading ? (
-            <Box sx={{ p: 5, textAlign: 'center' }}><CircularProgress /></Box>
+            <div className="p-12 flex justify-center items-center">
+                <div className="w-10 h-10 border-4 border-slate-200 border-t-[#1A237E] rounded-full animate-spin"></div>
+            </div>
         ) : (
-            <TableContainer>
-            <Table>
-                <TableHead sx={{ bgcolor: '#F4F7F6' }}>
-                <TableRow>
-                    <TableCell><strong>Item Name</strong></TableCell>
-                    <TableCell><strong>Category</strong></TableCell>
-                    <TableCell><strong>Quantity</strong></TableCell>
-                    <TableCell><strong>Unit Cost</strong></TableCell>
-                    <TableCell><strong>Status</strong></TableCell>
-                    <TableCell align="center"><strong>Actions</strong></TableCell>
-                </TableRow>
-                </TableHead>
-                <TableBody>
+            <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+                <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
+                    <th className="p-4 font-bold rounded-tl-3xl">Item Name</th>
+                    <th className="p-4 font-bold">Category</th>
+                    <th className="p-4 font-bold">Quantity</th>
+                    <th className="p-4 font-bold">Unit Cost</th>
+                    <th className="p-4 font-bold">Status</th>
+                    <th className="p-4 font-bold text-center rounded-tr-3xl">Actions</th>
+                </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
                 {filteredItems.map((row) => {
                     const isLowStock = row.stockQuantity <= row.threshold;
                     return (
-                        <TableRow 
+                        <tr 
                             key={row.equipmentId} 
-                            hover 
+                            className="hover:bg-slate-50/50 transition-colors cursor-pointer group"
                             onClick={() => handleRowClick(row)}
-                            sx={{ cursor: 'pointer' }}
                         >
-                        <TableCell>
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                            <InventoryIcon fontSize="small" color="action" />
-                            <Typography variant="body2" fontWeight="bold">{row.name}</Typography>
-                            </Stack>
-                        </TableCell>
-                        <TableCell>{row.category}</TableCell>
-                        <TableCell>
-                            <Typography fontWeight="bold" color={isLowStock ? 'error.main' : 'text.primary'}>
-                            {row.stockQuantity}
-                            </Typography>
-                        </TableCell>
-                        <TableCell>LKR {row.unitCost?.toLocaleString()}</TableCell>
-                        <TableCell>
-                            <Chip 
-                            icon={!isLowStock ? <CheckCircle fontSize="small" /> : <Warning fontSize="small" />}
-                            label={!isLowStock ? 'In Stock' : 'Low Stock'} 
-                            size="small"
-                            color={!isLowStock ? 'success' : 'error'}
-                            variant={!isLowStock ? 'outlined' : 'filled'}
-                            sx={{ fontWeight: 'bold' }}
-                            />
-                        </TableCell>
-                        <TableCell align="center">
-                            <Stack direction="row" justifyContent="center">
-                            <IconButton size="small" color="primary" onClick={(e) => handleOpenEdit(e, row)}>
-                                <Edit fontSize="small" />
-                            </IconButton>
-                            <IconButton size="small" color="error" onClick={(e) => handleDelete(e, row.equipmentId)}>
-                                <Delete fontSize="small" />
-                            </IconButton>
-                            </Stack>
-                        </TableCell>
-                        </TableRow>
+                        <td className="p-4 align-middle">
+                            <div className="flex items-center space-x-3">
+                                <InventoryIcon fontSize="small" className="text-slate-400 group-hover:text-[#1A237E] transition-colors" />
+                                <span className="font-bold text-slate-800">{row.name}</span>
+                            </div>
+                        </td>
+                        <td className="p-4 align-middle text-sm text-slate-600">
+                            {row.category}
+                        </td>
+                        <td className="p-4 align-middle">
+                            <span className={`font-bold ${isLowStock ? 'text-red-600' : 'text-slate-800'}`}>
+                                {row.stockQuantity}
+                            </span>
+                        </td>
+                        <td className="p-4 align-middle text-sm font-bold text-slate-800">
+                            LKR {row.unitCost?.toLocaleString()}
+                        </td>
+                        <td className="p-4 align-middle">
+                            <span className={`inline-flex items-center px-3 py-1 text-[0.65rem] font-bold uppercase tracking-wider rounded-lg ${
+                                !isLowStock ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'
+                            }`}>
+                                {!isLowStock ? <CheckCircle fontSize="inherit" className="mr-1" /> : <Warning fontSize="inherit" className="mr-1" />}
+                                {!isLowStock ? 'In Stock' : 'Low Stock'}
+                            </span>
+                        </td>
+                        <td className="p-4 align-middle text-center">
+                            <div className="flex justify-center items-center space-x-2">
+                                <button 
+                                    className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-colors focus:outline-none"
+                                    onClick={(e) => handleOpenEdit(e, row)}
+                                    title="Edit Item"
+                                >
+                                    <Edit fontSize="small" />
+                                </button>
+                                <button 
+                                    className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors focus:outline-none"
+                                    onClick={(e) => handleDelete(e, row.equipmentId)}
+                                    title="Delete Item"
+                                >
+                                    <Delete fontSize="small" />
+                                </button>
+                            </div>
+                        </td>
+                        </tr>
                     );
                 })}
                 {filteredItems.length === 0 && (
-                    <TableRow><TableCell colSpan={6} align="center" sx={{ py: 3 }}>No items found.</TableCell></TableRow>
+                    <tr><td colSpan="6" className="p-8 text-center text-slate-500">No items found.</td></tr>
                 )}
-                </TableBody>
-            </Table>
-            </TableContainer>
+                </tbody>
+            </table>
+            </div>
         )}
-      </Paper>
+      </div>
 
       {/* --- CRUD DIALOG (Add/Edit) --- */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullWidth maxWidth="sm">
-        <DialogTitle fontWeight="bold" sx={{ bgcolor: '#1A237E', color: 'white' }}>
-          {isEditMode ? 'Update Inventory Item' : 'Add New Inventory Item'}
-        </DialogTitle>
-        <DialogContent dividers>
-          <Stack spacing={3} sx={{ mt: 1 }}>
-            <TextField label="Item Name" fullWidth value={currentItem.name} onChange={(e) => setCurrentItem({...currentItem, name: e.target.value})} />
-            <TextField select label="Category" fullWidth value={currentItem.category} onChange={(e) => setCurrentItem({...currentItem, category: e.target.value})}>
-              <MenuItem value="Consumables">Consumables</MenuItem>
-              <MenuItem value="Medical">Medical</MenuItem>
-              <MenuItem value="Equipment">Equipment</MenuItem>
-              <MenuItem value="Office">Office Supplies</MenuItem>
-            </TextField>
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                 <TextField label="Stock Quantity" type="number" fullWidth value={currentItem.stockQuantity} onChange={(e) => setCurrentItem({...currentItem, stockQuantity: e.target.value})} />
-              </Grid>
-              <Grid item xs={6}>
-                 <TextField label="Unit Cost (LKR)" type="number" fullWidth value={currentItem.unitCost} onChange={(e) => setCurrentItem({...currentItem, unitCost: e.target.value})} />
-              </Grid>
-            </Grid>
-            <Alert severity="info" icon={false} sx={{ py: 0 }}>
-              <Stack direction="row" alignItems="center" spacing={2} sx={{ width: '100%' }}>
-                <Typography variant="body2">Low Stock Warning Threshold:</Typography>
-                <TextField variant="standard" type="number" size="small" sx={{ width: 60 }} value={currentItem.threshold} onChange={(e) => setCurrentItem({...currentItem, threshold: e.target.value})} />
-              </Stack>
-            </Alert>
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setOpenDialog(false)} color="inherit">Cancel</Button>
-          <Button variant="contained" onClick={handleSave} sx={{ bgcolor: '#1A237E' }}>
-            {isEditMode ? 'Save Changes' : 'Add Item'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {openDialog && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+                  
+                  {/* Header */}
+                  <div className="bg-[#1A237E] p-5 flex justify-between items-center shrink-0">
+                      <h2 className="text-white font-bold font-poppins text-lg">
+                          {isEditMode ? 'Update Inventory Item' : 'Add New Inventory Item'}
+                      </h2>
+                      <button 
+                         onClick={() => setOpenDialog(false)}
+                         className="text-white/70 hover:text-white transition-colors focus:outline-none"
+                      >
+                         <Close fontSize="small" />
+                      </button>
+                  </div>
+
+                  {/* Body & Form */}
+                  <form onSubmit={handleSave} className="flex flex-col flex-grow overflow-hidden">
+                      <div className="p-6 overflow-y-auto flex-grow space-y-5">
+                          
+                          <div>
+                              <label className="block text-xs font-bold text-[#1A237E] uppercase tracking-wider mb-2">Item Name</label>
+                              <input 
+                                  type="text" 
+                                  required
+                                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 outline-none focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 transition-all"
+                                  value={currentItem.name} 
+                                  onChange={(e) => setCurrentItem({...currentItem, name: e.target.value})} 
+                              />
+                          </div>
+                          
+                          <div>
+                              <label className="block text-xs font-bold text-[#1A237E] uppercase tracking-wider mb-2">Category</label>
+                              <div className="relative">
+                                  <select 
+                                      required
+                                      className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 outline-none focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 transition-all appearance-none"
+                                      value={currentItem.category} 
+                                      onChange={(e) => setCurrentItem({...currentItem, category: e.target.value})}
+                                  >
+                                      <option value="Consumables">Consumables</option>
+                                      <option value="Medical">Medical</option>
+                                      <option value="Equipment">Equipment</option>
+                                      <option value="Office">Office Supplies</option>
+                                  </select>
+                                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                      </svg>
+                                  </div>
+                              </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                  <label className="block text-xs font-bold text-[#1A237E] uppercase tracking-wider mb-2">Stock Quantity</label>
+                                  <input 
+                                      type="number" 
+                                      required min="0" step="any"
+                                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 outline-none focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 transition-all"
+                                      value={currentItem.stockQuantity} 
+                                      onChange={(e) => setCurrentItem({...currentItem, stockQuantity: e.target.value})} 
+                                  />
+                              </div>
+                              <div>
+                                  <label className="block text-xs font-bold text-[#1A237E] uppercase tracking-wider mb-2">Unit Cost (LKR)</label>
+                                  <input 
+                                      type="number" 
+                                      required min="0" step="any"
+                                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 outline-none focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 transition-all"
+                                      value={currentItem.unitCost} 
+                                      onChange={(e) => setCurrentItem({...currentItem, unitCost: e.target.value})} 
+                                  />
+                              </div>
+                          </div>
+                          
+                          <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl flex items-center flex-wrap gap-2">
+                              <span className="text-sm font-semibold text-blue-800 flex-grow">Low Stock Warning Threshold:</span>
+                              <input 
+                                  type="number" 
+                                  required min="0"
+                                  className="w-20 px-3 py-1.5 bg-white border border-blue-200 rounded-lg text-sm font-bold text-center text-blue-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                  value={currentItem.threshold} 
+                                  onChange={(e) => setCurrentItem({...currentItem, threshold: e.target.value})} 
+                              />
+                          </div>
+                      </div>
+
+                      {/* Footer */}
+                      <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-end space-x-3 shrink-0">
+                          <button 
+                              type="button"
+                              onClick={() => setOpenDialog(false)}
+                              className="px-5 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-200 transition-colors focus:outline-none"
+                          >
+                              Cancel
+                          </button>
+                          <button 
+                              type="submit"
+                              className="px-5 py-2.5 rounded-xl bg-[#1A237E] text-white font-bold hover:bg-[#12185c] hover:-translate-y-0.5 transition-all focus:outline-none shadow-md"
+                          >
+                              {isEditMode ? 'Save Changes' : 'Add Item'}
+                          </button>
+                      </div>
+                  </form>
+              </div>
+          </div>
+      )}
 
       {/* --- ITEM DETAILS / PAST USAGE MODAL (Row Click) --- */}
-      <Dialog open={openDetails} onClose={() => setOpenDetails(false)} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ bgcolor: '#F4F7F6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6" fontWeight="bold">Item Details & Usage</Typography>
-            {selectedItem?.stockQuantity <= selectedItem?.threshold && (
-                <Chip label="LOW STOCK" color="error" size="small" sx={{ fontWeight: 'bold' }} />
-            )}
-        </DialogTitle>
-        <DialogContent dividers>
-            {selectedItem && (
-                <Box>
-                    <Grid container spacing={2} sx={{ mb: 3 }}>
-                        <Grid item xs={6}>
-                            <Typography variant="caption" color="text.secondary">Item Name</Typography>
-                            <Typography variant="body1" fontWeight="bold">{selectedItem.name}</Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <Typography variant="caption" color="text.secondary">Category</Typography>
-                            <Typography variant="body1" fontWeight="bold">{selectedItem.category}</Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <Typography variant="caption" color="text.secondary">Current Stock</Typography>
-                            <Typography variant="body1" fontWeight="bold">{selectedItem.stockQuantity} Units</Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <Typography variant="caption" color="text.secondary">Unit Value</Typography>
-                            <Typography variant="body1" fontWeight="bold">LKR {selectedItem.unitCost?.toLocaleString()}</Typography>
-                        </Grid>
-                    </Grid>
+      {openDetails && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+                  
+                  {/* Header */}
+                  <div className="bg-slate-50 p-5 border-b border-slate-100 flex justify-between items-center shrink-0">
+                      <h2 className="text-slate-800 font-bold font-poppins text-lg flex items-center gap-2">
+                          Item Details & Usage
+                          {selectedItem?.stockQuantity <= selectedItem?.threshold && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[0.6rem] font-bold uppercase tracking-wider bg-red-100 text-red-700">LOW STOCK</span>
+                          )}
+                      </h2>
+                      <button 
+                         onClick={() => setOpenDetails(false)}
+                         className="text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                      >
+                         <Close fontSize="small" />
+                      </button>
+                  </div>
 
-                    <Alert severity="success" sx={{ mb: 3 }}>
-                        <strong>Last Updated:</strong> {selectedItem.lastUpdated || 'Never'} <br/>
-                        <strong>Updated By:</strong> Admin ID #{selectedItem.adminId || 'System'}
-                    </Alert>
+                  {/* Body */}
+                  <div className="p-6 overflow-y-auto flex-grow">
+                      {selectedItem && (
+                          <div className="space-y-6">
+                              
+                              {/* Data Grid */}
+                              <div className="grid grid-cols-2 gap-y-4 gap-x-6">
+                                  <div>
+                                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Item Name</p>
+                                      <p className="text-sm font-semibold text-slate-800">{selectedItem.name}</p>
+                                  </div>
+                                  <div>
+                                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Category</p>
+                                      <p className="text-sm font-semibold text-slate-800">{selectedItem.category}</p>
+                                  </div>
+                                  <div>
+                                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Current Stock</p>
+                                      <p className="text-sm font-semibold text-slate-800">{selectedItem.stockQuantity} Units</p>
+                                  </div>
+                                  <div>
+                                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Unit Value</p>
+                                      <p className="text-sm font-semibold text-slate-800">LKR {selectedItem.unitCost?.toLocaleString()}</p>
+                                  </div>
+                              </div>
 
-                    <Divider sx={{ my: 2 }} />
+                              <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm">
+                                  <p className="mb-1"><strong className="font-semibold text-green-900">Last Updated:</strong> {selectedItem.lastUpdated || 'Never'}</p>
+                                  <p><strong className="font-semibold text-green-900">Updated By:</strong> Admin ID #{selectedItem.adminId || 'System'}</p>
+                              </div>
 
-                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-                        <History color="primary" />
-                        <Typography variant="h6" fontWeight="bold" color="primary.dark">Past Usage History</Typography>
-                    </Stack>
-                    
-                    {/* Placeholder for future Treatment Integration */}
-                    <Paper elevation={0} sx={{ bgcolor: '#FAFAFA', p: 3, textAlign: 'center', borderRadius: 2, border: '1px dashed #ccc' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            Usage history will populate here automatically once this item is utilized in clinical Treatments.
-                        </Typography>
-                        <Typography variant="caption" color="primary" sx={{ display: 'block', mt: 1 }}>
-                            (Treatment linking module in development)
-                        </Typography>
-                    </Paper>
-                </Box>
-            )}
-        </DialogContent>
-        <DialogActions>
-            <Button onClick={() => setOpenDetails(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+                              <hr className="border-slate-100" />
+
+                              <div className="flex items-center gap-2 mb-2">
+                                  <History className="text-[#1A237E]" />
+                                  <h3 className="text-lg font-bold text-[#1A237E]">Past Usage History</h3>
+                              </div>
+                              
+                              {/* Placeholder for future Treatment Integration */}
+                              <div className="bg-slate-50 p-6 text-center rounded-2xl border border-dashed border-slate-300">
+                                  <p className="text-sm text-slate-500 mb-2">
+                                      Usage history will populate here automatically once this item is utilized in clinical Treatments.
+                                  </p>
+                                  <p className="text-xs font-semibold text-blue-600">
+                                      (Treatment linking module in development)
+                                  </p>
+                              </div>
+
+                          </div>
+                      )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-end shrink-0">
+                      <button 
+                          onClick={() => setOpenDetails(false)}
+                          className="px-5 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-200 transition-colors focus:outline-none"
+                      >
+                          Close
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
+    </div>
   );
 };
 

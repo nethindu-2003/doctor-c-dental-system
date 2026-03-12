@@ -1,12 +1,9 @@
 import React, { useEffect } from 'react';
-import { 
-  Box, Container, Grid, Typography, Button, Stack, Card, Avatar 
-} from '@mui/material';
 import { motion } from 'framer-motion';
 import { 
   ArrowForward, VerifiedUser, Star, AutoFixHigh, MedicalServices, 
   HealthAndSafety, Construction, ContentCut, FaceRetouchingNatural, 
-  InvertColors, ChildCare // <--- Added ChildCare for Pediatric
+  InvertColors, ChildCare 
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PublicHeader from '../../components/Layout/PublicHeader';
@@ -27,207 +24,195 @@ const LandingPage = () => {
     }
   }, [location]);
 
-  // UPDATED 10 SERVICES LIST (Matches ServiceDetailPage IDs)
   const servicesList = [
     { 
       id: 'extraction',
       title: 'Extraction', 
       desc: 'Painless removal of decayed or impacted teeth.',
       icon: <ContentCut fontSize="small" />, 
-      color: '#FFEBEE' // Light Red
+      color: 'bg-red-50 text-red-600'
     },
     { 
       id: 'scaling',
       title: 'Scaling & Polishing', 
       desc: 'Deep cleaning to remove plaque and tartar.',
       icon: <InvertColors fontSize="small" />, 
-      color: '#E3F2FD' // Light Blue
+      color: 'bg-blue-50 text-blue-600'
     },
     { 
       id: 'root-filling',
       title: 'Root Filling (RCT)', 
       desc: 'Save your natural tooth with endodontic therapy.',
       icon: <HealthAndSafety fontSize="small" />, 
-      color: '#E8EAF6' // Indigo
+      color: 'bg-indigo-50 text-indigo-600'
     },
     { 
       id: 'denture',
       title: 'Dentures', 
       desc: 'Comfortable, natural-looking teeth replacements.',
       icon: <FaceRetouchingNatural fontSize="small" />, 
-      color: '#FFF3E0' // Orange
+      color: 'bg-orange-50 text-orange-600'
     },
     { 
       id: 'orthodontic',
       title: 'Orthodontics', 
       desc: 'Braces and aligners for a perfect bite.',
       icon: <Construction fontSize="small" />, 
-      color: '#E0F2F1' // Teal
+      color: 'bg-teal-50 text-teal-600'
     },
     { 
       id: 'surgery',
       title: 'Minor Oral Surgery', 
       desc: 'Wisdom teeth removal and soft tissue procedures.',
       icon: <MedicalServices fontSize="small" />, 
-      color: '#F3E5F5' // Purple
+      color: 'bg-purple-50 text-purple-600'
     },
     { 
       id: 'restoration',
       title: 'Restoration', 
       desc: 'Aesthetic composite fillings for cavities.',
       icon: <AutoFixHigh fontSize="small" />, 
-      color: '#E8F5E9' // Green
+      color: 'bg-green-50 text-green-600'
     },
     { 
       id: 'pediatric',
       title: 'Pediatric Dentistry', 
       desc: 'Gentle care and fluoride treatments for kids.',
       icon: <ChildCare fontSize="small" />, 
-      color: '#FFF8E1' // Yellow
+      color: 'bg-yellow-50 text-yellow-600'
     },
     { 
       id: 'implant-bridge',
       title: 'Implants & Bridges', 
       desc: 'Permanent fixed solutions for missing teeth.',
       icon: <VerifiedUser fontSize="small" />, 
-      color: '#ECEFF1' // Blue Grey
+      color: 'bg-slate-100 text-slate-600'
     },
     { 
       id: 'cosmetic',
       title: 'Cosmetic Dentistry', 
       desc: 'Veneers and whitening for a dream smile.',
       icon: <Star fontSize="small" />, 
-      color: '#E0F7FA' // Cyan
+      color: 'bg-cyan-50 text-cyan-600'
     },
   ];
 
   return (
-    <Box sx={{ bgcolor: 'background.default', overflowX: 'hidden' }}>
+    <div className="bg-slate-50 min-h-screen font-sans text-slate-800 overflow-x-hidden">
       <PublicHeader />
 
       {/* Hero Section */}
-      <Box sx={{ 
-        minHeight: '100vh', 
-        pt: { xs: 15, md: 12 }, 
-        pb: { xs: 8, md: 0 },
-        display: 'flex', 
-        alignItems: 'center', 
-        background: 'linear-gradient(180deg, #F4F7F6 0%, #FFFFFF 100%)' 
-      }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={4} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
-                <Typography variant="subtitle2" color="secondary.main" fontWeight={700} letterSpacing={2} sx={{ mb: 2 }}>
-                  ESTABLISHED 2023 • MATARA
-                </Typography>
-                <Typography variant="h1" gutterBottom sx={{ 
-                  color: 'primary.dark', mb: 3, fontSize: { xs: '2.5rem', md: '4rem' }, lineHeight: 1.1
-                }}>
-                  Redefining the <br /> 
-                  <span style={{ color: '#0E4C5C' }}>Art of Dentistry.</span>
-                </Typography>
-                <Typography variant="h6" color="text.secondary" paragraph sx={{ mb: 5, maxWidth: 480, fontWeight: 400, lineHeight: 1.6 }}>
-                  Experience world-class dental treatments in an environment designed for your comfort. Advanced technology meets compassionate care.
-                </Typography>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                  <Button variant="contained" size="large" onClick={() => navigate(`/login`)} endIcon={<ArrowForward />} sx={{ py: 1.5, px: 4 }}>
-                    Book Appointment
-                  </Button>
-                  <Button variant="outlined" size="large" onClick={() => document.getElementById('services').scrollIntoView({behavior: 'smooth'})} sx={{ py: 1.5, px: 4 }}>
-                    View Services
-                  </Button>
-                </Stack>
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-end' } }}>
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1 }}>
-                <Box sx={{ position: 'relative', maxWidth: '100%' }}>
-                  <Box 
-                    component="img"
-                    src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" 
-                    alt="Advanced Dental Clinic Interior"
-                    sx={{
-                      width: '100%', maxWidth: 600, height: 'auto', borderRadius: '24px',
-                      boxShadow: '0px 25px 50px -12px rgba(14, 76, 92, 0.25)', display: 'block'
-                    }}
-                  />
-                  <Card sx={{ 
-                    position: 'absolute', bottom: 30, left: -20, bgcolor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(16px)', 
-                    p: 2, borderRadius: 3, boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)', display: { xs: 'none', md: 'block' }, minWidth: 220
-                  }}>
-                    <Stack direction="row" alignItems="center" spacing={2}>
-                      <Avatar sx={{ bgcolor: 'secondary.main', width: 48, height: 48 }}><VerifiedUser /></Avatar>
-                      <Box>
-                        <Typography variant="subtitle2" fontWeight="bold" color="primary.dark">#1 Clinic in Matara</Typography>
-                        <Stack direction="row">{[1,2,3,4,5].map(i => <Star key={i} sx={{ fontSize: 12, color: '#FFD700' }} />)}</Stack>
-                      </Box>
-                    </Stack>
-                  </Card>
-                </Box>
-              </motion.div>
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
+      <section className="relative min-h-[90vh] pt-32 pb-16 md:pt-40 md:pb-24 flex items-center bg-gradient-to-b from-slate-50 to-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+            
+            {/* Text Content */}
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              transition={{ duration: 0.8 }}
+              className="max-w-xl"
+            >
+              <p className="text-accent font-bold tracking-widest text-sm mb-4 uppercase">
+                ESTABLISHED 2023 • MATARA
+              </p>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-poppins font-bold text-primary-dark leading-tight mb-6">
+                Redefining the <br /> 
+                <span className="text-primary">Art of Dentistry.</span>
+              </h1>
+              <p className="text-lg text-slate-600 mb-8 leading-relaxed">
+                Experience world-class dental treatments in an environment designed for your comfort. Advanced technology meets compassionate care.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button 
+                  onClick={() => navigate('/login')}
+                  className="bg-primary hover:bg-primary-dark text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-primary/30 transition-all duration-300 flex items-center justify-center transform hover:-translate-y-1"
+                >
+                  Book Appointment
+                  <ArrowForward className="ml-2" fontSize="small" />
+                </button>
+                <button 
+                  onClick={() => {
+                    const el = document.getElementById('services');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="bg-white hover:bg-slate-50 text-primary border-2 border-primary/20 hover:border-primary px-8 py-4 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center"
+                >
+                  View Services
+                </button>
+              </div>
+            </motion.div>
+            
+            {/* Image Overlay */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }} 
+              animate={{ opacity: 1, scale: 1 }} 
+              transition={{ duration: 1 }}
+              className="relative w-full max-w-lg mx-auto lg:max-w-none lg:ml-auto"
+            >
+              <img 
+                src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" 
+                alt="Advanced Dental Clinic Interior"
+                className="w-full h-auto rounded-3xl shadow-2xl object-cover border-4 border-white"
+              />
+              {/* Badge */}
+              <div className="absolute -bottom-6 -left-6 md:bottom-8 md:-left-12 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-white flex items-center gap-4 animate-bounce-slow hidden sm:flex">
+                <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center text-white shadow-inner">
+                  <VerifiedUser />
+                </div>
+                <div>
+                  <p className="font-poppins font-bold text-primary-dark text-sm">#1 Clinic in Matara</p>
+                  <div className="flex text-yellow-400 mt-1">
+                    {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4" />)}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
 
-      {/* --- SERVICES DIVISION (Compact Boxes) --- */}
-      <Box id="services" sx={{ py: 12, bgcolor: '#FAFAFA' }}>
-        <Container maxWidth="lg">
-          <Typography variant="h2" align="center" sx={{ mb: 2, color: 'primary.dark', fontFamily: 'Playfair Display', fontWeight: 700 }}>
-            Our Services
-          </Typography>
-          <Typography variant="body1" align="center" color="text.secondary" sx={{ mb: 8, maxWidth: 700, mx: 'auto' }}>
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section id="services" className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl md:text-5xl font-poppins font-bold text-primary-dark mb-6">
+              Our Services
+            </h2>
+            <p className="text-lg text-slate-600 leading-relaxed">
               We offer a comprehensive range of dental treatments. From routine care to complex surgeries, your smile is in safe hands.
-          </Typography>
+            </p>
+          </div>
 
-          <Grid container spacing={3}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {servicesList.map((item, i) => (
-              <Grid item xs={12} sm={6} md={4} key={i}>
-                <motion.div whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
-                  <Card 
-                    onClick={() => navigate(`/service/${item.id}`)}
-                    sx={{ 
-                      p: 3, 
-                      cursor: 'pointer',
-                      bgcolor: 'white', 
-                      borderRadius: 3, 
-                      display: 'flex', 
-                      alignItems: 'center', // Horizontal Layout
-                      boxShadow: '0 2px 10px rgba(0,0,0,0.03)', 
-                      border: '1px solid #f0f0f0',
-                      transition: 'all 0.3s',
-                      '&:hover': { 
-                        borderColor: 'primary.main',
-                        boxShadow: '0 10px 30px rgba(14, 76, 92, 0.1)' 
-                      }
-                    }}
-                  >
-                    <Box sx={{ 
-                      width: 50, height: 50, borderRadius: 2, bgcolor: item.color, 
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', mr: 2, color: 'primary.dark',
-                      flexShrink: 0
-                    }}>
-                      {item.icon}
-                    </Box>
-                    <Box>
-                      <Typography variant="h6" sx={{ fontFamily: 'Playfair Display', fontWeight: 700, fontSize: '1.1rem', mb: 0.5 }}>
-                        {item.title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem', lineHeight: 1.4 }}>
-                        {item.desc}
-                      </Typography>
-                    </Box>
-                  </Card>
-                </motion.div>
-              </Grid>
+              <motion.div 
+                key={i}
+                whileHover={{ y: -5 }} 
+                transition={{ duration: 0.2 }}
+                onClick={() => navigate(`/service/${item.id}`)}
+                className="bg-white rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5 border border-slate-100 shadow-sm cursor-pointer hover:shadow-xl hover:border-primary/30 transition-all duration-300 group"
+              >
+                <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform duration-300 ${item.color}`}>
+                  {item.icon}
+                </div>
+                <div>
+                  <h3 className="font-poppins font-bold text-lg text-slate-800 mb-2 group-hover:text-primary transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    {item.desc}
+                  </p>
+                </div>
+              </motion.div>
             ))}
-          </Grid>
-        </Container>
-      </Box>
+          </div>
+        </div>
+      </section>
 
       <Footer />
-    </Box>
+    </div>
   );
 };
 

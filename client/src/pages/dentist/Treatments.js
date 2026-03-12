@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
 import { 
-  Box, Typography, Grid, Paper, TextField, Button, MenuItem, Stack, 
-  LinearProgress, Card, CardContent, Divider, Chip, IconButton, Collapse,
-  Table, TableHead, TableBody, TableRow, TableCell
-} from '@mui/material';
-import { 
   Save, History, ExpandMore, ExpandLess, MedicalServices, Event 
 } from '@mui/icons-material';
 
@@ -60,177 +55,214 @@ const Treatments = () => {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" fontFamily="Playfair Display" fontWeight="bold" color="#0E4C5C" sx={{ mb: 3 }}>
+    <div className="font-sans text-slate-800 animate-fade-in p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+      <h1 className="text-3xl md:text-4xl font-poppins font-bold text-[#0E4C5C] mb-6 md:mb-8">
         Treatment Management
-      </Typography>
+      </h1>
 
-      <Grid container spacing={3}>
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         
-        {/* --- LEFT: ADD NEW TREATMENT / SESSION FORM [cite: 95-132] --- */}
-        <Grid item xs={12} md={5}>
-          <Paper elevation={3} sx={{ p: 3, borderRadius: 3, bgcolor: 'white' }}>
-            <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 2 }}>
-              <MedicalServices sx={{ color: '#0E4C5C' }} />
-              <Typography variant="h6" fontWeight="bold">Add New Treatment</Typography>
-            </Stack>
-            <Divider sx={{ mb: 3 }} />
+        {/* --- LEFT: ADD NEW TREATMENT / SESSION FORM --- */}
+        <div className="w-full lg:w-5/12">
+          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 h-full">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-2 bg-[#E0F7FA] rounded-xl text-[#0E4C5C] shadow-sm">
+                 <MedicalServices />
+              </div>
+              <h2 className="text-xl font-bold font-poppins text-slate-800">Add New Treatment</h2>
+            </div>
+            
+            <hr className="border-slate-100 mb-6" />
 
-            <Stack spacing={2.5}>
+            <div className="space-y-5">
               {/* Patient Search */}
-              <TextField 
-                label="Search Patient" 
-                variant="outlined" 
-                fullWidth 
-                placeholder="Name or ID" 
-                helperText="Selected: Sophia Clark (ID: #12345)" // Mock selection
-              />
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Search Patient</label>
+                <input 
+                  type="text" 
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all text-sm"
+                  placeholder="Name or ID" 
+                />
+                <p className="text-xs text-slate-500 mt-1.5 font-medium ml-1">Selected: Sophia Clark (ID: #12345)</p>
+              </div>
 
-              {/* Diagnosis & Procedure */}
-              <TextField label="Diagnosis" fullWidth variant="outlined" placeholder="e.g. Gingivitis" />
+              {/* Diagnosis */}
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Diagnosis</label>
+                <input 
+                    type="text" 
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all text-sm" 
+                    placeholder="e.g. Gingivitis" 
+                />
+              </div>
               
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <TextField select label="Procedure" fullWidth defaultValue="">
-                     <MenuItem value="Cleaning">Cleaning</MenuItem>
-                     <MenuItem value="Filling">Filling</MenuItem>
-                     <MenuItem value="Root Canal">Root Canal</MenuItem>
-                     <MenuItem value="Braces">Braces</MenuItem>
-                  </TextField>
-                </Grid>
-                <Grid item xs={6}>
-                  <TextField label="Est. Cost (Rs.)" type="number" fullWidth />
-                </Grid>
-              </Grid>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Procedure</label>
+                  <select className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all text-sm appearance-none">
+                     <option value="" disabled selected>Select...</option>
+                     <option value="Cleaning">Cleaning</option>
+                     <option value="Filling">Filling</option>
+                     <option value="Root Canal">Root Canal</option>
+                     <option value="Braces">Braces</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Est. Cost (Rs.)</label>
+                  <input 
+                      type="number" 
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all text-sm" 
+                  />
+                </div>
+              </div>
 
               {/* Session Planning */}
-              <Typography variant="subtitle2" fontWeight="bold" sx={{ mt: 1, color: '#0E4C5C' }}>
-                Session Planning
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                   <TextField label="Total Sessions" type="number" defaultValue={1} fullWidth />
-                </Grid>
-                <Grid item xs={6}>
-                   <TextField label="Session Date" type="date" fullWidth InputLabelProps={{ shrink: true }} defaultValue={formData.date} />
-                </Grid>
-              </Grid>
+              <div className="pt-2">
+                  <h3 className="text-sm font-bold text-[#0E4C5C] mb-3 uppercase tracking-wider">Session Planning</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1">Total Sessions</label>
+                        <input 
+                            type="number" 
+                            defaultValue={1} 
+                            min={1}
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all text-sm" 
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1">Session Date</label>
+                        <input 
+                            type="date" 
+                            defaultValue={formData.date} 
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all text-sm text-slate-600" 
+                        />
+                    </div>
+                  </div>
+              </div>
 
-              <TextField 
-                label="Clinical Notes" 
-                multiline 
-                rows={4} 
-                fullWidth 
-                placeholder="Details about today's procedure..." 
-              />
+              <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Clinical Notes</label>
+                  <textarea 
+                    rows={4} 
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all text-sm resize-none" 
+                    placeholder="Details about today's procedure..." 
+                  ></textarea>
+              </div>
 
-              <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                <Button variant="contained" startIcon={<Save />} fullWidth sx={{ bgcolor: '#0E4C5C' }}>
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <button className="flex-1 bg-[#0E4C5C] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#0a3541] focus:ring-4 focus:ring-[#0E4C5C]/30 transition-all shadow-md flex items-center justify-center">
+                  <Save className="mr-2" fontSize="small" />
                   Save Treatment
-                </Button>
-                <Button variant="outlined" color="error">
+                </button>
+                <button className="sm:w-32 bg-white text-red-600 border border-red-200 px-6 py-3 rounded-xl font-bold hover:bg-red-50 focus:ring-4 focus:ring-red-500/20 transition-all flex items-center justify-center">
                   Reset
-                </Button>
-              </Stack>
-            </Stack>
-          </Paper>
-        </Grid>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        {/* --- RIGHT: TREATMENT HISTORY & SESSIONS [cite: 139-165] --- */}
-        <Grid item xs={12} md={7}>
-          <Paper elevation={3} sx={{ p: 3, borderRadius: 3, height: '100%' }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-              <Typography variant="h6" fontWeight="bold">Patient History</Typography>
-              <Button startIcon={<History />} size="small">View All</Button>
-            </Stack>
+        {/* --- RIGHT: TREATMENT HISTORY & SESSIONS --- */}
+        <div className="w-full lg:w-7/12">
+          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 h-full flex flex-col">
+            <div className="flex justify-between items-center mb-6 shrink-0">
+              <h2 className="text-xl font-bold font-poppins text-slate-800">Patient History</h2>
+              <button className="text-[#0E4C5C] hover:bg-[#E0F7FA] px-3 py-1.5 rounded-lg text-sm font-bold transition-colors flex items-center focus:outline-none">
+                  <History className="mr-1.5" fontSize="small" />
+                  View All
+              </button>
+            </div>
 
             {/* List of Treatments */}
-            <Stack spacing={2}>
+            <div className="space-y-4 overflow-y-auto flex-grow pr-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
               {treatments.map((t) => (
-                <Card key={t.id} variant="outlined" sx={{ borderRadius: 2, borderColor: t.status === 'Ongoing' ? '#4DB6AC' : '#e0e0e0' }}>
-                  <CardContent sx={{ pb: '16px !important' }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                      <Box>
-                        <Typography variant="subtitle1" fontWeight="bold">{t.procedure}</Typography>
-                        <Typography variant="caption" color="text.secondary">Diagnosis: {t.diagnosis}</Typography>
-                      </Box>
-                      <Chip 
-                        label={t.status} 
-                        color={t.status === 'Ongoing' ? 'primary' : 'success'} 
-                        size="small" 
-                        variant={t.status === 'Ongoing' ? 'filled' : 'outlined'}
-                      />
-                    </Stack>
+                <div 
+                    key={t.id} 
+                    className={`bg-white border rounded-2xl p-5 shadow-sm transition-all hover:shadow-md ${
+                        t.status === 'Ongoing' ? 'border-[#4DB6AC]' : 'border-slate-200'
+                    }`}
+                >
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-800 leading-tight mb-1">{t.procedure}</h3>
+                        <p className="text-sm font-medium text-slate-500">Diagnosis: <span className="text-slate-700">{t.diagnosis}</span></p>
+                      </div>
+                      <span className={`inline-block px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg border shrink-0 ml-4 ${
+                          t.status === 'Ongoing' 
+                            ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                            : 'bg-green-50 text-green-700 border-green-200'
+                      }`}>
+                          {t.status}
+                      </span>
+                    </div>
 
                     {/* Progress Bar for Multi-Session Treatments */}
-                    <Box sx={{ mt: 2, mb: 1 }}>
-                      <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
-                        <Typography variant="caption" fontWeight="bold">Progress</Typography>
-                        <Typography variant="caption">
-                           {t.completedSessions} / {t.totalSessions} Sessions
-                        </Typography>
-                      </Stack>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={(t.completedSessions / t.totalSessions) * 100} 
-                        sx={{ height: 6, borderRadius: 5, bgcolor: '#eee', '& .MuiLinearProgress-bar': { bgcolor: '#0E4C5C' } }}
-                      />
-                    </Box>
+                    <div className="mb-4">
+                      <div className="flex justify-between items-end mb-1.5">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Progress</span>
+                        <span className="text-xs font-bold font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                           {t.completedSessions} / {t.totalSessions}
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/50">
+                        <div 
+                            className="bg-[#0E4C5C] h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden" 
+                            style={{ width: `${(t.completedSessions / t.totalSessions) * 100}%` }}
+                        >
+                            <div className="absolute inset-0 bg-white/20"></div>
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Expand Button for Sessions Table */}
-                    <Button 
+                    <button 
                       onClick={() => handleExpandClick(t.id)}
-                      endIcon={expandedId === t.id ? <ExpandLess /> : <ExpandMore />}
-                      size="small"
-                      sx={{ textTransform: 'none', mt: 1, p: 0 }}
+                      className="text-[#0E4C5C] hover:text-[#0a3541] hover:bg-slate-50 px-2 py-1 -ml-2 rounded text-sm font-bold transition-colors flex items-center focus:outline-none"
                     >
                       View Session Records
-                    </Button>
+                      {expandedId === t.id ? <ExpandLess fontSize="small" className="ml-1" /> : <ExpandMore fontSize="small" className="ml-1" />}
+                    </button>
 
                     {/* --- COLLAPSIBLE SESSION TABLE --- */}
-                    <Collapse in={expandedId === t.id} timeout="auto" unmountOnExit>
-                      <Box sx={{ mt: 2, bgcolor: '#F8F9FA', borderRadius: 2, p: 1 }}>
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                              <TableCell><Typography variant="caption" fontWeight="bold">Date</Typography></TableCell>
-                              <TableCell><Typography variant="caption" fontWeight="bold">Dentist</Typography></TableCell>
-                              <TableCell><Typography variant="caption" fontWeight="bold">Notes</Typography></TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {t.sessions.map((session) => (
-                              <TableRow key={session.id}>
-                                <TableCell sx={{ fontSize: '0.8rem' }}>{session.date}</TableCell>
-                                <TableCell sx={{ fontSize: '0.8rem' }}>{session.dentist}</TableCell>
-                                <TableCell sx={{ fontSize: '0.8rem' }}>{session.notes}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedId === t.id ? 'max-h-[500px] mt-4 opacity-100' : 'max-h-0 opacity-0'}`}>
+                      <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse min-w-[400px]">
+                              <thead>
+                                <tr className="border-b-2 border-slate-200 text-slate-400 text-[10px] uppercase tracking-wider">
+                                  <th className="pb-2 font-bold">Date</th>
+                                  <th className="pb-2 font-bold">Dentist</th>
+                                  <th className="pb-2 font-bold">Notes</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100">
+                                {t.sessions.map((session) => (
+                                  <tr key={session.id} className="hover:bg-slate-100/50 transition-colors">
+                                    <td className="py-2 text-xs font-bold text-slate-600 whitespace-nowrap pr-4">{session.date}</td>
+                                    <td className="py-2 text-xs font-medium text-slate-700 whitespace-nowrap pr-4">{session.dentist}</td>
+                                    <td className="py-2 text-xs text-slate-500 leading-snug min-w-[150px]">{session.notes}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                        </div>
                         {/* Quick Add Session Button for Ongoing Treatments */}
                         {t.status === 'Ongoing' && (
-                          <Button 
-                            startIcon={<Event />} 
-                            fullWidth 
-                            size="small" 
-                            sx={{ mt: 1, borderColor: '#0E4C5C', color: '#0E4C5C' }} 
-                            variant="outlined"
-                          >
+                          <button className="mt-4 w-full bg-white border border-[#0E4C5C] text-[#0E4C5C] px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#E0F7FA] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all flex items-center justify-center shadow-sm">
+                            <Event className="mr-2" fontSize="small" />
                             Log Next Session
-                          </Button>
+                          </button>
                         )}
-                      </Box>
-                    </Collapse>
+                      </div>
+                    </div>
 
-                  </CardContent>
-                </Card>
+                </div>
               ))}
-            </Stack>
-          </Paper>
-        </Grid>
-      </Grid>
-    </Box>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

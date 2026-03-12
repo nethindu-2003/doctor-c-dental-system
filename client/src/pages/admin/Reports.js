@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
 import { 
-  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, 
-  TableHead, TableRow, Chip, Stack, Button, TextField, InputAdornment, 
-  Grid, Avatar, Tooltip, IconButton 
-} from '@mui/material';
-import { 
   Search, FilterList, PictureAsPdf, Visibility, RestartAlt 
 } from '@mui/icons-material';
 
@@ -95,194 +90,192 @@ const AdminReports = () => {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" fontFamily="Playfair Display" fontWeight="bold" color="#1A237E" gutterBottom>
-        Patient Treatment Reports
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-        Filter, view, and generate reports of all patient treatments.
-      </Typography>
+    <div className="font-sans text-slate-800 animate-fade-in p-2 md:p-6 lg:p-8 max-w-7xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl md:text-4xl font-poppins font-bold text-[#1A237E] mb-2">
+          Patient Treatment Reports
+        </h1>
+        <p className="text-slate-500 text-sm md:text-base">
+          Filter, view, and generate reports of all patient treatments.
+        </p>
+      </div>
 
       {/* 1. FILTER SECTION */}
-      <Paper elevation={2} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-           <FilterList color="action" />
-           <Typography variant="h6" fontWeight="bold">Filter Options</Typography>
-        </Stack>
+      <div className="bg-white p-6 mb-8 rounded-3xl shadow-sm border border-slate-200">
+        <div className="flex items-center space-x-2 mb-6 text-slate-600">
+           <FilterList fontSize="small" />
+           <h2 className="text-lg font-bold text-slate-800">Filter Options</h2>
+        </div>
         
-        <Grid container spacing={2} alignItems="center">
+        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-10 gap-4 items-end">
           {/* Search by Name */}
-          <Grid item xs={12} md={3}>
-             <TextField 
-               label="Patient Name" 
-               name="name" 
-               size="small" 
-               fullWidth 
-               value={filters.name}
-               onChange={handleFilterChange}
-               InputProps={{ startAdornment: <InputAdornment position="start"><Search fontSize="small" /></InputAdornment> }}
-             />
-          </Grid>
+          <div className="md:col-span-2 lg:col-span-3">
+             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Patient Name</label>
+             <div className="relative">
+                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <Search fontSize="small" />
+                 </div>
+                 <input 
+                   type="text" 
+                   name="name" 
+                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 outline-none transition-all text-sm font-medium text-slate-800"
+                   value={filters.name}
+                   onChange={handleFilterChange}
+                 />
+             </div>
+          </div>
           
           {/* Search by ID */}
-          <Grid item xs={12} md={2}>
-             <TextField 
-               label="Patient ID" 
+          <div className="md:col-span-2 lg:col-span-2">
+             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Patient ID</label>
+             <input 
+               type="text" 
                name="id" 
-               size="small" 
-               fullWidth 
+               className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 outline-none transition-all text-sm font-medium text-slate-800"
                value={filters.id}
                onChange={handleFilterChange}
              />
-          </Grid>
+          </div>
 
           {/* Date Range */}
-          <Grid item xs={12} md={2}>
-             <TextField 
-               label="From" 
-               name="startDate" 
+          <div className="md:col-span-2 lg:col-span-2">
+             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">From</label>
+             <input 
                type="date" 
-               size="small" 
-               fullWidth 
-               InputLabelProps={{ shrink: true }}
+               name="startDate" 
+               className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 outline-none transition-all text-sm font-medium text-slate-800 uppercase tracking-wider"
                value={filters.startDate}
                onChange={handleFilterChange}
              />
-          </Grid>
-          <Grid item xs={12} md={2}>
-             <TextField 
-               label="To" 
-               name="endDate" 
+          </div>
+          <div className="md:col-span-2 lg:col-span-2">
+             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">To</label>
+             <input 
                type="date" 
-               size="small" 
-               fullWidth 
-               InputLabelProps={{ shrink: true }}
+               name="endDate" 
+               className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 outline-none transition-all text-sm font-medium text-slate-800 uppercase tracking-wider"
                value={filters.endDate}
                onChange={handleFilterChange}
              />
-          </Grid>
+          </div>
 
           {/* Buttons */}
-          <Grid item xs={12} md={3}>
-             <Stack direction="row" spacing={1}>
-                <Button variant="contained" sx={{ bgcolor: '#1A237E' }} fullWidth>
-                  Filter
-                </Button>
-                <Button variant="outlined" startIcon={<RestartAlt />} onClick={handleReset} fullWidth>
-                  Reset
-                </Button>
-             </Stack>
-          </Grid>
-        </Grid>
-      </Paper>
+          <div className="md:col-span-4 lg:col-span-1 flex space-x-2">
+             <button 
+                onClick={handleReset}
+                className="flex-1 lg:flex-none flex items-center justify-center px-4 py-2.5 border border-slate-300 rounded-xl text-slate-600 font-bold hover:bg-slate-50 transition-colors focus:outline-none"
+             >
+                <RestartAlt fontSize="small" />
+             </button>
+          </div>
+        </div>
+      </div>
 
       {/* 2. REPORT TABLE */}
-      <Paper elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
-        <Box sx={{ p: 2, bgcolor: '#E8EAF6', display: 'flex', justifyContent: 'space-between' }}>
-           <Typography variant="subtitle1" fontWeight="bold">Treatment Records</Typography>
-           <Typography variant="caption" color="text.secondary">
+      <div className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm relative">
+        <div className="bg-[#1A237E]/5 px-6 py-4 flex justify-between items-center border-b border-slate-200">
+           <h3 className="text-lg font-bold text-[#1A237E]">Treatment Records</h3>
+           <p className="text-sm font-semibold text-slate-500">
              Showing {filteredRecords.length} records
-           </Typography>
-        </Box>
-        <TableContainer>
-          <Table>
-            <TableHead sx={{ bgcolor: '#F5F5F5' }}>
-              <TableRow>
-                <TableCell><strong>Patient</strong></TableCell>
-                <TableCell><strong>Treatment Details</strong></TableCell>
-                <TableCell><strong>Dates</strong></TableCell>
-                <TableCell><strong>Progress</strong></TableCell>
-                <TableCell><strong>Status</strong></TableCell>
-                <TableCell><strong>Amount</strong></TableCell>
-                <TableCell align="center"><strong>Actions</strong></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+           </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
+                <th className="p-4 font-bold">Patient</th>
+                <th className="p-4 font-bold">Treatment Details</th>
+                <th className="p-4 font-bold">Dates</th>
+                <th className="p-4 font-bold text-center">Progress</th>
+                <th className="p-4 font-bold text-center">Status</th>
+                <th className="p-4 font-bold">Amount</th>
+                <th className="p-4 font-bold text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
               {filteredRecords.map((row) => (
-                <TableRow key={row.id} hover>
+                <tr key={row.id} className="hover:bg-slate-50/50 transition-colors group">
                   
                   {/* Patient Info */}
-                  <TableCell>
-                    <Stack direction="row" alignItems="center" spacing={2}>
-                      <Avatar sx={{ bgcolor: '#1A237E' }}>{row.patientName.charAt(0)}</Avatar>
-                      <Box>
-                        <Typography variant="body2" fontWeight="bold">{row.patientName}</Typography>
-                        <Typography variant="caption" color="text.secondary">{row.patientId}</Typography>
-                      </Box>
-                    </Stack>
-                  </TableCell>
+                  <td className="p-4 align-middle">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 bg-[#1A237E]">
+                        {row.patientName.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-800">{row.patientName}</p>
+                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{row.patientId}</p>
+                      </div>
+                    </div>
+                  </td>
 
                   {/* Treatment Info */}
-                  <TableCell>
-                    <Typography variant="body2" fontWeight="500">{row.treatment}</Typography>
-                    <Typography variant="caption" color="text.secondary">{row.dentist}</Typography>
-                  </TableCell>
+                  <td className="p-4 align-middle">
+                    <p className="font-semibold text-slate-800 text-sm">{row.treatment}</p>
+                    <p className="text-xs font-semibold text-slate-500">{row.dentist}</p>
+                  </td>
 
                   {/* Dates */}
-                  <TableCell>
-                    <Stack>
-                       <Typography variant="caption">Start: {row.startDate}</Typography>
-                       <Typography variant="caption">End: {row.endDate}</Typography>
-                    </Stack>
-                  </TableCell>
+                  <td className="p-4 align-middle text-[0.8rem] text-slate-600 font-medium">
+                    <p><span className="text-slate-400 mr-1">Start:</span>{row.startDate}</p>
+                    <p><span className="text-slate-400 mr-1">End:</span>{row.endDate}</p>
+                  </td>
 
                   {/* Sessions */}
-                  <TableCell>
-                    <Chip label={`${row.sessions} Sessions`} size="small" variant="outlined" />
-                  </TableCell>
+                  <td className="p-4 align-middle text-center">
+                    <span className="inline-block px-3 py-1 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-lg shadow-sm whitespace-nowrap">
+                        {row.sessions} Sessions
+                    </span>
+                  </td>
 
                   {/* Status */}
-                  <TableCell>
-                    <Chip 
-                      label={row.status} 
-                      size="small" 
-                      color={row.status === 'Completed' ? 'success' : 'primary'} 
-                      variant="filled"
-                    />
-                  </TableCell>
+                  <td className="p-4 align-middle text-center">
+                    <span className={`inline-block px-3 py-1 text-[0.65rem] font-bold uppercase tracking-wider rounded-lg ${
+                        row.status === 'Completed' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-blue-100 text-[#1A237E] border border-blue-200'
+                    }`}>
+                      {row.status}
+                    </span>
+                  </td>
 
                   {/* Amount */}
-                  <TableCell sx={{ fontWeight: 'bold' }}>
-                    Rs. {row.amount}
-                  </TableCell>
+                  <td className="p-4 align-middle font-bold text-slate-800 text-sm">
+                    Rs. {row.amount?.toLocaleString()}
+                  </td>
 
                   {/* Actions */}
-                  <TableCell align="center">
-                    <Stack direction="row" spacing={1} justifyContent="center">
-                       <Tooltip title="View Details">
-                          <IconButton size="small" color="primary">
-                             <Visibility fontSize="small" />
-                          </IconButton>
-                       </Tooltip>
-                       <Tooltip title="Generate PDF Report">
-                          <Button 
-                            variant="outlined" 
-                            size="small" 
-                            color="secondary"
-                            startIcon={<PictureAsPdf />}
-                            onClick={() => handleGenerateReport(row.patientName)}
-                            sx={{ fontSize: '0.7rem', py: 0.5 }}
-                          >
-                            Report
-                          </Button>
-                       </Tooltip>
-                    </Stack>
-                  </TableCell>
+                  <td className="p-4 align-middle text-center">
+                    <div className="flex justify-center items-center space-x-2">
+                       <button 
+                         className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none"
+                         title="View Details"
+                       >
+                          <Visibility fontSize="small" />
+                       </button>
+                       <button 
+                         className="flex items-center px-3 py-1.5 rounded-lg border border-red-200 text-red-600 font-bold text-xs hover:bg-red-50 hover:border-red-300 transition-colors focus:outline-none"
+                         onClick={() => handleGenerateReport(row.patientName)}
+                         title="Generate PDF Report"
+                       >
+                         <PictureAsPdf fontSize="inherit" className="mr-1" />
+                         Report
+                       </button>
+                    </div>
+                  </td>
 
-                </TableRow>
+                </tr>
               ))}
               {filteredRecords.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                    <Typography color="text.secondary">No records found matching filters.</Typography>
-                  </TableCell>
-                </TableRow>
+                <tr>
+                  <td colSpan="7" className="p-8 text-center text-slate-500">
+                    No records found matching filters.
+                  </td>
+                </tr>
               )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-    </Box>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 };
 

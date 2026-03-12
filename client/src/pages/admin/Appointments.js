@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, 
-  TableHead, TableRow, Chip, IconButton, Stack, Button, TextField, 
-  InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, 
-  MenuItem, Grid, Tooltip, CircularProgress, Alert
-} from '@mui/material';
-import { 
-  Search, Edit, Cancel, EventAvailable, CheckCircle, Person 
+  Search, Edit, Cancel, EventAvailable, CheckCircle, Person, Close 
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import axios from '../../api/axios'; 
@@ -112,197 +106,268 @@ const AdminAppointments = () => {
   });
 
   return (
-    <Box>
-      <Typography variant="h4" fontFamily="Playfair Display" fontWeight="bold" color="#1A237E" sx={{ mb: 3 }}>
-        Appointment Management
-      </Typography>
+    <div className="font-sans text-slate-800 animate-fade-in p-2 md:p-6 lg:p-8 max-w-7xl mx-auto">
+      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+           <h1 className="text-3xl md:text-4xl font-poppins font-bold text-[#1A237E] mb-2">
+             Appointment Management
+           </h1>
+           <p className="text-slate-500 text-sm md:text-base">View, manage, and schedule patient appointments.</p>
+        </div>
+      </div>
 
-      {successMsg && <Alert severity="success" sx={{ mb: 3 }}>{successMsg}</Alert>}
+      {successMsg && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-800 rounded-xl flex items-center shadow-sm animate-fade-in">
+              <CheckCircle fontSize="small" className="mr-2" />
+              <span className="font-semibold">{successMsg}</span>
+          </div>
+      )}
 
-      <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: 2, border: '1px solid #e0e0e0' }}>
-        <Stack direction="row" spacing={2}>
-          <TextField
+      {/* SEARCH BAR */}
+      <div className="bg-white p-4 mb-6 rounded-2xl shadow-sm border border-slate-200">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+            <Search fontSize="small" />
+          </div>
+          <input
+            type="text"
             placeholder="Search by Patient or Dentist Name..."
-            size="small"
-            fullWidth
+            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 outline-none transition-all text-sm font-medium"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }}
-            sx={{ bgcolor: 'white' }}
           />
-        </Stack>
-      </Paper>
+        </div>
+      </div>
 
-      <Paper elevation={0} sx={{ borderRadius: 3, overflow: 'hidden', border: '1px solid #e0e0e0' }}>
+      {/* APPOINTMENTS TABLE */}
+      <div className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm relative">
         {loading ? (
-            <Box sx={{ p: 5, textAlign: 'center' }}><CircularProgress /></Box>
+            <div className="p-12 flex justify-center items-center">
+                <div className="w-10 h-10 border-4 border-slate-200 border-t-[#1A237E] rounded-full animate-spin"></div>
+            </div>
         ) : (
-            <TableContainer>
-            <Table>
-                <TableHead sx={{ bgcolor: '#F4F7F6' }}>
-                <TableRow>
-                    <TableCell><strong>Patient</strong></TableCell>
-                    <TableCell><strong>Dentist</strong></TableCell>
-                    <TableCell><strong>Reason for Visit</strong></TableCell>
-                    <TableCell><strong>Date & Time</strong></TableCell>
-                    <TableCell><strong>Status</strong></TableCell>
-                    <TableCell align="center"><strong>Actions</strong></TableCell>
-                </TableRow>
-                </TableHead>
-                <TableBody>
-                {filteredAppointments.map((row) => {
-                    const apptDateTime = dayjs(`${row.appointmentDate}T${row.appointmentTime}`);
-                    const isPast = apptDateTime.isBefore(dayjs());
+            <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
+                            <th className="p-4 font-bold rounded-tl-3xl">Patient</th>
+                            <th className="p-4 font-bold">Dentist</th>
+                            <th className="p-4 font-bold">Reason for Visit</th>
+                            <th className="p-4 font-bold">Date & Time</th>
+                            <th className="p-4 font-bold">Status</th>
+                            <th className="p-4 font-bold text-center rounded-tr-3xl">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                        {filteredAppointments.length === 0 ? (
+                            <tr>
+                                <td colSpan="6" className="p-8 text-center text-slate-500">No appointments found.</td>
+                            </tr>
+                        ) : (
+                            filteredAppointments.map((row) => {
+                                const apptDateTime = dayjs(`${row.appointmentDate}T${row.appointmentTime}`);
+                                const isPast = apptDateTime.isBefore(dayjs());
+                                const displayStatus = isPast && row.status !== 'CANCELLED' ? 'COMPLETED' : row.status;
 
-                    return (
-                    <TableRow key={row.appointmentId} hover>
-                    <TableCell>
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                            <Person fontSize="small" color="action" />
-                            <Typography variant="body2" fontWeight="500">
-                                {row.patientName || 'Walk-in Guest'} 
-                            </Typography>
-                        </Stack>
-                    </TableCell>
-                    <TableCell>
-                        {row.dentistName ? `Dr. ${row.dentistName}` : 'Unassigned'}
-                    </TableCell>
-                    <TableCell>{row.reasonForVisit}</TableCell>
-                    <TableCell>
-                        <Typography variant="body2" fontWeight="bold" color={isPast ? 'text.disabled' : 'text.primary'}>
-                            {dayjs('2023-01-01 ' + row.appointmentTime).format('h:mm A')}
-                        </Typography>
-                        <Typography variant="caption" color={isPast ? 'text.disabled' : 'text.secondary'}>
-                            {dayjs(row.appointmentDate).format('MMM D, YYYY')}
-                        </Typography>
-                    </TableCell>
-                    <TableCell>
-                        <Chip 
-                        label={isPast && row.status !== 'CANCELLED' ? 'COMPLETED' : row.status} 
-                        size="small"
-                        color={row.status === 'CONFIRMED' ? 'success' : (row.status === 'PENDING' ? 'warning' : 'default')}
-                        variant={row.status === 'PENDING' ? 'outlined' : 'filled'}
-                        sx={{ fontWeight: 'bold' }}
-                        />
-                    </TableCell>
-                    <TableCell align="center">
-                        <Stack direction="row" justifyContent="center" spacing={1}>
-                        
-                        {/* Confirm Button */}
-                        {row.status === 'PENDING' && (
-                            <Tooltip title={isPast ? "Past appointment" : "Confirm Appointment"}>
-                                <span>
-                                    <IconButton size="small" color="success" onClick={() => handleConfirmClick(row)} disabled={isPast}>
-                                        <CheckCircle fontSize="small" />
-                                    </IconButton>
-                                </span>
-                            </Tooltip>
-                        )}
-                        
-                        {/* Edit Button */}
-                        <Tooltip title={isPast ? "Cannot edit past appointments" : "Edit / Reschedule"}>
-                            <span>
-                                <IconButton size="small" color="primary" onClick={() => handleEditClick(row)} disabled={isPast}>
-                                    <Edit fontSize="small" />
-                                </IconButton>
-                            </span>
-                        </Tooltip>
+                                let statusClasses = 'bg-slate-100 text-slate-700';
+                                if (displayStatus === 'CONFIRMED') statusClasses = 'bg-green-100 text-green-700 border-green-200';
+                                else if (displayStatus === 'PENDING') statusClasses = 'bg-yellow-50 text-yellow-700 border border-yellow-200';
+                                else if (displayStatus === 'CANCELLED') statusClasses = 'bg-red-50 text-red-600 border border-red-200';
 
-                        {/* Cancel Button */}
-                        {row.status !== 'CANCELLED' && (
-                            <Tooltip title={isPast ? "Cannot cancel past appointments" : "Cancel Appointment"}>
-                                <span>
-                                    <IconButton size="small" color="error" onClick={() => handleCancelClick(row.appointmentId)} disabled={isPast}>
-                                        <Cancel fontSize="small" />
-                                    </IconButton>
-                                </span>
-                            </Tooltip>
+                                return (
+                                <tr key={row.appointmentId} className="hover:bg-slate-50/50 transition-colors group">
+                                    <td className="p-4 w-1/6 align-middle">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 text-slate-500">
+                                                <Person fontSize="small" />
+                                            </div>
+                                            <span className="font-semibold text-slate-800 break-words whitespace-normal text-sm group-hover:text-[#1A237E] transition-colors">
+                                                {row.patientName || 'Walk-in Guest'}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="p-4 w-1/6 align-middle text-sm font-medium text-slate-600 break-words">
+                                        {row.dentistName ? `Dr. ${row.dentistName}` : <span className="text-slate-400 italic">Unassigned</span>}
+                                    </td>
+                                    <td className="p-4 w-1/5 align-middle text-sm text-slate-600 break-words whitespace-normal">
+                                        {row.reasonForVisit}
+                                    </td>
+                                    <td className="p-4 w-1/6 align-middle">
+                                        <p className={`font-bold text-sm whitespace-nowrap ${isPast ? 'text-slate-400' : 'text-slate-800'}`}>
+                                            {dayjs('2023-01-01 ' + row.appointmentTime).format('h:mm A')}
+                                        </p>
+                                        <p className={`text-xs whitespace-nowrap mt-0.5 ${isPast ? 'text-slate-400' : 'text-slate-500'}`}>
+                                            {dayjs(row.appointmentDate).format('MMM D, YYYY')}
+                                        </p>
+                                    </td>
+                                    <td className="p-4 w-1/6 align-middle text-center md:text-left">
+                                        <span className={`inline-block px-3 py-1.5 text-[0.65rem] font-bold uppercase tracking-wider rounded-lg ${statusClasses}`}>
+                                            {displayStatus}
+                                        </span>
+                                    </td>
+                                    <td className="p-4 w-1/6 align-middle text-center">
+                                        <div className="flex justify-center items-center space-x-2">
+                                            {/* Confirm Button */}
+                                            {row.status === 'PENDING' && (
+                                                <button 
+                                                    className={`p-1.5 rounded-lg transition-colors focus:outline-none ${isPast ? 'text-slate-300 cursor-not-allowed' : 'text-green-600 hover:bg-green-50 hover:text-green-700'}`}
+                                                    onClick={() => !isPast && handleConfirmClick(row)}
+                                                    disabled={isPast}
+                                                    title={isPast ? "Past appointment" : "Confirm Appointment"}
+                                                >
+                                                    <CheckCircle fontSize="small" />
+                                                </button>
+                                            )}
+                                            
+                                            {/* Edit Button */}
+                                            <button 
+                                                className={`p-1.5 rounded-lg transition-colors focus:outline-none ${isPast ? 'text-slate-300 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50 hover:text-blue-700'}`}
+                                                onClick={() => !isPast && handleEditClick(row)}
+                                                disabled={isPast}
+                                                title={isPast ? "Cannot edit past appointments" : "Edit / Reschedule"}
+                                            >
+                                                <Edit fontSize="small" />
+                                            </button>
+
+                                            {/* Cancel Button */}
+                                            {row.status !== 'CANCELLED' && (
+                                                <button 
+                                                    className={`p-1.5 rounded-lg transition-colors focus:outline-none ${isPast ? 'text-slate-300 cursor-not-allowed' : 'text-red-500 hover:bg-red-50 hover:text-red-600'}`}
+                                                    onClick={() => !isPast && handleCancelClick(row.appointmentId)}
+                                                    disabled={isPast}
+                                                    title={isPast ? "Cannot cancel past appointments" : "Cancel Appointment"}
+                                                >
+                                                    <Cancel fontSize="small" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                                );
+                            })
                         )}
-                        </Stack>
-                    </TableCell>
-                    </TableRow>
-                    );
-                })}
-                {filteredAppointments.length === 0 && (
-                    <TableRow>
-                        <TableCell colSpan={6} align="center" sx={{ py: 3 }}>No appointments found.</TableCell>
-                    </TableRow>
-                )}
-                </TableBody>
-            </Table>
-            </TableContainer>
+                    </tbody>
+                </table>
+            </div>
         )}
-      </Paper>
+      </div>
 
       {/* 4. EDIT/RESCHEDULE DIALOG */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullWidth maxWidth="sm">
-        <DialogTitle fontWeight="bold" sx={{ bgcolor: '#1A237E', color: 'white' }}>
-          Manage Appointment
-        </DialogTitle>
-        <DialogContent dividers>
-          {currentAppt && (
-            <Stack spacing={3} sx={{ mt: 1 }}>
-              <TextField label="Patient Name" fullWidth value={currentAppt.patientName || 'Walk-in Guest'} disabled />
-              
-              <TextField 
-                select 
-                label="Assign Dentist" 
-                fullWidth 
-                value={currentAppt.dentistId} 
-                onChange={(e) => setCurrentAppt({...currentAppt, dentistId: e.target.value})}
-              >
-                <MenuItem value=""><em>Unassigned / Any Available</em></MenuItem>
-                {dentists.map(d => (
-                    <MenuItem key={d.dentistId} value={d.dentistId}>Dr. {d.name}</MenuItem>
-                ))}
-              </TextField>
+      {openDialog && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+                  
+                  {/* Header */}
+                  <div className="bg-[#1A237E] p-5 flex justify-between items-center shrink-0">
+                      <h2 className="text-white font-bold font-poppins text-lg">Manage Appointment</h2>
+                      <button 
+                         onClick={() => setOpenDialog(false)}
+                         className="text-white/70 hover:text-white transition-colors focus:outline-none"
+                      >
+                         <Close fontSize="small" />
+                      </button>
+                  </div>
 
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                   <TextField 
-                     label="Date" 
-                     type="date" 
-                     fullWidth 
-                     InputLabelProps={{ shrink: true }}
-                     value={currentAppt.appointmentDate} 
-                     onChange={(e) => setCurrentAppt({...currentAppt, appointmentDate: e.target.value})}
-                   />
-                </Grid>
-                <Grid item xs={6}>
-                   <TextField 
-                     label="Time" 
-                     type="time" 
-                     fullWidth 
-                     InputLabelProps={{ shrink: true }}
-                     value={currentAppt.appointmentTime} 
-                     onChange={(e) => setCurrentAppt({...currentAppt, appointmentTime: e.target.value})}
-                   />
-                </Grid>
-              </Grid>
+                  {/* Body */}
+                  <div className="p-6 overflow-y-auto flex-grow">
+                      {currentAppt && (
+                          <div className="space-y-5">
+                              <div>
+                                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Patient Name</label>
+                                  <input 
+                                      type="text" 
+                                      className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 font-medium cursor-not-allowed outline-none" 
+                                      value={currentAppt.patientName || 'Walk-in Guest'} 
+                                      disabled 
+                                  />
+                              </div>
+                              
+                              <div>
+                                  <label className="block text-xs font-bold text-[#1A237E] uppercase tracking-wider mb-2">Assign Dentist</label>
+                                  <div className="relative">
+                                      <select 
+                                          className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 outline-none focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 transition-all appearance-none"
+                                          value={currentAppt.dentistId} 
+                                          onChange={(e) => setCurrentAppt({...currentAppt, dentistId: e.target.value})}
+                                      >
+                                          <option value="">Unassigned / Any Available</option>
+                                          {dentists.map(d => (
+                                              <option key={d.dentistId} value={d.dentistId}>Dr. {d.name}</option>
+                                          ))}
+                                      </select>
+                                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                          </svg>
+                                      </div>
+                                  </div>
+                              </div>
 
-              <TextField 
-                select 
-                label="Status" 
-                fullWidth 
-                value={currentAppt.status} 
-                onChange={(e) => setCurrentAppt({...currentAppt, status: e.target.value})}
-              >
-                <MenuItem value="CONFIRMED">Confirmed</MenuItem>
-                <MenuItem value="PENDING">Pending</MenuItem>
-                <MenuItem value="CANCELLED">Cancelled</MenuItem>
-                <MenuItem value="COMPLETED">Completed</MenuItem>
-              </TextField>
-            </Stack>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setOpenDialog(false)} color="inherit">Cancel</Button>
-          <Button variant="contained" onClick={handleSaveChanges} startIcon={<EventAvailable />} sx={{ bgcolor: '#1A237E' }}>
-            Save Changes
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+                              <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                      <label className="block text-xs font-bold text-[#1A237E] uppercase tracking-wider mb-2">Date</label>
+                                      <input 
+                                          type="date"
+                                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 outline-none focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 transition-all uppercase"
+                                          value={currentAppt.appointmentDate} 
+                                          onChange={(e) => setCurrentAppt({...currentAppt, appointmentDate: e.target.value})}
+                                      />
+                                  </div>
+                                  <div>
+                                      <label className="block text-xs font-bold text-[#1A237E] uppercase tracking-wider mb-2">Time</label>
+                                      <input 
+                                          type="time"
+                                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 outline-none focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 transition-all uppercase"
+                                          value={currentAppt.appointmentTime} 
+                                          onChange={(e) => setCurrentAppt({...currentAppt, appointmentTime: e.target.value})}
+                                      />
+                                  </div>
+                              </div>
+
+                              <div>
+                                  <label className="block text-xs font-bold text-[#1A237E] uppercase tracking-wider mb-2">Status</label>
+                                  <div className="relative">
+                                      <select 
+                                          className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 outline-none focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 transition-all appearance-none"
+                                          value={currentAppt.status} 
+                                          onChange={(e) => setCurrentAppt({...currentAppt, status: e.target.value})}
+                                      >
+                                          <option value="CONFIRMED">Confirmed</option>
+                                          <option value="PENDING">Pending</option>
+                                          <option value="CANCELLED">Cancelled</option>
+                                          <option value="COMPLETED">Completed</option>
+                                      </select>
+                                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                          </svg>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                      )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-end space-x-3 shrink-0">
+                      <button 
+                          onClick={() => setOpenDialog(false)}
+                          className="px-5 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-200 transition-colors focus:outline-none"
+                      >
+                          Cancel
+                      </button>
+                      <button 
+                          onClick={handleSaveChanges}
+                          className="px-5 py-2.5 rounded-xl bg-[#1A237E] text-white font-bold flex items-center hover:bg-[#12185c] hover:-translate-y-0.5 transition-all focus:outline-none shadow-md"
+                      >
+                          <EventAvailable fontSize="small" className="mr-2 -ml-1" />
+                          Save Changes
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
+    </div>
   );
 };
 

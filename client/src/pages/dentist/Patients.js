@@ -1,16 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Box, Typography, Paper, TextField, InputAdornment, Table, TableBody, 
-  TableCell, TableContainer, TableHead, TableRow, Avatar, Chip, IconButton, 
-  Stack, Button, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions,
-  Grid, Divider, CircularProgress, Card, CardContent
-} from '@mui/material';
-import { 
   Search, Visibility, Assessment, Phone, Email, Close, MedicalServices, 
   CalendarToday, AssignmentTurnedIn, LocalHospital
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
-import axios from '../../api/axios'; // Adjust path
+import axios from '../../api/axios';
 
 const Patients = () => {
   const [patients, setPatients] = useState([]);
@@ -58,8 +52,6 @@ const Patients = () => {
   const handleGeneratePDF = (e, patient) => {
     e.stopPropagation(); // Prevents row click
     window.print(); 
-    // In a production app, you would use jsPDF:
-    // const doc = new jsPDF(); doc.text(`Report for ${patient.name}`, 10, 10); doc.save('report.pdf');
   };
 
   // --- FILTER LOGIC ---
@@ -69,229 +61,280 @@ const Patients = () => {
   );
 
   return (
-    <Box sx={{ '.print-only': { display: 'none' } }}>
+    <div className="font-sans text-slate-800 animate-fade-in p-2 md:p-6 lg:p-8 max-w-7xl mx-auto print:hidden">
       
       {/* --- HEADER & SEARCH --- */}
-      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" sx={{ mb: 4, gap: 2 }}>
-        <Box>
-           <Typography variant="h4" fontFamily="Playfair Display" fontWeight="bold" color="#0E4C5C">Patient Directory</Typography>
-           <Typography variant="body2" color="text.secondary">Review clinical records and medical history.</Typography>
-        </Box>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div>
+           <h1 className="text-3xl md:text-4xl font-poppins font-bold text-[#0E4C5C] mb-2">Patient Directory</h1>
+           <p className="text-slate-500 text-sm md:text-base">Review clinical records and medical history.</p>
+        </div>
         
-        <TextField
-          placeholder="Search by name or ID..."
-          variant="outlined"
-          size="small"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{ startAdornment: <InputAdornment position="start"><Search color="action" /></InputAdornment> }}
-          sx={{ bgcolor: 'white', borderRadius: 1, minWidth: 300, border: '1px solid #E0E4E8' }}
-        />
-      </Stack>
+        <div className="relative w-full sm:w-auto min-w-[300px]">
+           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <Search fontSize="small" />
+           </div>
+           <input
+             type="text"
+             className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all text-sm shadow-sm"
+             placeholder="Search by name or ID..."
+             value={searchTerm}
+             onChange={(e) => setSearchTerm(e.target.value)}
+           />
+        </div>
+      </div>
 
       {/* --- PATIENT TABLE --- */}
-      <Paper elevation={0} sx={{ borderRadius: 3, overflow: 'hidden', border: '1px solid #E0E4E8' }}>
+      <div className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm relative">
         {loading ? (
-           <Box sx={{ p: 5, textAlign: 'center' }}><CircularProgress /></Box>
+             <div className="flex justify-center items-center h-64">
+                 <div className="w-10 h-10 border-4 border-slate-200 border-t-[#0E4C5C] rounded-full animate-spin"></div>
+             </div>
         ) : (
-          <TableContainer>
-            <Table sx={{ minWidth: 700 }}>
-              <TableHead sx={{ bgcolor: '#F8FAFC' }}>
-                <TableRow>
-                  <TableCell><strong>Patient Details</strong></TableCell>
-                  <TableCell><strong>Patient ID</strong></TableCell>
-                  <TableCell><strong>Contact Info</strong></TableCell>
-                  <TableCell><strong>Current Treatment</strong></TableCell>
-                  <TableCell><strong>Last Visit</strong></TableCell>
-                  <TableCell align="center"><strong>Actions</strong></TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left border-collapse min-w-[800px]">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr className="text-slate-500 text-xs uppercase tracking-wider">
+                  <th className="p-4 font-bold">Patient Details</th>
+                  <th className="p-4 font-bold">Patient ID</th>
+                  <th className="p-4 font-bold">Contact Info</th>
+                  <th className="p-4 font-bold">Current Treatment</th>
+                  <th className="p-4 font-bold">Last Visit</th>
+                  <th className="p-4 font-bold text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
                 {filteredPatients.map((patient) => (
-                  <TableRow 
+                  <tr 
                     key={patient.patientId} 
-                    hover 
+                    className="hover:bg-slate-50/70 transition-colors cursor-pointer group"
                     onClick={() => handleRowClick(patient)}
-                    sx={{ cursor: 'pointer', '&:hover': { bgcolor: '#F0F4F8' } }}
                   >
                     
                     {/* Name & Avatar */}
-                    <TableCell>
-                      <Stack direction="row" alignItems="center" spacing={2}>
-                        <Avatar sx={{ bgcolor: '#0E4C5C', color: 'white', fontWeight: 'bold' }}>
-                          {patient.name?.charAt(0)}
-                        </Avatar>
-                        <Typography variant="subtitle2" fontWeight="700" color="#0E4C5C">
+                    <td className="p-4 align-middle">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full bg-[#0E4C5C] text-white flex items-center justify-center font-bold shadow-sm shrink-0">
+                          {patient.name?.charAt(0).toUpperCase()}
+                        </div>
+                        <p className="font-bold text-[#0E4C5C] truncate max-w-[150px]">
                           {patient.name}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
+                        </p>
+                      </div>
+                    </td>
 
                     {/* ID */}
-                    <TableCell>
-                      <Chip label={`#PT-${patient.patientId}`} size="small" variant="outlined" sx={{ fontWeight: 'bold', color: '#546e7a' }} />
-                    </TableCell>
+                    <td className="p-4 align-middle">
+                      <span className="inline-block px-3 py-1 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-lg shadow-sm">
+                          #PT-{patient.patientId}
+                      </span>
+                    </td>
 
                     {/* Contact */}
-                    <TableCell>
-                      <Stack spacing={0.5}>
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <Email sx={{ fontSize: 14, color: 'text.secondary' }} />
-                          <Typography variant="caption">{patient.email}</Typography>
-                        </Stack>
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <Phone sx={{ fontSize: 14, color: 'text.secondary' }} />
-                          <Typography variant="caption">{patient.phone || 'N/A'}</Typography>
-                        </Stack>
-                      </Stack>
-                    </TableCell>
+                    <td className="p-4 align-middle">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center text-slate-500">
+                          <Email fontSize="inherit" className="mr-2 text-[14px]" />
+                          <span className="text-xs font-medium truncate max-w-[150px]">{patient.email}</span>
+                        </div>
+                        <div className="flex items-center text-slate-500">
+                          <Phone fontSize="inherit" className="mr-2 text-[14px]" />
+                          <span className="text-xs font-medium">{patient.phone || 'N/A'}</span>
+                        </div>
+                      </div>
+                    </td>
 
                     {/* Treatment */}
-                    <TableCell>
-                      <Chip 
-                        icon={<MedicalServices fontSize="small" />}
-                        label={patient.currentTreatment} 
-                        size="small" 
-                        sx={{ bgcolor: '#E0F2F1', color: '#00695C', fontWeight: 'bold', borderRadius: 1 }} 
-                      />
-                    </TableCell>
+                    <td className="p-4 align-middle">
+                      <span className="inline-flex items-center px-3 py-1.5 bg-[#E0F2F1] text-[#00695C] text-xs font-bold rounded-lg truncate max-w-[200px]">
+                          <MedicalServices fontSize="inherit" className="mr-1.5 text-[14px]" />
+                          <span className="truncate">{patient.currentTreatment}</span>
+                      </span>
+                    </td>
 
                     {/* Last Visit */}
-                    <TableCell>
-                      <Typography variant="body2" fontWeight="500">
+                    <td className="p-4 align-middle">
+                      <p className="font-medium text-slate-700 text-sm">
                         {patient.lastVisit !== 'Never' ? dayjs(patient.lastVisit).format('MMM D, YYYY') : 'No Visits'}
-                      </Typography>
-                    </TableCell>
+                      </p>
+                    </td>
 
                     {/* Actions */}
-                    <TableCell align="center">
-                      <Stack direction="row" justifyContent="center" spacing={1}>
-                        <Tooltip title="View Medical Profile">
-                          <IconButton size="small" sx={{ color: '#0E4C5C', bgcolor: '#E0F7FA' }}>
-                            <Visibility fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Download PDF Report">
-                          <Button 
-                            variant="outlined" 
-                            size="small" 
-                            startIcon={<Assessment />}
-                            onClick={(e) => handleGeneratePDF(e, patient)}
-                            sx={{ fontSize: '0.7rem', textTransform: 'none', borderColor: '#B0BEC5', color: '#455A64' }}
+                    <td className="p-4 align-middle text-center">
+                      <div className="flex items-center justify-center space-x-2">
+                          <button 
+                             className="p-1.5 rounded-lg text-[#0E4C5C] bg-[#E0F7FA] hover:bg-cyan-100 transition-colors focus:outline-none shadow-sm"
+                             title="View Medical Profile"
+                             onClick={(e) => { e.stopPropagation(); handleRowClick(patient); }}
                           >
+                            <Visibility fontSize="small" />
+                          </button>
+                          
+                          <button 
+                            className="flex items-center px-3 py-1.5 rounded-lg border border-[#B0BEC5] text-[#455A64] hover:bg-slate-50 transition-colors focus:outline-none text-xs font-semibold shadow-sm"
+                            onClick={(e) => handleGeneratePDF(e, patient)}
+                            title="Download PDF Report"
+                          >
+                            <Assessment fontSize="small" className="mr-1.5 text-[14px]" />
                             Report
-                          </Button>
-                        </Tooltip>
-                      </Stack>
-                    </TableCell>
+                          </button>
+                      </div>
+                    </td>
 
-                  </TableRow>
+                  </tr>
                 ))}
                 {filteredPatients.length === 0 && (
-                  <TableRow><TableCell colSpan={6} align="center" sx={{ py: 4 }}>No patient records found.</TableCell></TableRow>
+                  <tr>
+                      <td colSpan="6" className="p-10 text-center text-slate-500 font-medium bg-slate-50/50">
+                          No patient records found.
+                      </td>
+                  </tr>
                 )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+              </tbody>
+            </table>
+          </div>
         )}
-      </Paper>
+      </div>
 
       {/* --- PATIENT DOSSIER MODAL --- */}
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="md" fullWidth>
-        {selectedPatient && (
-          <>
-            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#0E4C5C', color: 'white' }}>
-               <Stack direction="row" alignItems="center" spacing={2}>
-                  <Avatar sx={{ bgcolor: 'white', color: '#0E4C5C', fontWeight: 'bold' }}>{selectedPatient.name?.charAt(0)}</Avatar>
-                  <Box>
-                    <Typography variant="h6" fontWeight="bold">{selectedPatient.name}</Typography>
-                    <Typography variant="caption">Patient ID: #PT-{selectedPatient.patientId}</Typography>
-                  </Box>
-               </Stack>
-               <IconButton onClick={() => setOpenModal(false)} sx={{ color: 'white' }}><Close /></IconButton>
-            </DialogTitle>
-            
-            <DialogContent dividers sx={{ bgcolor: '#F8FAFC', p: 4 }}>
-                
-                {/* Contact Overview Cards */}
-                <Grid container spacing={3} sx={{ mb: 4 }}>
-                    <Grid item xs={12} sm={6}>
-                        <Card elevation={0} sx={{ border: '1px solid #E0E4E8', borderRadius: 2 }}>
-                            <CardContent>
-                                <Typography variant="caption" color="text.secondary" fontWeight="bold">CONTACT EMAIL</Typography>
-                                <Typography variant="body1" fontWeight="500">{selectedPatient.email}</Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <Card elevation={0} sx={{ border: '1px solid #E0E4E8', borderRadius: 2 }}>
-                            <CardContent>
-                                <Typography variant="caption" color="text.secondary" fontWeight="bold">PHONE NUMBER</Typography>
-                                <Typography variant="body1" fontWeight="500">{selectedPatient.phone || 'Not Provided'}</Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                </Grid>
+      {openModal && selectedPatient && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in print:hidden">
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+                  
+                  {/* Header */}
+                  <div className="bg-[#0E4C5C] px-6 py-4 flex justify-between items-center text-white shrink-0">
+                      <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 rounded-full bg-white text-[#0E4C5C] flex items-center justify-center font-bold text-xl shadow-lg shrink-0">
+                              {selectedPatient.name?.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                              <h2 className="text-xl font-bold font-poppins">{selectedPatient.name}</h2>
+                              <p className="text-white/80 text-sm font-medium">Patient ID: #PT-{selectedPatient.patientId}</p>
+                          </div>
+                      </div>
+                      <button 
+                         onClick={() => setOpenModal(false)}
+                         className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-all focus:outline-none"
+                      >
+                         <Close />
+                      </button>
+                  </div>
+                  
+                  {/* Body */}
+                  <div className="p-6 md:p-8 overflow-y-auto flex-grow bg-slate-50">
+                      
+                      {/* Contact Overview Cards */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Contact Email</p>
+                              <p className="text-slate-800 font-bold text-lg">{selectedPatient.email}</p>
+                          </div>
+                          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Phone Number</p>
+                              <p className="text-slate-800 font-bold text-lg">{selectedPatient.phone || 'Not Provided'}</p>
+                          </div>
+                      </div>
 
-                <Divider sx={{ mb: 4 }}><Chip label="Clinical Treatment History" color="primary" variant="outlined" /></Divider>
+                      <div className="flex items-center justify-center mb-8 relative">
+                          <div className="absolute inset-0 flex items-center">
+                              <div className="w-full border-t border-slate-200"></div>
+                          </div>
+                          <div className="relative bg-slate-50 px-4">
+                              <span className="inline-flex items-center px-4 py-1.5 rounded-full border border-blue-200 bg-blue-50 text-blue-700 text-sm font-bold shadow-sm">
+                                  Clinical Treatment History
+                              </span>
+                          </div>
+                      </div>
 
-                {/* Treatment History Timeline */}
-                {historyLoading ? (
-                    <Box textAlign="center" py={3}><CircularProgress size={30} /></Box>
-                ) : (
-                    <Box>
-                        {treatmentHistory.length > 0 ? (
-                            <Stack spacing={3}>
-                                {treatmentHistory.map((treatment) => (
-                                    <Paper key={treatment.treatmentId} elevation={0} sx={{ p: 3, border: '1px solid #CFD8DC', borderRadius: 2, borderLeft: '5px solid #0E4C5C' }}>
-                                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                                            <Typography variant="h6" color="#0E4C5C" fontWeight="bold">
-                                                <LocalHospital sx={{ fontSize: 18, mr: 1, verticalAlign: 'middle' }}/>
-                                                {treatment.treatmentName}
-                                            </Typography>
-                                            <Chip label={treatment.status} size="small" color={treatment.status === 'COMPLETED' ? 'success' : 'warning'} />
-                                        </Stack>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Assigned Dentist: <b>Dr. {treatment.dentistName}</b></Typography>
-                                        
-                                        {/* Nested Sessions */}
-                                        <Stack spacing={1} sx={{ mt: 2, bgcolor: '#F1F5F9', p: 2, borderRadius: 1 }}>
-                                            <Typography variant="caption" fontWeight="bold" color="text.secondary">SESSION NOTES</Typography>
-                                            {treatment.sessions?.length > 0 ? (
-                                                treatment.sessions.map((session, idx) => (
-                                                    <Box key={idx} sx={{ display: 'flex', gap: 2, pb: 1, borderBottom: idx !== treatment.sessions.length -1 ? '1px dashed #CFD8DC' : 'none' }}>
-                                                        <Typography variant="body2" fontWeight="bold" color="#546E7A" sx={{ minWidth: 100 }}>
-                                                            {dayjs(session.sessionDate).format('MMM D, YYYY')}
-                                                        </Typography>
-                                                        <Typography variant="body2">{session.notes || 'No clinical notes recorded.'}</Typography>
-                                                    </Box>
-                                                ))
-                                            ) : (
-                                                <Typography variant="body2" color="text.secondary">No active sessions logged yet.</Typography>
-                                            )}
-                                        </Stack>
-                                    </Paper>
-                                ))}
-                            </Stack>
-                        ) : (
-                            <Box textAlign="center" py={4}>
-                                <AssignmentTurnedIn sx={{ fontSize: 50, color: '#B0BEC5', mb: 1 }} />
-                                <Typography variant="h6" color="text.secondary">No Medical History Found</Typography>
-                                <Typography variant="body2" color="text.secondary">This patient has not undergone any recorded treatments yet.</Typography>
-                            </Box>
-                        )}
-                    </Box>
-                )}
-            </DialogContent>
-            <DialogActions sx={{ p: 2, bgcolor: '#F8FAFC', borderTop: '1px solid #E0E4E8' }}>
-               <Button onClick={() => setOpenModal(false)} color="inherit" sx={{ fontWeight: 'bold' }}>Close Dossier</Button>
-               <Button variant="contained" startIcon={<Assessment />} onClick={(e) => handleGeneratePDF(e, selectedPatient)} sx={{ bgcolor: '#0E4C5C', fontWeight: 'bold' }}>
-                   Print PDF Report
-               </Button>
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
-    </Box>
+                      {/* Treatment History Timeline */}
+                      {historyLoading ? (
+                          <div className="flex justify-center py-10">
+                              <div className="w-10 h-10 border-4 border-slate-200 border-t-[#0E4C5C] rounded-full animate-spin"></div>
+                          </div>
+                      ) : (
+                          <div>
+                              {treatmentHistory.length > 0 ? (
+                                  <div className="space-y-6">
+                                      {treatmentHistory.map((treatment) => (
+                                          <div key={treatment.treatmentId} className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm border-l-4 border-l-[#0E4C5C]">
+                                              
+                                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                                                  <h3 className="text-lg font-bold text-[#0E4C5C] flex items-center">
+                                                      <LocalHospital fontSize="small" className="mr-2 opacity-80" />
+                                                      {treatment.treatmentName}
+                                                  </h3>
+                                                  <span className={`inline-block px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg border w-max ${
+                                                      treatment.status === 'COMPLETED' 
+                                                          ? 'bg-green-100 text-green-700 border-green-200' 
+                                                          : 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                                                  }`}>
+                                                      {treatment.status}
+                                                  </span>
+                                              </div>
+                                              
+                                              <p className="text-sm text-slate-600 mb-6 font-medium">Assigned Dentist: <span className="font-bold text-slate-800">Dr. {treatment.dentistName}</span></p>
+                                              
+                                              {/* Nested Sessions */}
+                                              <div className="bg-slate-50 p-5 rounded-xl border border-slate-100 space-y-4">
+                                                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Session Notes</p>
+                                                  
+                                                  {treatment.sessions?.length > 0 ? (
+                                                      <div className="space-y-4">
+                                                          {treatment.sessions.map((session, idx) => (
+                                                              <div key={idx} className={`flex flex-col sm:flex-row gap-2 sm:gap-6 pb-4 ${idx !== treatment.sessions.length - 1 ? 'border-b border-dashed border-slate-200' : 'pb-0'}`}>
+                                                                  <div className="sm:w-32 shrink-0">
+                                                                       <p className="text-sm font-bold text-[#0E4C5C]">
+                                                                           {dayjs(session.sessionDate).format('MMM D, YYYY')}
+                                                                       </p>
+                                                                  </div>
+                                                                  <div className="flex-grow">
+                                                                      <p className="text-sm font-medium text-slate-700 leading-relaxed bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
+                                                                          {session.notes || 'No clinical notes recorded.'}
+                                                                      </p>
+                                                                  </div>
+                                                              </div>
+                                                          ))}
+                                                      </div>
+                                                  ) : (
+                                                      <p className="text-sm font-medium text-slate-500 italic">No active sessions logged yet.</p>
+                                                  )}
+                                              </div>
+                                          </div>
+                                      ))}
+                                  </div>
+                              ) : (
+                                  <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300">
+                                      <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                          <AssignmentTurnedIn className="text-slate-300" style={{ fontSize: 40 }} />
+                                      </div>
+                                      <h3 className="text-xl font-bold text-slate-700 mb-2">No Medical History Found</h3>
+                                      <p className="text-slate-500 max-w-sm mx-auto">This patient has not undergone any recorded treatments yet.</p>
+                                  </div>
+                              )}
+                          </div>
+                      )}
+                  </div>
+                  
+                  {/* Footer */}
+                  <div className="p-5 border-t border-slate-100 bg-white flex justify-end items-center gap-3 shrink-0">
+                     <button 
+                         onClick={() => setOpenModal(false)}
+                         className="px-6 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-100 transition-colors focus:outline-none"
+                     >
+                         Close Dossier
+                     </button>
+                     <button 
+                         onClick={(e) => handleGeneratePDF(e, selectedPatient)}
+                         className="px-6 py-2.5 rounded-xl bg-[#0E4C5C] text-white font-bold hover:bg-[#0a3541] focus:ring-4 focus:ring-[#0E4C5C]/30 transition-all shadow-md flex items-center"
+                     >
+                         <Assessment fontSize="small" className="mr-2" />
+                         Print PDF Report
+                     </button>
+                  </div>
+              </div>
+          </div>
+      )}
+    </div>
   );
 };
 

@@ -1,9 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Box, Grid, Paper, Typography, List, ListItem, ListItemAvatar, ListItemText, 
-  Avatar, TextField, IconButton, Divider, Stack, CircularProgress, Menu, MenuItem
-} from '@mui/material';
-import { 
   Send, Search, MoreVert, EmojiEmotions, Edit, Delete, Close, Circle 
 } from '@mui/icons-material';
 import { Client } from '@stomp/stompjs';
@@ -28,8 +24,7 @@ const PatientMessages = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [editingMessage, setEditingMessage] = useState(null);
   
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedMsgForMenu, setSelectedMsgForMenu] = useState(null);
+  const [menuOpenForId, setMenuOpenForId] = useState(null);
 
   const stompClientRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -127,143 +122,225 @@ const PatientMessages = () => {
   const handleDelete = (msgId) => {
     chatApi.delete(`/api/chat/delete/${msgId}`)
       .catch(err => console.error("Delete failed", err));
-    setAnchorEl(null);
+    setMenuOpenForId(null);
   };
 
   const activeDentist = dentists.find(d => (d.dentistId || d.id) === selectedDentistId);
 
   return (
-    <Box sx={{ height: 'calc(100vh - 140px)' }}> 
-      <Typography variant="h4" fontFamily="Playfair Display" fontWeight="bold" color="#0E4C5C" sx={{ mb: 3 }}>Secure Messages</Typography>
+    <div className="font-sans text-slate-800 animate-fade-in p-2 md:p-6 lg:p-8 h-[calc(100vh-80px)] flex flex-col"> 
+      <h1 className="text-3xl md:text-4xl font-poppins font-bold text-primary-dark mb-6 shrink-0">
+        Secure Messages
+      </h1>
 
-      <Paper elevation={0} sx={{ height: '100%', borderRadius: 4, border: '1px solid #e0e0e0', display: 'flex' }}>
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-grow overflow-hidden relative">
         
         {/* LEFT SIDE: DENTISTS */}
-        <Box sx={{ width: 320, borderRight: '1px solid #e0e0e0', display: { xs: 'none', md: 'flex' }, flexDirection: 'column', bgcolor: '#FAFAFA' }}>
-          <Box sx={{ p: 2 }}>
-            <TextField fullWidth size="small" placeholder="Search clinic staff..." InputProps={{ startAdornment: <Search sx={{ mr: 1 }} /> }} />
-          </Box>
-          <Divider />
-          <List sx={{ flexGrow: 1, overflowY: 'auto', p: 0 }}>
+        <div className="w-80 border-r border-slate-200 bg-slate-50 flex-col hidden md:flex shrink-0">
+          <div className="p-4 bg-white border-b border-slate-200">
+            <div className="relative">
+               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <Search fontSize="small" />
+               </div>
+               <input 
+                  type="text" 
+                  placeholder="Search clinic staff..." 
+                  className="w-full pl-10 pr-4 py-2 bg-slate-100 border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm"
+               />
+            </div>
+          </div>
+          
+          <div className="flex-grow overflow-y-auto">
             {dentists.map((dentist, index) => {
               const dId = dentist.dentistId || dentist.id;
+              const isSelected = selectedDentistId === dId;
               return (
-                <Box key={`dentist-${dId || index}`}>
-                  <ListItem 
-                    selected={selectedDentistId === dId} 
-                    onClick={() => setSelectedDentistId(dId)} 
-                    sx={{ 
-                      borderLeft: selectedDentistId === dId ? '4px solid #0E4C5C' : '4px solid transparent', 
-                      '&:hover': { cursor: 'pointer', bgcolor: '#f5f5f5' } 
-                    }}
-                  >
-                    <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: '#0E4C5C' }}>{dentist.name ? dentist.name.charAt(0) : 'D'}</Avatar>
-                    </ListItemAvatar>
-                    <ListItemText primary={`Dr. ${dentist.name || 'Unknown'}`} secondary={dentist.specialization || 'Dentist'} />
-                  </ListItem>
-                  <Divider component="li" />
-                </Box>
+                <div 
+                  key={`dentist-${dId || index}`}
+                  onClick={() => setSelectedDentistId(dId)} 
+                  className={`flex items-center p-4 cursor-pointer transition-colors border-l-4 border-b border-b-slate-100 ${
+                    isSelected ? 'bg-white border-l-primary' : 'border-l-transparent hover:bg-slate-100 text-slate-600'
+                  }`}
+                >
+                  <div className="w-12 h-12 rounded-full bg-primary-dark text-white flex items-center justify-center font-bold shadow-sm shrink-0 mr-4">
+                    {dentist.name ? dentist.name.charAt(0).toUpperCase() : 'D'}
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className={`font-bold truncate ${isSelected ? 'text-slate-800' : 'text-slate-700'}`}>
+                      Dr. {dentist.name || 'Unknown'}
+                    </p>
+                    <p className="text-xs text-slate-500 truncate mt-0.5">
+                      {dentist.specialization || 'Dentist'}
+                    </p>
+                  </div>
+                </div>
               );
             })}
-          </List>
-        </Box>
+          </div>
+        </div>
 
         {/* RIGHT SIDE: CHAT */}
-        <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', bgcolor: 'white', position: 'relative' }}>
+        <div className="flex-grow flex flex-col bg-slate-50/50 min-w-0 relative">
           {activeDentist ? (
             <>
               {/* Header */}
-              <Box sx={{ p: 2, borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Avatar sx={{ bgcolor: '#0E4C5C', mr: 2 }}>{activeDentist.name ? activeDentist.name.charAt(0) : 'D'}</Avatar>
-                  <Box>
-                    <Typography variant="subtitle1" fontWeight="bold">Dr. {activeDentist.name || 'Unknown'}</Typography>
-                    <Typography variant="caption" color="text.secondary">{activeDentist.specialization || 'Dentist'}</Typography>
-                  </Box>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Circle sx={{ fontSize: 12, color: isConnected ? '#4CAF50' : '#FF9800' }} />
-                  <Typography variant="caption" color="text.secondary">
+              <div className="bg-white p-4 border-b border-slate-200 flex items-center justify-between shrink-0 shadow-sm z-10">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 rounded-full bg-primary-dark text-white flex items-center justify-center font-bold shadow-sm shrink-0 mr-4">
+                    {activeDentist.name ? activeDentist.name.charAt(0).toUpperCase() : 'D'}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-lg">Dr. {activeDentist.name || 'Unknown'}</h3>
+                    <p className="text-xs font-semibold text-slate-500">{activeDentist.specialization || 'Dentist'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
+                  <Circle className={isConnected ? 'text-green-500' : 'text-orange-500'} style={{ fontSize: 10 }} />
+                  <span className="text-xs font-bold text-slate-600">
                     {isConnected ? 'Connected' : 'Connecting...'}
-                  </Typography>
-                </Box>
-              </Box>
+                  </span>
+                </div>
+              </div>
 
               {/* Messages Area */}
-              <Box sx={{ flexGrow: 1, p: 3, overflowY: 'auto', bgcolor: '#F4F7F6' }}>
-                {loadingHistory ? <Box textAlign="center"><CircularProgress /></Box> : (
+              <div className="flex-grow p-6 overflow-y-auto" style={{ backgroundColor: '#F4F7F6' }}>
+                {loadingHistory ? (
+                  <div className="flex justify-center items-center h-full">
+                     <div className="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
+                  </div>
+                ) : (
                   messages.map((msg, index) => {
-                    // Filter logic handled in WebSocket subscriber, so map normally here
                     const isPatient = msg.senderType === 'PATIENT';
+                    const showMenu = menuOpenForId === msg.messageId;
+
                     return (
-                      <Box key={`msg-${msg.messageId || index}`} sx={{ display: 'flex', justifyContent: isPatient ? 'flex-end' : 'flex-start', mb: 2 }}>
-                        <Paper elevation={0} sx={{ 
-                          p: 1.5, px: 2, maxWidth: '70%', borderRadius: 3, position: 'relative',
-                          borderTopRightRadius: isPatient ? 0 : 12, borderTopLeftRadius: isPatient ? 12 : 0,
-                          bgcolor: isPatient ? '#0E4C5C' : 'white', color: isPatient ? 'white' : 'text.primary',
-                        }}>
-                          <Typography variant="body1">{msg.content}</Typography>
-                          <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{ mt: 0.5 }}>
-                            {msg.isEdited && <Typography variant="caption" sx={{ opacity: 0.6, fontSize: '0.65rem' }}>(edited)</Typography>}
-                            <Typography variant="caption" sx={{ opacity: 0.8, fontSize: '0.65rem' }}>{msg.sentAt ? dayjs(msg.sentAt).format('h:mm A') : 'Now'}</Typography>
-                          </Stack>
-                          {isPatient && (
-                            <IconButton size="small" onClick={(e) => { setAnchorEl(e.currentTarget); setSelectedMsgForMenu(msg); }} sx={{ position: 'absolute', top: 0, right: -30, color: 'text.secondary' }}>
-                              <MoreVert fontSize="small" />
-                            </IconButton>
-                          )}
-                        </Paper>
-                      </Box>
+                      <div key={`msg-${msg.messageId || index}`} className={`flex mb-4 ${isPatient ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`relative max-w-[70%] group`}>
+                           {/* Context Menu Button (visible on hover) */}
+                           {isPatient && (
+                               <div className={`absolute top-0 -left-8 ${showMenu ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                                   <button 
+                                      className="p-1 text-slate-400 hover:text-slate-600 focus:outline-none"
+                                      onClick={() => setMenuOpenForId(showMenu ? null : msg.messageId)}
+                                   >
+                                       <MoreVert fontSize="small" />
+                                   </button>
+                                   
+                                   {/* Dropdown Menu */}
+                                   {showMenu && (
+                                       <div className="absolute right-0 top-6 w-32 bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden z-20">
+                                           <button 
+                                              className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center"
+                                              onClick={() => {
+                                                  setEditingMessage(msg);
+                                                  setNewMessage(msg.content);
+                                                  setMenuOpenForId(null);
+                                              }}
+                                           >
+                                               <Edit fontSize="small" className="mr-2" /> Edit
+                                           </button>
+                                           <button 
+                                              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center"
+                                              onClick={() => handleDelete(msg.messageId)}
+                                           >
+                                               <Delete fontSize="small" className="mr-2" /> Delete
+                                           </button>
+                                       </div>
+                                   )}
+                               </div>
+                           )}
+
+                           {/* Message Bubble */}
+                           <div className={`p-3 px-4 shadow-sm ${
+                              isPatient 
+                                ? 'bg-primary-dark text-white rounded-2xl rounded-tr-sm' 
+                                : 'bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-sm'
+                           }`}>
+                              <p className="text-sm leading-relaxed whitespace-pre-wrap word-break-words">{msg.content}</p>
+                              
+                              <div className={`flex justify-end items-center mt-1 space-x-2 ${isPatient ? 'text-white/70' : 'text-slate-400'}`}>
+                                  {msg.isEdited && <span className="text-[0.65rem] italic">(edited)</span>}
+                                  <span className="text-[0.65rem] font-medium">{msg.sentAt ? dayjs(msg.sentAt).format('h:mm A') : 'Now'}</span>
+                              </div>
+                           </div>
+                        </div>
+                      </div>
                     );
                   })
                 )}
                 <div ref={messagesEndRef} />
-              </Box>
+              </div>
 
-              {/* Context Menu */}
-              <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-                <MenuItem onClick={() => { setEditingMessage(selectedMsgForMenu); setNewMessage(selectedMsgForMenu.content); setAnchorEl(null); }}><Edit fontSize="small" sx={{ mr: 1 }} /> Edit</MenuItem>
-                <MenuItem onClick={() => handleDelete(selectedMsgForMenu.messageId)} sx={{ color: 'error.main' }}><Delete fontSize="small" sx={{ mr: 1 }} /> Delete</MenuItem>
-              </Menu>
-              
               {/* Emoji Picker */}
-              {showEmojiPicker && <Box sx={{ position: 'absolute', bottom: 80, right: 20, zIndex: 10 }}><EmojiPicker onEmojiClick={(e) => setNewMessage(prev => prev + e.emoji)} /></Box>}
+              {showEmojiPicker && (
+                  <div className="absolute bottom-24 left-4 md:left-[340px] z-50 shadow-2xl rounded-2xl overflow-hidden border border-slate-200">
+                      <EmojiPicker onEmojiClick={(e) => setNewMessage(prev => prev + e.emoji)} />
+                  </div>
+              )}
 
               {/* Input Area */}
-              <Box sx={{ p: 2, borderTop: '1px solid #f0f0f0' }}>
+              <div className="p-4 bg-white border-t border-slate-200 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
                 {editingMessage && (
-                  <Stack direction="row" justifyContent="space-between" sx={{ mb: 1, p: 1, bgcolor: '#FFF9C4', borderRadius: 1 }}>
-                    <Typography variant="caption" color="black">Editing message...</Typography>
-                    <IconButton size="small" onClick={() => { setEditingMessage(null); setNewMessage(''); }}><Close fontSize="small" /></IconButton>
-                  </Stack>
+                  <div className="flex justify-between items-center mb-2 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-800 text-sm">
+                    <span className="font-semibold flex items-center"><Edit fontSize="small" className="mr-2" /> Editing message</span>
+                    <button 
+                        className="text-yellow-600 hover:text-yellow-900 focus:outline-none bg-yellow-100 hover:bg-yellow-200 p-1 rounded-full transition-colors"
+                        onClick={() => { setEditingMessage(null); setNewMessage(''); }}
+                    >
+                        <Close fontSize="small" />
+                    </button>
+                  </div>
                 )}
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <IconButton onClick={() => setShowEmojiPicker(!showEmojiPicker)}><EmojiEmotions color="action" /></IconButton>
-                  <TextField 
-                    fullWidth size="small" variant="outlined" 
-                    placeholder={isConnected ? "Type a message..." : "Connecting to server..."}
-                    value={newMessage} onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && isConnected && handleSend()}
-                    disabled={!isConnected}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 50, bgcolor: '#f9f9f9' } }}
-                  />
-                  <IconButton 
-                    onClick={handleSend} 
-                    disabled={!isConnected}
-                    sx={{ bgcolor: isConnected ? '#0E4C5C' : '#ccc', color: isConnected ? 'white' : '#999', '&:hover': { bgcolor: isConnected ? '#083642' : '#ccc' } }}
+                <div className="flex items-center space-x-2">
+                  <button 
+                      className={`p-2 rounded-full transition-colors focus:outline-none ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      disabled={!isConnected}
                   >
-                    <Send />
-                  </IconButton>
-                </Stack>
-              </Box>
+                      <EmojiEmotions />
+                  </button>
+                  
+                  <input 
+                    type="text" 
+                    className="flex-grow px-5 py-3 bg-slate-100 border-none rounded-full focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder-slate-400 disabled:opacity-50"
+                    placeholder={isConnected ? "Type a message..." : "Connecting to server..."}
+                    value={newMessage} 
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => {
+                        if (e.key === 'Enter' && isConnected) {
+                            e.preventDefault();
+                            handleSend();
+                        }
+                    }}
+                    disabled={!isConnected}
+                  />
+                  
+                  <button 
+                    onClick={handleSend} 
+                    disabled={!isConnected || !newMessage.trim()}
+                    className={`p-3 rounded-full flex items-center justify-center transition-all focus:outline-none shadow-md ${
+                        isConnected && newMessage.trim() 
+                            ? 'bg-primary text-white hover:bg-primary-dark hover:-translate-y-0.5' 
+                            : 'bg-slate-200 text-slate-400'
+                    }`}
+                  >
+                    <Send fontSize="small" className={isConnected && newMessage.trim() ? 'ml-1' : ''} />
+                  </button>
+                </div>
+              </div>
             </>
           ) : (
-            <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Typography>Select a doctor</Typography></Box>
+            <div className="h-full flex flex-col items-center justify-center text-slate-400 p-6 text-center">
+                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                    <Search fontSize="large" className="text-slate-300" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-600 mb-2">No Conversation Selected</h3>
+                <p className="max-w-xs">Select a doctor from the list on the left to start a secure messaging session.</p>
+            </div>
           )}
-        </Box>
-      </Paper>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -1,23 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, 
-  TableHead, TableRow, Chip, IconButton, Grid, Stack, Dialog, DialogTitle, 
-  DialogContent, DialogActions, Button, Tooltip, CircularProgress, Alert, Divider
-} from '@mui/material';
-import { 
-  CheckCircle, Cancel, Visibility, Email, Phone, CalendarToday, AccessTime, Assignment
+  CheckCircle, Cancel, Visibility, Email, Phone, CalendarToday, AccessTime, Assignment, Close
 } from '@mui/icons-material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import dayjs from 'dayjs';
-import axios from '../../api/axios'; // Adjust your path
+import axios from '../../api/axios'; 
 
-const statusColors = {
-  CONFIRMED: 'success',
-  PENDING: 'warning',
-  CANCELLED: 'error',
-  COMPLETED: 'default'
+const statusConfig = {
+  CONFIRMED: { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200' },
+  PENDING: { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200' },
+  CANCELLED: { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200' },
+  COMPLETED: { bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-200' }
 };
 
 const Appointments = () => {
@@ -86,24 +81,34 @@ const Appointments = () => {
     dayjs(a.appointmentDate).isSame(selectedDate, 'day')
   );
 
-  if (loading) return <CircularProgress sx={{ display: 'block', mx: 'auto', mt: 10 }} />;
+  if (loading) return (
+      <div className="flex justify-center items-center h-48">
+          <div className="w-10 h-10 border-4 border-slate-200 border-t-[#0E4C5C] rounded-full animate-spin"></div>
+      </div>
+  );
 
   return (
-    <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-        <Box>
-           <Typography variant="h4" fontWeight="bold" fontFamily="Playfair Display" color="#0E4C5C">Daily Schedule</Typography>
-           <Typography variant="body2" color="text.secondary">Select a date on the calendar to view and manage appointments.</Typography>
-        </Box>
-      </Stack>
+    <div className="font-sans text-slate-800 animate-fade-in p-2 md:p-6 lg:p-8 max-w-7xl mx-auto">
+      
+      <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+           <h1 className="text-3xl md:text-4xl font-poppins font-bold text-[#0E4C5C] mb-2">Daily Schedule</h1>
+           <p className="text-slate-500 text-sm md:text-base">Select a date on the calendar to view and manage appointments.</p>
+        </div>
+      </div>
 
-      {statusMsg && <Alert severity={statusMsg.type} sx={{ mb: 3 }}>{statusMsg.msg}</Alert>}
+      {statusMsg && (
+        <div className={`p-4 rounded-xl mb-6 text-sm border flex items-center shadow-sm ${statusMsg.type === 'success' ? 'bg-green-50 text-green-800 border-green-200' : 'bg-red-50 text-red-800 border-red-200'}`}>
+            {statusMsg.type === 'success' ? <CheckCircle fontSize="small" className="mr-3 text-green-600" /> : <Cancel fontSize="small" className="mr-3 text-red-600" />}
+            <span className="font-medium">{statusMsg.msg}</span>
+        </div>
+      )}
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* --- LEFT: REAL CALENDAR --- */}
-        <Grid item xs={12} md={4}>
-          <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: '1px solid #E0E4E8', bgcolor: '#F8FAFC' }}>
+        <div className="lg:col-span-4">
+          <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center items-center">
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DateCalendar 
                 value={selectedDate} 
@@ -114,162 +119,185 @@ const Appointments = () => {
                 }}
               />
             </LocalizationProvider>
-          </Paper>
-        </Grid>
+          </div>
+        </div>
 
         {/* --- RIGHT: APPOINTMENT TABLE --- */}
-        <Grid item xs={12} md={8}>
-          <Paper elevation={0} sx={{ borderRadius: 3, overflow: 'hidden', border: '1px solid #E0E4E8' }}>
+        <div className="lg:col-span-8">
+          <div className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm relative h-full flex flex-col">
             
-            <Box sx={{ p: 2, bgcolor: '#0E4C5C', color: 'white' }}>
-               <Typography variant="h6" fontWeight="bold">
+            <div className="bg-[#0E4C5C] px-6 py-4 flex justify-between items-center text-white shrink-0">
+               <h2 className="font-bold text-lg font-poppins">
                   Appointments for {selectedDate.format('MMMM D, YYYY')}
-               </Typography>
-            </Box>
+               </h2>
+            </div>
 
-            <TableContainer sx={{ maxHeight: 400 }}>
-              <Table stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <TableCell><strong>Time</strong></TableCell>
-                    <TableCell><strong>Patient</strong></TableCell>
-                    <TableCell><strong>Status</strong></TableCell>
-                    <TableCell align="center"><strong>Actions</strong></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
+            <div className="overflow-x-auto flex-grow max-h-[500px]">
+              <table className="w-full text-left border-collapse">
+                <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 z-10">
+                  <tr className="text-slate-500 text-xs uppercase tracking-wider">
+                    <th className="p-4 font-bold">Time</th>
+                    <th className="p-4 font-bold">Patient</th>
+                    <th className="p-4 font-bold">Status</th>
+                    <th className="p-4 font-bold text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
                   {filteredAppointments.length > 0 ? (
                     filteredAppointments.map((row) => {
                       const isPast = dayjs(`${row.appointmentDate}T${row.appointmentTime}`).isBefore(dayjs());
+                      const statusStyles = statusConfig[row.status] || statusConfig.COMPLETED;
 
                       return (
-                        <TableRow 
+                        <tr 
                           key={row.appointmentId} 
-                          hover 
+                          className={`hover:bg-slate-50/50 transition-colors group cursor-pointer ${isPast ? 'bg-slate-50/30' : ''}`}
                           onClick={() => handleRowClick(row)}
-                          sx={{ cursor: 'pointer' }}
                         >
-                          <TableCell>
-                             <Typography fontWeight="bold" color={isPast ? 'text.disabled' : '#0E4C5C'}>
+                          <td className="p-4 align-middle">
+                             <p className={`font-bold ${isPast ? 'text-slate-400' : 'text-[#0E4C5C]'}`}>
                                 {dayjs(`2024-01-01 ${row.appointmentTime}`).format('h:mm A')}
-                             </Typography>
-                          </TableCell>
-                          <TableCell fontWeight="500">{row.patientName}</TableCell>
-                          <TableCell>
-                            <Chip 
-                              label={row.status} 
-                              color={statusColors[row.status] || 'default'} 
-                              size="small" 
-                              variant={row.status === 'PENDING' ? 'outlined' : 'filled'}
-                              sx={{ fontWeight: 'bold' }}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            <Stack direction="row" justifyContent="center" spacing={1}>
+                             </p>
+                          </td>
+                          <td className={`p-4 align-middle font-bold ${isPast ? 'text-slate-500' : 'text-slate-800'}`}>
+                              {row.patientName}
+                          </td>
+                          <td className="p-4 align-middle">
+                            <span className={`inline-block px-3 py-1 text-[0.65rem] font-bold uppercase tracking-wider rounded-lg border ${statusStyles.bg} ${statusStyles.text} ${statusStyles.border}`}>
+                              {row.status}
+                            </span>
+                          </td>
+                          <td className="p-4 align-middle text-center">
+                            <div className="flex justify-center items-center space-x-1.5" onClick={(e) => e.stopPropagation()}>
                               {row.status === 'PENDING' && !isPast && (
-                                <Tooltip title="Confirm & Send Email">
-                                  <IconButton size="small" color="success" onClick={(e) => handleConfirm(e, row.appointmentId)}>
-                                    <CheckCircle fontSize="small" />
-                                  </IconButton>
-                                </Tooltip>
+                                <button 
+                                   className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors focus:outline-none"
+                                   onClick={(e) => handleConfirm(e, row.appointmentId)}
+                                   title="Confirm & Send Email"
+                                >
+                                  <CheckCircle fontSize="small" />
+                                </button>
                               )}
                               {row.status !== 'CANCELLED' && !isPast && (
-                                <Tooltip title="Cancel & Send Email">
-                                  <IconButton size="small" color="error" onClick={(e) => handleCancel(e, row.appointmentId)}>
-                                    <Cancel fontSize="small" />
-                                  </IconButton>
-                                </Tooltip>
+                                <button 
+                                   className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors focus:outline-none"
+                                   onClick={(e) => handleCancel(e, row.appointmentId)}
+                                   title="Cancel & Send Email"
+                                >
+                                  <Cancel fontSize="small" />
+                                </button>
                               )}
-                              <Tooltip title="View Details">
-                                <IconButton size="small" color="primary" onClick={() => handleRowClick(row)}>
-                                  <Visibility fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </Stack>
-                          </TableCell>
-                        </TableRow>
+                              <button 
+                                 className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none"
+                                 onClick={() => handleRowClick(row)}
+                                 title="View Details"
+                              >
+                                <Visibility fontSize="small" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
                       );
                     })
                   ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                        <Typography color="text.secondary">No appointments scheduled for this date.</Typography>
-                      </TableCell>
-                    </TableRow>
+                    <tr>
+                      <td colSpan="4" className="p-12 text-center">
+                        <p className="text-slate-500 font-medium">No appointments scheduled for this date.</p>
+                      </td>
+                    </tr>
                   )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
-        </Grid>
-      </Grid>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* --- APPOINTMENT DETAILS MODAL --- */}
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth>
-        {selectedAppt && (
-          <>
-            <DialogTitle sx={{ bgcolor: '#0E4C5C', color: 'white', fontWeight: 'bold' }}>
-               Appointment Details
-            </DialogTitle>
-            <DialogContent dividers sx={{ p: 4 }}>
-               <Stack spacing={3}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight="bold">PATIENT NAME</Typography>
-                    <Typography variant="h6" fontWeight="bold">{selectedAppt.patientName}</Typography>
-                  </Box>
+      {openModal && selectedAppt && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+                  
+                  {/* Header */}
+                  <div className="bg-[#0E4C5C] px-6 py-4 flex justify-between items-center text-white shrink-0">
+                      <h2 className="font-bold font-poppins text-lg">Appointment Details</h2>
+                      <button 
+                         onClick={() => setOpenModal(false)}
+                         className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-full transition-all focus:outline-none"
+                      >
+                         <Close fontSize="small" />
+                      </button>
+                  </div>
 
-                  <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                       <Stack direction="row" spacing={1} alignItems="center">
-                          <CalendarToday color="action" fontSize="small" />
-                          <Box>
-                            <Typography variant="caption" color="text.secondary" display="block">DATE</Typography>
-                            <Typography variant="body2" fontWeight="bold">{dayjs(selectedAppt.appointmentDate).format('MMM D, YYYY')}</Typography>
-                          </Box>
-                       </Stack>
-                    </Grid>
-                    <Grid item xs={6}>
-                       <Stack direction="row" spacing={1} alignItems="center">
-                          <AccessTime color="action" fontSize="small" />
-                          <Box>
-                            <Typography variant="caption" color="text.secondary" display="block">TIME</Typography>
-                            <Typography variant="body2" fontWeight="bold">{dayjs(`2024-01-01 ${selectedAppt.appointmentTime}`).format('h:mm A')}</Typography>
-                          </Box>
-                       </Stack>
-                    </Grid>
-                  </Grid>
+                  {/* Body */}
+                  <div className="p-6 overflow-y-auto flex-grow space-y-6">
+                      
+                      <div>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Patient Name</p>
+                        <p className="text-xl font-bold text-slate-800">{selectedAppt.patientName}</p>
+                      </div>
 
-                  <Divider />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex items-center space-x-3">
+                           <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex justify-center items-center shrink-0">
+                               <CalendarToday fontSize="small" />
+                           </div>
+                           <div>
+                             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Date</p>
+                             <p className="text-sm font-bold text-slate-800">{dayjs(selectedAppt.appointmentDate).format('MMM D, YYYY')}</p>
+                           </div>
+                        </div>
+                        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex items-center space-x-3">
+                           <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex justify-center items-center shrink-0">
+                               <AccessTime fontSize="small" />
+                           </div>
+                           <div>
+                             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Time</p>
+                             <p className="text-sm font-bold text-slate-800">{dayjs(`2024-01-01 ${selectedAppt.appointmentTime}`).format('h:mm A')}</p>
+                           </div>
+                        </div>
+                      </div>
 
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight="bold" display="block" sx={{ mb: 1 }}>CONTACT INFO</Typography>
-                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
-                       <Email fontSize="small" color="action" />
-                       <Typography variant="body2">{selectedAppt.patientEmail}</Typography>
-                    </Stack>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                       <Phone fontSize="small" color="action" />
-                       <Typography variant="body2">{selectedAppt.patientPhone || 'Not provided'}</Typography>
-                    </Stack>
-                  </Box>
+                      <hr className="border-slate-100" />
 
-                  <Box p={2} sx={{ bgcolor: '#F1F5F9', borderRadius: 2, borderLeft: '4px solid #0E4C5C' }}>
-                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                        <Assignment fontSize="small" color="primary" />
-                        <Typography variant="caption" fontWeight="bold" color="text.secondary">REASON FOR VISIT</Typography>
-                    </Stack>
-                    <Typography variant="body2" fontWeight="500">{selectedAppt.reasonForVisit}</Typography>
-                  </Box>
+                      <div>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Contact Info</p>
+                        <div className="space-y-3">
+                            <div className="flex items-center space-x-3 text-slate-600 font-medium text-sm">
+                               <Email fontSize="small" className="text-slate-400" />
+                               <span>{selectedAppt.patientEmail}</span>
+                            </div>
+                            <div className="flex items-center space-x-3 text-slate-600 font-medium text-sm">
+                               <Phone fontSize="small" className="text-slate-400" />
+                               <span>{selectedAppt.patientPhone || 'Not provided'}</span>
+                            </div>
+                        </div>
+                      </div>
 
-               </Stack>
-            </DialogContent>
-            <DialogActions sx={{ p: 2 }}>
-              <Button onClick={() => setOpenModal(false)} variant="contained" sx={{ bgcolor: '#0E4C5C' }}>Close</Button>
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
-    </Box>
+                      <div className="p-4 bg-blue-50/50 rounded-2xl border-l-4 border-blue-500 text-sm">
+                        <div className="flex items-center space-x-2 mb-1.5 text-blue-800">
+                            <Assignment fontSize="small" />
+                            <p className="font-bold text-xs uppercase tracking-wider">Reason For Visit</p>
+                        </div>
+                        <p className="font-medium text-slate-700 leading-relaxed pl-7">{selectedAppt.reasonForVisit}</p>
+                      </div>
+
+                  </div>
+                  
+                  {/* Footer */}
+                  <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-end shrink-0">
+                      <button 
+                          onClick={() => setOpenModal(false)}
+                          className="px-6 py-2.5 rounded-xl bg-[#0E4C5C] text-white font-bold hover:bg-[#0a3541] transition-colors focus:outline-none shadow-md"
+                      >
+                          Close
+                      </button>
+                  </div>
+
+              </div>
+          </div>
+      )}
+    </div>
   );
 };
 

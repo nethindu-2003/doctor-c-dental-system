@@ -1,89 +1,81 @@
 import React from 'react';
-import { Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Divider, Box, Typography } from '@mui/material';
 import { 
   Dashboard, CalendarMonth, MedicalServices, AccountCircle, People, Inventory, Chat, Logout 
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const DentistSidebar = ({ mobileOpen, handleDrawerToggle, drawerWidth, handleLogout }) => {
+const DentistSidebar = ({ mobileOpen, handleDrawerToggle, handleLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const menuItems = [
-    { text: 'Dashboard', icon: <Dashboard />, path: '/dentist/dashboard' },
-    { text: 'Appointments', icon: <CalendarMonth />, path: '/dentist/appointments' },
-    { text: 'Treatments', icon: <MedicalServices />, path: '/dentist/treatments' },
-    { text: 'Patients', icon: <People />, path: '/dentist/patients' },
-    { text: 'Inventory', icon: <Inventory />, path: '/dentist/inventory' }, // 
-    { text: 'Messages', icon: <Chat />, path: '/dentist/messages' }, // 
-    { text: 'Profile', icon: <AccountCircle />, path: '/dentist/profile' },
+    { text: 'Dashboard', icon: <Dashboard fontSize="small" />, path: '/dentist/dashboard' },
+    { text: 'Appointments', icon: <CalendarMonth fontSize="small" />, path: '/dentist/appointments' },
+    { text: 'Treatments', icon: <MedicalServices fontSize="small" />, path: '/dentist/treatments' },
+    { text: 'Patients', icon: <People fontSize="small" />, path: '/dentist/patients' },
+    { text: 'Inventory', icon: <Inventory fontSize="small" />, path: '/dentist/inventory' },
+    { text: 'Messages', icon: <Chat fontSize="small" />, path: '/dentist/messages' },
+    { text: 'Profile', icon: <AccountCircle fontSize="small" />, path: '/dentist/profile' },
   ];
 
   const drawerContent = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#0E4C5C', color: 'white' }}> {/* Teal Theme */}
+    <div className="h-full flex flex-col bg-teal-900 text-white shadow-xl">
       {/* Brand Logo */}
-      <Toolbar sx={{ display: 'flex', gap: 2, px: 3, py: 1 }}>
-        <Box sx={{ width: 35, height: 35, bgcolor: '#4DB6AC', borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Typography variant="h6" fontWeight="bold" color="#0E4C5C">C</Typography>
-        </Box>
-        <Typography variant="h6" fontFamily="Playfair Display" fontWeight="bold">Doctor C</Typography>
-      </Toolbar>
-      <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+      <div className="flex items-center gap-3 px-6 py-5 border-b border-teal-800">
+        <div className="w-9 h-9 bg-teal-400 rounded-lg flex items-center justify-center shadow-sm">
+            <span className="text-xl font-bold text-teal-900">C</span>
+        </div>
+        <span className="text-xl font-poppins font-bold tracking-tight text-white">Doctor C</span>
+      </div>
 
       {/* Navigation */}
-      <List sx={{ px: 2, pt: 2, flexGrow: 1 }}>
+      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+        <div className="text-xs font-semibold text-teal-200/50 uppercase tracking-wider mb-4 px-2">Menu</div>
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
-            <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
-              <ListItemButton 
-                onClick={() => { navigate(item.path); if(mobileOpen) handleDrawerToggle(); }}
-                sx={{ 
-                  borderRadius: 2, 
-                  bgcolor: isActive ? '#4DB6AC' : 'transparent',
-                  color: isActive ? '#0E4C5C' : 'rgba(255,255,255,0.8)',
-                  '&:hover': { bgcolor: isActive ? '#4DB6AC' : 'rgba(255,255,255,0.1)' }
-                }}
-              >
-                <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} primaryTypographyProps={{ fontWeight: isActive ? 700 : 400 }} />
-              </ListItemButton>
-            </ListItem>
+            <button
+              key={item.text}
+              onClick={() => { navigate(item.path); if(mobileOpen) handleDrawerToggle(); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left ${
+                isActive 
+                  ? 'bg-teal-400 text-teal-950 shadow-md font-bold' 
+                  : 'text-teal-100 hover:bg-teal-800 hover:text-white'
+              }`}
+            >
+              <span className={`flex items-center justify-center ${isActive ? 'text-teal-900' : 'text-teal-300'}`}>
+                {item.icon}
+              </span>
+              <span className={`text-sm ${isActive ? 'font-bold' : 'font-normal'}`}>{item.text}</span>
+            </button>
           );
         })}
-      </List>
+      </nav>
       
       {/* Logout */}
-      <Box sx={{ p: 2 }}>
-         <ListItemButton onClick={handleLogout} sx={{ borderRadius: 2, color: '#FFCDD2', '&:hover': { bgcolor: 'rgba(255,0,0,0.1)' } }}>
-            <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}><Logout /></ListItemIcon>
-            <ListItemText primary="Logout" />
-         </ListItemButton>
-      </Box>
-    </Box>
+      <div className="p-4 border-t border-teal-800">
+         <button 
+           onClick={handleLogout} 
+           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-300 hover:bg-red-500/10 transition-colors text-left"
+         >
+            <span className="flex items-center justify-center"><Logout fontSize="small" /></span>
+            <span className="text-sm font-medium">Logout</span>
+         </button>
+      </div>
+    </div>
   );
 
   return (
-    <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
+    <>
        {/* Mobile Drawer */}
-       <Drawer
-         variant="temporary"
-         open={mobileOpen}
-         onClose={handleDrawerToggle}
-         ModalProps={{ keepMounted: true }}
-         sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth } }}
-       >
+       <div className={`fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 ease-in-out md:hidden ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
          {drawerContent}
-       </Drawer>
+       </div>
        {/* Desktop Drawer */}
-       <Drawer
-         variant="permanent"
-         sx={{ display: { xs: 'none', md: 'block' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, border: 'none' } }}
-         open
-       >
+       <div className="hidden md:block fixed inset-y-0 left-0 z-40 w-72 h-screen border-r border-teal-900">
          {drawerContent}
-       </Drawer>
-    </Box>
+       </div>
+    </>
   );
 };
 

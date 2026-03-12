@@ -1,7 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, Typography, TextField, Button, Paper, Alert, Stack, InputAdornment, IconButton, CircularProgress 
-} from '@mui/material';
 import { Visibility, VisibilityOff, LockOpen, CheckCircleOutline } from '@mui/icons-material';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from '../../api/axios';
@@ -73,82 +70,89 @@ const SetupPassword = () => {
   }, [token]);
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#f4f7f6', p: 2 }}>
-      <Paper elevation={3} sx={{ p: { xs: 3, md: 5 }, maxWidth: 450, width: '100%', borderRadius: 3 }}>
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans text-slate-800">
+      <div className="bg-white p-8 md:p-10 max-w-md w-full rounded-3xl shadow-xl border border-slate-100">
         
         {success ? (
             // --- SUCCESS STATE ---
-            <Box textAlign="center" py={4}>
-                <CheckCircleOutline sx={{ fontSize: 60, color: 'success.main', mb: 2 }} />
-                <Typography variant="h5" fontWeight="bold" gutterBottom>Account Activated!</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <div className="text-center py-8 animate-fade-in">
+                <CheckCircleOutline className="text-green-500 mb-6" style={{ fontSize: 72 }} />
+                <h2 className="text-2xl font-poppins font-bold text-slate-800 mb-3">Account Activated!</h2>
+                <p className="text-slate-500 mb-8 leading-relaxed">
                     Your password has been securely set. You are being redirected to the login page...
-                </Typography>
-                <CircularProgress size={24} />
-            </Box>
+                </p>
+                <div className="w-8 h-8 mx-auto border-4 border-slate-200 border-t-green-500 rounded-full animate-spin"></div>
+            </div>
         ) : (
             // --- SETUP FORM ---
-            <Box>
-                <Box textAlign="center" mb={4}>
-                    <Avatar sx={{ bgcolor: '#1A237E', mx: 'auto', mb: 2, width: 56, height: 56 }}>
-                        <LockOpen />
-                    </Avatar>
-                    <Typography variant="h5" fontFamily="Playfair Display" fontWeight="bold" color="#1A237E">
+            <div>
+                <div className="text-center mb-8">
+                    <div className="w-16 h-16 bg-primary-dark text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
+                        <LockOpen fontSize="large" />
+                    </div>
+                    <h2 className="text-2xl font-poppins font-bold text-primary-dark mb-2">
                         Secure Your Account
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    </h2>
+                    <p className="text-slate-500 text-sm leading-relaxed">
                         Welcome to Doctor C Dental! Please create a strong password to access your patient portal.
-                    </Typography>
-                </Box>
+                    </p>
+                </div>
 
-                {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+                {error && (
+                    <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-sm border border-red-100">
+                        {error}
+                    </div>
+                )}
 
-                <form onSubmit={handleSubmit}>
-                    <Stack spacing={3}>
-                        <TextField 
-                            label="New Password" 
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">New Password</label>
+                        <div className="relative">
+                            <input 
+                                type={showPassword ? 'text' : 'password'} 
+                                required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all pr-12"
+                                placeholder="Enter strong password"
+                            />
+                            <button 
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                            >
+                                {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                            </button>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-2 ml-1">Must contain at least 8 characters, including letters and numbers.</p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm Password</label>
+                        <input 
                             type={showPassword ? 'text' : 'password'} 
-                            fullWidth 
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            helperText="Must contain at least 8 characters, including letters and numbers."
-                            InputProps={{
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                                        </IconButton>
-                                    </InputAdornment>
-                                )
-                            }}
-                        />
-
-                        <TextField 
-                            label="Confirm Password" 
-                            type={showPassword ? 'text' : 'password'} 
-                            fullWidth 
                             required
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all"
+                            placeholder="Confirm your password"
                         />
+                    </div>
 
-                        <Button 
-                            type="submit" 
-                            variant="contained" 
-                            size="large" 
-                            fullWidth 
-                            disabled={loading || !token}
-                            sx={{ bgcolor: '#1A237E', py: 1.5, borderRadius: 2, fontWeight: 'bold' }}
-                        >
-                            {loading ? <CircularProgress size={24} color="inherit" /> : 'Set Password & Login'}
-                        </Button>
-                    </Stack>
+                    <button 
+                        type="submit" 
+                        disabled={loading || !token}
+                        className="w-full bg-primary-dark hover:bg-[#0a3844] disabled:bg-slate-300 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-bold shadow-lg shadow-primary-dark/20 transition-all duration-300 transform hover:-translate-y-0.5 mt-2 flex items-center justify-center"
+                    >
+                        {loading ? (
+                           <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : 'Set Password & Login'}
+                    </button>
                 </form>
-            </Box>
+            </div>
         )}
-      </Paper>
-    </Box>
+      </div>
+    </div>
   );
 };
 

@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { 
-  Box, Typography, Paper, TextField, Button, Alert, Container, Stack 
-} from '@mui/material';
 import { LockReset } from '@mui/icons-material';
 import api from '../../api/axios';
 
@@ -42,46 +39,60 @@ const DentistSetup = () => {
   };
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'linear-gradient(135deg, rgba(14, 76, 92, 0.9) 0%, rgba(6, 46, 56, 0.85) 100%)'
-    }}>
-      <Container maxWidth="xs">
-        <Paper elevation={10} sx={{ p: 4, borderRadius: 4, textAlign: 'center' }}>
-          <LockReset sx={{ fontSize: 50, color: '#0E4C5C', mb: 2 }} />
-          <Typography variant="h5" fontWeight="bold" gutterBottom>
-            Set Your Password
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Welcome, Doctor. Please create a secure password to activate your account.
-          </Typography>
+    <div className="min-h-screen bg-gradient-to-br from-primary-dark/90 to-[#062e38]/85 flex items-center justify-center p-4 font-sans">
+      <div className="bg-white p-8 md:p-10 text-center rounded-3xl shadow-2xl max-w-sm w-full">
+        <div className="flex justify-center mb-6">
+          <div className="w-16 h-16 bg-primary-light/20 flex items-center justify-center rounded-full">
+            <LockReset className="text-primary-dark" style={{ fontSize: 36 }} />
+          </div>
+        </div>
+        
+        <h2 className="text-2xl font-poppins font-bold text-slate-800 mb-2">Set Your Password</h2>
+        <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+          Welcome, Doctor. Please create a secure password to activate your account.
+        </p>
 
-          {status.msg && <Alert severity={status.type} sx={{ mb: 2 }}>{status.msg}</Alert>}
+        {status.msg && (
+          <div className={`p-4 rounded-xl mb-6 text-sm border flex items-start ${status.type === 'success' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+            <span>{status.msg}</span>
+          </div>
+        )}
 
-          <form onSubmit={handleSubmit}>
-            <Stack spacing={2}>
-              <TextField 
-                label="New Password" type="password" fullWidth required 
-                value={passwords.new} 
-                onChange={(e) => setPasswords({...passwords, new: e.target.value})}
-              />
-              <TextField 
-                label="Confirm Password" type="password" fullWidth required 
-                value={passwords.confirm} 
-                onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
-              />
-              <Button 
-                type="submit" variant="contained" fullWidth size="large"
-                disabled={loading}
-                sx={{ bgcolor: '#0E4C5C', mt: 2 }}
-              >
-                {loading ? 'Activating...' : 'Activate Account'}
-              </Button>
-            </Stack>
-          </form>
-        </Paper>
-      </Container>
-    </Box>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="text-left">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">New Password</label>
+            <input 
+              type="password"
+              required
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all"
+              value={passwords.new} 
+              onChange={(e) => setPasswords({...passwords, new: e.target.value})}
+              placeholder="Enter new password"
+            />
+          </div>
+          
+          <div className="text-left">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm Password</label>
+            <input 
+              type="password"
+              required
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all"
+              value={passwords.confirm} 
+              onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
+              placeholder="Confirm new password"
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-primary hover:bg-primary-dark disabled:bg-primary/50 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all duration-300 transform hover:-translate-y-0.5 mt-2"
+          >
+            {loading ? 'Activating...' : 'Activate Account'}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 };
 

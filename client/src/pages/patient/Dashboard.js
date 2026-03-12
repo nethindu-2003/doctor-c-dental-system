@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Box, Grid, Typography, Card, Stack, Avatar, Button, LinearProgress, Chip, CircularProgress 
-} from '@mui/material';
-import { 
   CalendarMonth, ArrowForward, MedicalServices, AttachMoney, NotificationsActive 
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -87,175 +84,214 @@ const Dashboard = () => {
   };
 
   if (loading) {
-      return <CircularProgress sx={{ display: 'block', mx: 'auto', mt: 10 }} />;
+      return (
+        <div className="flex justify-center mt-24">
+            <div className="w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
+        </div>
+      );
   }
 
   return (
-    <Box>
+    <div className="font-sans text-slate-800 animate-fade-in p-2 md:p-6 lg:p-8">
       {/* 1. Welcome Section */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontFamily="Playfair Display" fontWeight="bold" color="primary.dark">
+      <div className="mb-8">
+        <h1 className="text-3xl md:text-4xl font-poppins font-bold text-primary-dark mb-2">
           Welcome back, {profile.name || 'Patient'}!
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
+        </h1>
+        <p className="text-slate-500 text-lg">
           Here is an overview of your dental health status today.
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* 2. Key Metrics Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
         
         {/* Next Appointment Card */}
-        <Grid item xs={12} md={4}>
-          <Card sx={{ p: 3, height: '100%', borderRadius: 4, bgcolor: 'primary.dark', color: 'white', position: 'relative', overflow: 'hidden' }}>
-            <Box sx={{ position: 'absolute', top: -20, right: -20, opacity: 0.1 }}><CalendarMonth sx={{ fontSize: 150 }} /></Box>
-            <Typography variant="overline" sx={{ opacity: 0.7 }}>UPCOMING APPOINTMENT</Typography>
-            
-            {nextAppointment ? (
-                <>
-                    <Typography variant="h5" fontWeight="bold" sx={{ mt: 1, mb: 1 }}>
-                        {dayjs(nextAppointment.appointmentDate).format('MMM D, YYYY')}
-                    </Typography>
-                    <Typography variant="h4" fontWeight="bold" color="secondary.main">
-                        {dayjs('2023-01-01 ' + nextAppointment.appointmentTime).format('h:mm A')}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mt: 2, opacity: 0.9 }}>
-                        {nextAppointment.dentist ? `Dr. ${nextAppointment.dentist.name}` : 'Clinic Admin'} • {nextAppointment.reasonForVisit}
-                    </Typography>
-                </>
-            ) : (
-                <Box sx={{ mt: 3, mb: 2 }}>
-                    <Typography variant="h6">No upcoming appointments</Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.8 }}>Time for a checkup?</Typography>
-                </Box>
-            )}
+        <div className="bg-primary-dark text-white p-6 rounded-3xl relative overflow-hidden shadow-lg flex flex-col justify-between group">
+          <div className="absolute -top-6 -right-6 opacity-10 group-hover:scale-110 transition-transform duration-500">
+            <CalendarMonth style={{ fontSize: 180 }} />
+          </div>
+          
+          <div>
+              <p className="text-primary-light font-bold text-xs tracking-widest uppercase mb-4">
+                UPCOMING APPOINTMENT
+              </p>
+              
+              {nextAppointment ? (
+                  <>
+                      <h2 className="text-3xl font-bold mb-1">
+                          {dayjs(nextAppointment.appointmentDate).format('MMM D, YYYY')}
+                      </h2>
+                      <h3 className="text-2xl font-bold text-accent mb-4">
+                          {dayjs('2023-01-01 ' + nextAppointment.appointmentTime).format('h:mm A')}
+                      </h3>
+                      <p className="text-slate-300 text-sm">
+                          {nextAppointment.dentist ? `Dr. ${nextAppointment.dentist.name}` : 'Clinic Admin'} • {nextAppointment.reasonForVisit}
+                      </p>
+                  </>
+              ) : (
+                  <div className="my-6">
+                      <h3 className="text-xl font-bold mb-1">No upcoming appointments</h3>
+                      <p className="text-slate-300 text-sm">Time for a checkup?</p>
+                  </div>
+              )}
+          </div>
 
-            <Button 
-              variant="contained" color="secondary" size="small" sx={{ mt: 3, borderRadius: 20, color: 'primary.dark', fontWeight: 'bold' }}
-              onClick={() => navigate('/patient/appointments')}
-            >
-              {nextAppointment ? 'Manage' : 'Book Now'}
-            </Button>
-          </Card>
-        </Grid>
+          <div className="mt-8 relative z-10">
+              <button 
+                onClick={() => navigate('/patient/appointments')}
+                className="bg-accent hover:bg-yellow-400 text-primary-dark w-full py-3 rounded-xl font-bold shadow-md transition-colors"
+              >
+                {nextAppointment ? 'Manage Appointment' : 'Book Now'}
+              </button>
+          </div>
+        </div>
 
         {/* Treatment Progress Card */}
-        <Grid item xs={12} md={4}>
-          <Card sx={{ p: 3, height: '100%', borderRadius: 4 }}>
-            <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
-              <Avatar sx={{ bgcolor: '#E0F2F1', color: 'primary.main' }}><MedicalServices /></Avatar>
-              <Typography variant="h6" fontWeight="bold" color="primary.dark">Treatment Progress</Typography>
-            </Stack>
-            
-            {activeTreatment ? (
-                <>
-                    <Typography variant="subtitle2" fontWeight="bold">{activeTreatment.name}</Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, mt: 0.5 }}>
-                        <Typography variant="body2" color="text.secondary">
-                            Session {activeTreatment.completed} of {activeTreatment.total}
-                        </Typography>
-                        <Typography variant="body2" fontWeight="bold" color="primary.main">{activeTreatment.progress}%</Typography>
-                    </Box>
-                    <LinearProgress 
-                        variant="determinate" 
-                        value={activeTreatment.progress} 
-                        sx={{ height: 8, borderRadius: 5, bgcolor: '#f0f0f0', '& .MuiLinearProgress-bar': { bgcolor: 'secondary.main' } }} 
-                    />
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
-                        Next Step: {activeTreatment.nextStep}
-                    </Typography>
-                </>
-            ) : (
-                <Box sx={{ mt: 3, textAlign: 'center' }}>
-                    <Typography variant="body2" color="text.secondary">No ongoing complex treatments.</Typography>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                        Your smile is looking great!
-                    </Typography>
-                </Box>
-            )}
-            <Button endIcon={<ArrowForward />} sx={{ mt: activeTreatment ? 0 : 3 }} onClick={() => navigate('/patient/treatments')}>View History</Button>
-          </Card>
-        </Grid>
+        <div className="bg-white p-6 rounded-3xl shadow-md border border-slate-100 flex flex-col justify-between hover:shadow-lg transition-shadow">
+          <div>
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-primary-light text-white rounded-2xl flex items-center justify-center mr-4 shadow-sm">
+                  <MedicalServices />
+                </div>
+                <h3 className="text-xl font-bold text-primary-dark">Treatment Progress</h3>
+              </div>
+              
+              {activeTreatment ? (
+                  <>
+                      <h4 className="font-bold text-slate-800 mb-2">{activeTreatment.name}</h4>
+                      <div className="flex justify-between items-end mb-2">
+                          <span className="text-sm text-slate-500 font-medium">Session {activeTreatment.completed} of {activeTreatment.total}</span>
+                          <span className="text-lg font-bold text-primary">{activeTreatment.progress}%</span>
+                      </div>
+                      
+                      <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mb-4">
+                          <div 
+                            className="bg-primary h-full rounded-full transition-all duration-1000" 
+                            style={{ width: `${activeTreatment.progress}%` }}
+                          ></div>
+                      </div>
+                      
+                      <p className="text-sm text-slate-500 mt-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                          <span className="font-semibold text-slate-700">Next Step:</span> {activeTreatment.nextStep}
+                      </p>
+                  </>
+              ) : (
+                  <div className="text-center py-6">
+                      <p className="text-slate-500 font-medium text-sm">No ongoing complex treatments.</p>
+                      <p className="text-slate-400 text-xs mt-2">Your smile is looking great!</p>
+                  </div>
+              )}
+          </div>
+          
+          <button 
+            onClick={() => navigate('/patient/treatments')}
+            className={`flex items-center justify-center w-full py-3 text-sm font-semibold text-primary hover:text-primary-dark hover:bg-slate-50 rounded-xl transition-colors ${!activeTreatment ? 'mt-4 border border-slate-200' : 'mt-4'}`}
+          >
+            View History <ArrowForward fontSize="small" className="ml-2" />
+          </button>
+        </div>
 
         {/* Payments Card */}
-        <Grid item xs={12} md={4}>
-          <Card sx={{ p: 3, height: '100%', borderRadius: 4 }}>
-             <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
-              <Avatar sx={{ bgcolor: '#FFF8E1', color: '#F57C00' }}><AttachMoney /></Avatar>
-              <Typography variant="h6" fontWeight="bold" color="primary.dark">Payments</Typography>
-            </Stack>
-            <Typography variant="body2" color="text.secondary">Total Outstanding</Typography>
-            <Typography variant="h4" fontWeight="bold" color={paymentStats.outstanding > 0 ? "error.main" : "success.main"} sx={{ mb: 1 }}>
+        <div className="bg-white p-6 rounded-3xl shadow-md border border-slate-100 flex flex-col justify-between hover:shadow-lg transition-shadow">
+          <div>
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-orange-100 text-orange-500 rounded-2xl flex items-center justify-center mr-4 shadow-sm">
+                <AttachMoney />
+              </div>
+              <h3 className="text-xl font-bold text-primary-dark">Payments</h3>
+            </div>
+
+            <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-1">Total Outstanding</p>
+            <h2 className={`text-4xl font-bold mb-6 ${paymentStats.outstanding > 0 ? 'text-red-500' : 'text-green-500'}`}>
                 LKR {paymentStats.outstanding.toLocaleString()}
-            </Typography>
+            </h2>
             
-            <Stack direction="row" spacing={1}>
-               <Chip label={`${paymentStats.paidCount} Paid`} size="small" color="success" variant="outlined" />
+            <div className="flex flex-wrap gap-2">
+               <span className="px-3 py-1 bg-green-50 text-green-700 border border-green-200 rounded-lg text-sm font-semibold">
+                 {paymentStats.paidCount} Paid
+               </span>
                {paymentStats.pendingCount > 0 && (
-                   <Chip label={`${paymentStats.pendingCount} Pending`} size="small" color="error" variant="outlined" />
+                   <span className="px-3 py-1 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm font-semibold">
+                     {paymentStats.pendingCount} Pending
+                   </span>
                )}
-            </Stack>
-            
-            <Button endIcon={<ArrowForward />} sx={{ mt: 2 }} onClick={() => navigate('/patient/payments')}>
-                {paymentStats.outstanding > 0 ? 'Pay Now' : 'View History'}
-            </Button>
-          </Card>
-        </Grid>
+            </div>
+          </div>
+          
+          <button 
+            onClick={() => navigate('/patient/payments')}
+            className={`flex items-center justify-center w-full py-3 mt-6 text-sm font-semibold rounded-xl transition-colors ${
+              paymentStats.outstanding > 0 
+                ? 'bg-red-50 text-red-600 hover:bg-red-100' 
+                : 'text-primary hover:text-primary-dark hover:bg-slate-50 border border-slate-200'
+            }`}
+          >
+              {paymentStats.outstanding > 0 ? 'Pay Now' : 'View History'} <ArrowForward fontSize="small" className="ml-2" />
+          </button>
+        </div>
 
-      </Grid>
+      </div>
 
-      {/* 3. Recent Notifications / Reminders (Static for now, could be wired to a Notification table later) */}
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h6" fontWeight="bold" color="primary.dark" sx={{ mb: 2 }}>Notifications & Reminders</Typography>
-        <Card sx={{ borderRadius: 3 }}>
+      {/* 3. Recent Notifications / Reminders */}
+      <div className="mb-8">
+        <h3 className="text-xl font-bold text-primary-dark mb-4">Notifications &amp; Reminders</h3>
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             
           {/* Dynamic Appointment Reminder Notification */}
           {nextAppointment && dayjs(nextAppointment.appointmentDate).diff(dayjs(), 'day') <= 2 && (
-             <Box sx={{ p: 2, borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'start', gap: 2 }}>
-                <Avatar sx={{ bgcolor: '#ffebee', color: 'error.main', width: 40, height: 40 }}>
-                  <NotificationsActive fontSize="small" />
-                </Avatar>
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="subtitle2" fontWeight="bold">Upcoming Appointment Reminder</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                      Your {nextAppointment.reasonForVisit} is scheduled for {dayjs(nextAppointment.appointmentDate).format('MMM D')} at {dayjs('2023-01-01 ' + nextAppointment.appointmentTime).format('h:mm A')}.
-                  </Typography>
-                </Box>
-                <Typography variant="caption" fontWeight="bold" color ="error">Urgent</Typography>
-             </Box>
+             <div className="p-5 border-b border-slate-100 flex items-start sm:items-center gap-4 hover:bg-slate-50 transition-colors flex-col sm:flex-row">
+                <div className="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center shrink-0">
+                  <NotificationsActive />
+                </div>
+                <div className="flex-grow">
+                  <h4 className="font-bold text-slate-800 text-sm mb-1">Upcoming Appointment Reminder</h4>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                      Your {nextAppointment.reasonForVisit} is scheduled for <span className="font-semibold text-slate-700">{dayjs(nextAppointment.appointmentDate).format('MMM D')}</span> at <span className="font-semibold text-slate-700">{dayjs('2023-01-01 ' + nextAppointment.appointmentTime).format('h:mm A')}</span>.
+                  </p>
+                </div>
+                <div className="shrink-0 mt-2 sm:mt-0">
+                  <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full uppercase tracking-wider">Urgent</span>
+                </div>
+             </div>
           )}
 
           {/* Dynamic Payment Reminder Notification */}
           {paymentStats.outstanding > 0 && (
-              <Box sx={{ p: 2, borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'start', gap: 2 }}>
-                <Avatar sx={{ bgcolor: '#fff3e0', color: 'warning.main', width: 40, height: 40 }}>
-                  <AttachMoney fontSize="small" />
-                </Avatar>
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="subtitle2" fontWeight="bold">Outstanding Balance</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                      You have an outstanding balance of LKR {paymentStats.outstanding.toLocaleString()}. Please clear it before your next visit.
-                  </Typography>
-                </Box>
-                <Button size="small" onClick={() => navigate('/patient/payments')}>Pay</Button>
-             </Box>
+              <div className="p-5 border-b border-slate-100 flex items-start sm:items-center gap-4 hover:bg-slate-50 transition-colors flex-col sm:flex-row">
+                <div className="w-12 h-12 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center shrink-0">
+                  <AttachMoney />
+                </div>
+                <div className="flex-grow">
+                  <h4 className="font-bold text-slate-800 text-sm mb-1">Outstanding Balance</h4>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                      You have an outstanding balance of <span className="font-bold text-red-500">LKR {paymentStats.outstanding.toLocaleString()}</span>. Please clear it before your next visit.
+                  </p>
+                </div>
+                <button 
+                  onClick={() => navigate('/patient/payments')}
+                  className="shrink-0 mt-2 sm:mt-0 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm"
+                >
+                  Pay Now
+                </button>
+             </div>
           )}
 
           {/* System Welcome Notification */}
-          <Box sx={{ p: 2, display: 'flex', alignItems: 'start', gap: 2 }}>
-            <Avatar sx={{ bgcolor: '#e3f2fd', color: 'primary.main', width: 40, height: 40 }}>
-              <MedicalServices fontSize="small" />
-            </Avatar>
-            <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="subtitle2" fontWeight="bold">Welcome to Doctor C Dental</Typography>
-              <Typography variant="body2" color="text.secondary">Thank you for choosing us for your dental care. Don't forget to update your profile.</Typography>
-            </Box>
-            <Typography variant="caption" color="text.secondary">System</Typography>
-          </Box>
+          <div className="p-5 flex items-start gap-4 hover:bg-slate-50 transition-colors">
+            <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center shrink-0">
+              <MedicalServices />
+            </div>
+            <div className="flex-grow">
+              <h4 className="font-bold text-slate-800 text-sm mb-1">Welcome to Doctor C Dental</h4>
+              <p className="text-sm text-slate-500 leading-relaxed">Thank you for choosing us for your dental care. Don't forget to update your profile with relevant medical history.</p>
+            </div>
+            <span className="shrink-0 text-xs font-semibold text-slate-400 self-center hidden sm:block">System</span>
+          </div>
           
-        </Card>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

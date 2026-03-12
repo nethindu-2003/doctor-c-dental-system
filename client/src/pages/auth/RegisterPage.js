@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  Box, Typography, TextField, Button, InputAdornment, IconButton, Link, Container, Stack, Paper, MenuItem, Grid, Alert
-} from '@mui/material';
 import { Visibility, VisibilityOff, Email, Lock, ArrowBack, Phone, Person, CalendarToday } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext'; 
-import { validateRegistration } from '../../utils/validation'; // <--- IMPORT VALIDATION
+import { validateRegistration } from '../../utils/validation';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -22,10 +19,10 @@ const RegisterPage = () => {
     gender: '', 
     dob: '',
     password: '',
-    confirmPassword: '' // <--- Added Confirm Password
+    confirmPassword: ''
   });
 
-  const [errors, setErrors] = useState({}); // Stores field-specific errors
+  const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -33,28 +30,26 @@ const RegisterPage = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     
-    // Auto-clear error when user types to improve UX
     if (errors[e.target.name]) {
       setErrors({ ...errors, [e.target.name]: '' });
     }
   };
 
-  const handleRegister = async () => {
+  const handleRegister = async (e) => {
+    e.preventDefault();
     setServerError('');
     setSuccess('');
 
     // 1. RUN VALIDATION LOGIC
     const validationErrors = validateRegistration(formData);
     
-    // If validation fails, stop and show errors on the specific fields
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return; 
     }
 
     try {
-      // 2. Call Backend API (Only if valid)
-      // Note: We do NOT send confirmPassword to the backend
+      // 2. Call Backend API
       await register({
         name: formData.name,
         email: formData.email,
@@ -77,207 +72,215 @@ const RegisterPage = () => {
   };
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
-      width: '100vw',
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      backgroundImage: 'url(https://images.unsplash.com/photo-1629909613654-28e377c37b09?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80)',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      position: 'relative',
-      overflowX: 'hidden',
-      py: 4 
-    }}>
+    <div className="min-h-screen w-full flex items-center justify-center relative bg-cover bg-center overflow-x-hidden font-sans py-4" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1629909613654-28e377c37b09?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80)' }}>
       
       {/* 1. DARK TEAL OVERLAY */}
-      <Box sx={{ 
-        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, 
-        background: 'linear-gradient(135deg, rgba(14, 76, 92, 0.9) 0%, rgba(6, 46, 56, 0.85) 100%)',
-        zIndex: 1
-      }} />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-dark/90 to-[#062e38]/85 z-0" />
 
       {/* 2. CENTERED REGISTER CARD */}
-      <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 2 }}>
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
-          
-          <Paper elevation={24} sx={{ 
-            p: { xs: 4, md: 5 }, 
-            borderRadius: 4, 
-            bgcolor: 'rgba(255, 255, 255, 0.95)', 
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.2)'
-          }}>
+      <div className="relative z-10 w-full max-w-2xl px-4 py-8">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }} 
+          animate={{ opacity: 1, scale: 1 }} 
+          transition={{ duration: 0.5 }}
+          className="bg-white/95 backdrop-blur-md p-8 md:p-10 rounded-3xl shadow-2xl"
+        >
 
-            {/* Back to Home Link */}
-            <Box 
-              sx={{ display: 'flex', alignItems: 'center', mb: 3, cursor: 'pointer', color: 'text.secondary' }} 
-              onClick={() => navigate('/')}
-            >
-               <ArrowBack sx={{ fontSize: 18, mr: 1 }} />
-               <Typography variant="caption" fontWeight="bold">Back to Home</Typography>
-            </Box>
+          {/* Back to Home Link */}
+          <button 
+            type="button"
+            className="flex items-center text-slate-500 hover:text-primary transition-colors mb-6 text-sm font-semibold group" 
+            onClick={() => navigate('/')}
+          >
+            <ArrowBack fontSize="small" className="mr-1 group-hover:-translate-x-1 transition-transform" />
+            Back to Home
+          </button>
 
-            {/* Header */}
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <Typography variant="h4" color="primary.dark" sx={{ fontFamily: 'Playfair Display', fontWeight: 700, mb: 1 }}>
-                Create Account
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Join Doctor C Dental Clinic as a new patient.
-              </Typography>
-            </Box>
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-poppins font-bold text-primary-dark mb-2">Create Account</h1>
+            <p className="text-slate-500 text-sm">Join Doctor C Dental Clinic as a new patient.</p>
+          </div>
 
-            {/* Global Alerts */}
-            {serverError && <Alert severity="error" sx={{ mb: 3 }}>{serverError}</Alert>}
-            {success && <Alert severity="success" sx={{ mb: 3 }}>{success}</Alert>}
+          {/* Global Alerts */}
+          {serverError && (
+            <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-sm border border-red-100 flex items-start">
+              <span>{serverError}</span>
+            </div>
+          )}
+          {success && (
+            <div className="bg-green-50 text-green-700 p-4 rounded-xl mb-6 text-sm border border-green-100 flex items-start">
+              <span>{success}</span>
+            </div>
+          )}
 
+          {/* FORM FIELDS */}
+          <form onSubmit={handleRegister} className="space-y-5">
+            
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                  <Person fontSize="small" />
+                </div>
+                <input 
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className={`w-full pl-11 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all ${
+                    errors.name ? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/30' : 'border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                  }`}
+                  placeholder="John Doe"
+                />
+              </div>
+              {errors.name && <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.name}</p>}
+            </div>
 
-            {/* FORM FIELDS */}
-            <Stack spacing={2.5}>
-              
-              <TextField 
-                label="Full Name" 
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                fullWidth 
-                variant="outlined" 
-                error={!!errors.name}      // <--- Turn Red on Error
-                helperText={errors.name}   // <--- Show Error Message
-                InputProps={{ startAdornment: <InputAdornment position="start"><Person color="action" /></InputAdornment> }} 
-              />
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                  <Email fontSize="small" />
+                </div>
+                <input 
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={`w-full pl-11 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all ${
+                    errors.email ? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/30' : 'border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                  }`}
+                  placeholder="john@example.com"
+                />
+              </div>
+              {errors.email && <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.email}</p>}
+            </div>
 
-              <TextField 
-                label="Email Address" 
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                fullWidth 
-                variant="outlined" 
-                error={!!errors.email}
-                helperText={errors.email}
-                InputProps={{ startAdornment: <InputAdornment position="start"><Email color="action" /></InputAdornment> }} 
-              />
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                  <Phone fontSize="small" />
+                </div>
+                <input 
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className={`w-full pl-11 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all ${
+                    errors.phone ? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/30' : 'border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                  }`}
+                  placeholder="+94 7X XXX XXXX"
+                />
+              </div>
+              {errors.phone && <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.phone}</p>}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Gender</label>
+                <select 
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all text-slate-700"
+                >
+                  <option value="" disabled>Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
 
-              <TextField 
-                label="Phone Number" 
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                fullWidth 
-                variant="outlined" 
-                error={!!errors.phone}
-                helperText={errors.phone}
-                InputProps={{ startAdornment: <InputAdornment position="start"><Phone color="action" /></InputAdornment> }} 
-              />
-              
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                    <TextField 
-                      select 
-                      label="Gender" 
-                      name="gender"
-                      value={formData.gender}
-                      onChange={handleChange}
-                      fullWidth 
-                      defaultValue=""
-                    >
-                      <MenuItem value="Male">Male</MenuItem>
-                      <MenuItem value="Female">Female</MenuItem>
-                      <MenuItem value="Other">Other</MenuItem>
-                    </TextField>
-                </Grid>
-                <Grid item xs={6}>
-                    <TextField 
-                      label="Date of Birth" 
-                      name="dob"
-                      type="date" 
-                      value={formData.dob}
-                      onChange={handleChange}
-                      fullWidth 
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ startAdornment: <InputAdornment position="start"><CalendarToday color="action" fontSize="small" /></InputAdornment> }} 
-                    />
-                </Grid>
-              </Grid>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Date of Birth</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                    <CalendarToday fontSize="small" />
+                  </div>
+                  <input 
+                    type="date"
+                    name="dob"
+                    value={formData.dob}
+                    onChange={handleChange}
+                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all text-slate-700"
+                  />
+                </div>
+              </div>
+            </div>
 
-              {/* PASSWORD FIELD */}
-              <TextField 
-                label="Password" 
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                type={showPassword ? 'text' : 'password'} 
-                fullWidth 
-                variant="outlined" 
-                error={!!errors.password}
-                helperText={errors.password}
-                InputProps={{ 
-                  startAdornment: <InputAdornment position="start"><Lock color="action" /></InputAdornment>,
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ) 
-                }} 
-              />
+            {/* PASSWORD FIELD */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                  <Lock fontSize="small" />
+                </div>
+                <input 
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`w-full pl-11 pr-12 py-3 bg-slate-50 border rounded-xl outline-none transition-all ${
+                    errors.password ? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/30' : 'border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                  }`}
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                </button>
+              </div>
+              {errors.password && <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.password}</p>}
+            </div>
 
-              {/* CONFIRM PASSWORD FIELD (NEW) */}
-              <TextField 
-                label="Confirm Password" 
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                type="password" 
-                fullWidth 
-                variant="outlined" 
-                error={!!errors.confirmPassword}
-                helperText={errors.confirmPassword}
-                InputProps={{ 
-                  startAdornment: <InputAdornment position="start"><Lock color="action" /></InputAdornment> 
-                }} 
-              />
+            {/* CONFIRM PASSWORD FIELD */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm Password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                  <Lock fontSize="small" />
+                </div>
+                <input 
+                  type="password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className={`w-full pl-11 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all ${
+                    errors.confirmPassword ? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/30' : 'border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                  }`}
+                  placeholder="Confirm your password"
+                />
+              </div>
+              {errors.confirmPassword && <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.confirmPassword}</p>}
+            </div>
 
-            </Stack>
-
-            <Button 
-              fullWidth 
-              variant="contained" 
-              size="large" 
-              onClick={handleRegister} 
-              sx={{ 
-                mt: 4,
-                py: 1.5, 
-                borderRadius: 50, 
-                fontSize: '1.1rem',
-                fontWeight: 700,
-                boxShadow: '0 10px 30px rgba(14, 76, 92, 0.2)',
-                transition: '0.3s',
-                '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 15px 40px rgba(14, 76, 92, 0.4)' }
-              }}
+            <button 
+              type="submit" 
+              className="w-full bg-primary hover:bg-primary-dark text-white py-3.5 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all duration-300 transform hover:-translate-y-0.5 mt-4"
             >
               Register
-            </Button>
+            </button>
+          </form>
 
-            <Typography variant="body2" align="center" sx={{ mt: 3, color: 'text.secondary' }}>
-              Already have an account? 
-              <Link 
-                component="button" 
-                onClick={() => navigate('/login')} 
-                sx={{ ml: 1, fontWeight: 'bold', color: 'primary.main', textDecoration: 'none', cursor: 'pointer' }}
-              >
-                Login here
-              </Link>
-            </Typography>
+          <div className="mt-8 text-center text-sm text-slate-500">
+            Already have an account?{' '}
+            <button 
+              type="button" 
+              onClick={() => navigate('/login')} 
+              className="font-bold text-primary hover:text-primary-dark transition-colors"
+            >
+              Login here
+            </button>
+          </div>
 
-          </Paper>
         </motion.div>
-      </Container>
-    </Box>
+      </div>
+    </div>
   );
 };
 

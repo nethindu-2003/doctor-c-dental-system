@@ -1,5 +1,4 @@
 import React from 'react';
-import { Box, Container, Grid, Typography, Stack, IconButton, Divider } from '@mui/material';
 import { Facebook, Instagram, LinkedIn, Phone, Email, LocationOn } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -33,124 +32,113 @@ const Footer = () => {
   ];
 
   return (
-    <Box sx={{ bgcolor: 'primary.main', color: 'white', pt: 8, pb: 4 }}>
-      <Container maxWidth="lg">
-        <Grid container spacing={8}>
+    <footer className="bg-primary text-white pt-16 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8">
           
           {/* Column 1: Brand & Identity */}
-          <Grid item xs={12} md={4}>
-            <Box 
-              sx={{ display: 'flex', alignItems: 'center', mb: 2, cursor: 'pointer' }}
+          <div className="lg:col-span-4">
+            <div 
+              className="flex items-center mb-6 cursor-pointer"
               onClick={() => navigate('/')}
             >
-              <Box sx={{ 
-                width: 32, height: 32, bgcolor: 'secondary.main', borderRadius: 1, 
-                display: 'flex', alignItems: 'center', justifyContent: 'center', mr: 1.5 
-              }}>
-                <Typography variant="h6" fontWeight="bold" color="primary.main">C</Typography>
-              </Box>
-              <Typography variant="h5" sx={{ fontFamily: 'Playfair Display', fontWeight: 700 }}>
+              <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center mr-3 shadow-md">
+                <span className="text-xl font-bold text-white">C</span>
+              </div>
+              <span className="text-2xl font-poppins font-bold tracking-tight">
                 Doctor C
-              </Typography>
-            </Box>
-            <Typography variant="body2" sx={{ opacity: 0.8, mb: 3, lineHeight: 1.8 }}>
+              </span>
+            </div>
+            <p className="text-sm text-primary-light mb-8 leading-relaxed pr-8">
               Redefining the art of dentistry in Matara. We combine advanced technology with compassionate care to create lasting smiles.
-            </Typography>
-            <Stack direction="row" spacing={1}>
+            </p>
+            <div className="flex space-x-3">
               {[Facebook, Instagram, LinkedIn].map((Icon, i) => (
-                <IconButton key={i} size="small" sx={{ color: 'secondary.main', bgcolor: 'rgba(255,255,255,0.05)' }}>
+                <button key={i} className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent hover:text-white transition-colors duration-300">
                   <Icon fontSize="small" />
-                </IconButton>
+                </button>
               ))}
-            </Stack>
-          </Grid>
+            </div>
+          </div>
 
-          {/* Column 2: Quick Links (UPDATED) */}
-          <Grid item xs={6} md={2}>
-            <Typography variant="h6" gutterBottom sx={{ fontFamily: 'Playfair Display', color: 'secondary.main' }}>
+          {/* Column 2: Quick Links */}
+          <div className="lg:col-span-2">
+            <h3 className="text-lg font-poppins font-semibold text-white mb-6">
               Explore
-            </Typography>
-            <Stack spacing={1.5}>
+            </h3>
+            <ul className="space-y-3">
               {footerLinks.map((item) => (
-                <Typography 
-                  key={item.label} 
-                  variant="body2" 
-                  onClick={() => handleNavigation(item.path)}
-                  sx={{ 
-                    color: 'white', 
-                    opacity: 0.7, 
-                    cursor: 'pointer',
-                    transition: '0.2s',
-                    '&:hover': { color: 'secondary.main', opacity: 1, transform: 'translateX(5px)' } 
-                  }}
-                >
-                  {item.label}
-                </Typography>
+                <li key={item.label}>
+                  <button 
+                    onClick={() => handleNavigation(item.path)}
+                    className="text-sm text-primary-light hover:text-white hover:translate-x-1 transition-all duration-300 text-left"
+                  >
+                    {item.label}
+                  </button>
+                </li>
               ))}
-            </Stack>
-          </Grid>
+            </ul>
+          </div>
 
           {/* Column 3: Contact Info */}
-          <Grid item xs={12} md={3}>
-            <Typography variant="h6" gutterBottom sx={{ fontFamily: 'Playfair Display', color: 'secondary.main' }}>
+          <div className="lg:col-span-3">
+            <h3 className="text-lg font-poppins font-semibold text-white mb-6">
               Visit Us
-            </Typography>
-            <Stack spacing={2}>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <LocationOn sx={{ color: 'secondary.main', fontSize: 20, mt: 0.5 }} />
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+            </h3>
+            <ul className="space-y-4">
+              <li className="flex items-start gap-3">
+                <LocationOn className="text-accent mt-0.5 shrink-0" fontSize="small" />
+                <span className="text-sm text-primary-light leading-relaxed">
                  No. 20, Circular rd, <br /> Devinuwara, Sri Lanka <br /> 81000
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <Phone sx={{ color: 'secondary.main', fontSize: 20 }} />
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>+94 70 513 9901</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <Email sx={{ color: 'secondary.main', fontSize: 20 }} />
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>doctorcdentalsurgery@gmaail.com</Typography>
-              </Box>
-            </Stack>
-          </Grid>
+                </span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Phone className="text-accent shrink-0" fontSize="small" />
+                <span className="text-sm text-primary-light">+94 70 513 9901</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Email className="text-accent shrink-0" fontSize="small" />
+                <span className="text-sm text-primary-light">doctorcdentalsurgery@gmail.com</span>
+              </li>
+            </ul>
+          </div>
 
           {/* Column 4: Hours */}
-          <Grid item xs={12} md={3}>
-            <Typography variant="h6" gutterBottom sx={{ fontFamily: 'Playfair Display', color: 'secondary.main' }}>
+          <div className="lg:col-span-3">
+            <h3 className="text-lg font-poppins font-semibold text-white mb-6">
               Opening Hours
-            </Typography>
-            <Stack spacing={1}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', opacity: 0.8 }}>
-                <Typography variant="body2">Mon - Fri</Typography>
-                <Typography variant="body2">4:30 PM - 9:00 PM</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', opacity: 0.8 }}>
-                <Typography variant="body2">Sat</Typography>
-                <Typography variant="body2">6:30 PM - 9:00 PM</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', opacity: 0.8 }}>
-                <Typography variant="body2">Sun</Typography>
-                <Typography variant="body2">9:00 AM - 12:00 PM</Typography>
-              </Box>
-            </Stack>
-          </Grid>
-        </Grid>
+            </h3>
+            <ul className="space-y-3">
+              <li className="flex justify-between items-center pb-2 border-b border-white/10">
+                <span className="text-sm text-primary-light">Mon - Fri</span>
+                <span className="text-sm font-medium">4:30 PM - 9:00 PM</span>
+              </li>
+              <li className="flex justify-between items-center pb-2 border-b border-white/10">
+                <span className="text-sm text-primary-light">Sat</span>
+                <span className="text-sm font-medium">6:30 PM - 9:00 PM</span>
+              </li>
+              <li className="flex justify-between items-center">
+                <span className="text-sm text-primary-light">Sun</span>
+                <span className="text-sm font-medium">9:00 AM - 12:00 PM</span>
+              </li>
+            </ul>
+          </div>
+        </div>
 
-        <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', my: 4 }} />
-
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="caption" sx={{ opacity: 0.6 }}>
+        <div className="mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-xs text-primary-light">
             © 2026 Doctor C Dental Surgery. All Rights Reserved.
-          </Typography>
-          <Stack direction="row" spacing={3} sx={{ mt: { xs: 2, md: 0 } }}>
+          </p>
+          <div className="flex space-x-6">
             {['Privacy Policy', 'Terms', 'Cookies'].map((text) => (
-              <Typography key={text} variant="caption" sx={{ opacity: 0.6, cursor: 'pointer', '&:hover': { color: 'secondary.main' } }}>
+              <button key={text} className="text-xs text-primary-light hover:text-white transition-colors">
                 {text}
-              </Typography>
+              </button>
             ))}
-          </Stack>
-        </Box>
-      </Container>
-    </Box>
+          </div>
+        </div>
+      </div>
+    </footer>
   );
 };
 

@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Box, Grid, Paper, Typography, LinearProgress, List, ListItem, ListItemText, 
-  ListItemAvatar, Avatar, Divider, Button, Dialog, DialogTitle, DialogContent, 
-  DialogActions, CircularProgress, Chip, Stack
-} from '@mui/material';
-import { 
   CalendarToday, CheckCircle, Warning, NotificationsActive, 
-  PersonOutline, AddCircleOutline, AccessTime 
+  PersonOutline, AddCircleOutline, AccessTime, Close 
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import api from '../../api/axios'; // Make sure this points to your identity_service axios instance
+import api from '../../api/axios'; 
 import { useAuth } from '../../context/AuthContext';
 
 const Dashboard = () => {
@@ -39,8 +34,6 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        // api instance already has baseURL: 'http://localhost:8080/auth'
-        // So this calls: http://localhost:8080/auth/dentist/{id}/dashboard
         const response = await api.get(`/dentist/${dentistId}/dashboard`);
         setDashboardData(response.data);
       } catch (err) {
@@ -57,7 +50,6 @@ const Dashboard = () => {
   // --- FORMATTING UTILS ---
   const formatTime = (timeString) => {
     if (!timeString) return "TBD";
-    // Assuming backend sends "HH:MM:SS"
     const [hours, minutes] = timeString.split(':');
     const h = parseInt(hours, 10);
     const ampm = h >= 12 ? 'PM' : 'AM';
@@ -70,212 +62,285 @@ const Dashboard = () => {
     { 
       label: "Today's Patients", 
       value: dashboardData.todaysPatients?.length || 0, 
-      icon: <PersonOutline />, 
-      color: '#0288d1',
+      icon: <PersonOutline fontSize="large" />, 
+      colorClass: 'text-blue-600',
+      bgClass: 'bg-blue-50',
+      borderClass: 'hover:border-blue-400',
       action: () => setPatientsModalOpen(true) 
     },
     { 
       label: "Today's Appointments", 
       value: dashboardData.todaysAppointmentsCount || 0, 
-      icon: <CalendarToday />, 
-      color: '#7b1fa2',
+      icon: <CalendarToday fontSize="large" />, 
+      colorClass: 'text-purple-600',
+      bgClass: 'bg-purple-50',
+      borderClass: 'hover:border-purple-400',
       action: () => navigate('/dentist/appointments') 
     },
     { 
       label: "Completed Treatments", 
       value: dashboardData.completedTreatmentsCount || 0, 
-      icon: <CheckCircle />, 
-      color: '#2e7d32',
+      icon: <CheckCircle fontSize="large" />, 
+      colorClass: 'text-green-600',
+      bgClass: 'bg-green-50',
+      borderClass: 'hover:border-green-400',
       action: () => setCompletedModalOpen(true) 
     }
   ];
 
-  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress sx={{ color: '#0E4C5C' }} /></Box>;
-  if (error) return <Box sx={{ mt: 5, textAlign: 'center' }}><Typography color="error" variant="h6">{error}</Typography></Box>;
+  if (loading) return (
+      <div className="flex justify-center items-center h-48">
+          <div className="w-10 h-10 border-4 border-slate-200 border-t-[#0E4C5C] rounded-full animate-spin"></div>
+      </div>
+  );
+  
+  if (error) return (
+      <div className="mt-8 text-center p-6 bg-red-50 rounded-2xl border border-red-100 max-w-lg mx-auto">
+          <p className="text-red-600 font-semibold">{error}</p>
+      </div>
+  );
 
   return (
-    <Box>
-      <Typography variant="h4" fontFamily="Playfair Display" fontWeight="bold" color="#0E4C5C" gutterBottom>
-        Welcome back, Dr. {user?.name || 'Dentist'}
-      </Typography>
+    <div className="font-sans text-slate-800 animate-fade-in p-2 md:p-6 lg:p-8 max-w-7xl mx-auto">
+      
+      <div className="mb-8">
+        <h1 className="text-3xl md:text-4xl font-poppins font-bold text-[#0E4C5C] mb-2">
+          Welcome back, Dr. {user?.name || 'Dentist'}
+        </h1>
+        <p className="text-slate-500 text-sm md:text-base">Here is your daily overview and pending tasks.</p>
+      </div>
       
       {/* --- STATS CARDS --- */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {stats.map((stat, index) => (
-          <Grid item xs={12} sm={4} key={index}>
-            <Paper 
-              elevation={2} 
-              onClick={stat.action} 
-              sx={{ 
-                p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 3, border: '1px solid #e0e0e0',
-                cursor: 'pointer', transition: 'all 0.2s ease-in-out', '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 8px 24px rgba(14, 76, 92, 0.15)', borderColor: stat.color }
-              }}
-            >
-              <Box>
-                <Typography variant="h3" fontWeight="bold" color={stat.color}>{stat.value}</Typography>
-                <Typography variant="subtitle1" color="text.secondary" fontWeight="500">{stat.label}</Typography>
-              </Box>
-              <Avatar sx={{ bgcolor: stat.color + '15', color: stat.color, width: 60, height: 60 }}>{stat.icon}</Avatar>
-            </Paper>
-          </Grid>
+          <button 
+            key={index}
+            onClick={stat.action}
+            className={`flex items-center justify-between p-6 bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 text-left focus:outline-none ${stat.borderClass}`}
+          >
+            <div>
+              <p className={`text-4xl font-bold mb-1 ${stat.colorClass}`}>{stat.value}</p>
+              <p className="font-semibold text-slate-500">{stat.label}</p>
+            </div>
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${stat.bgClass} ${stat.colorClass}`}>
+              {stat.icon}
+            </div>
+          </button>
         ))}
-      </Grid>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* --- ONGOING TREATMENTS --- */}
-        <Grid item xs={12} md={7}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 3, height: '100%', border: '1px solid #e0e0e0' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6" fontWeight="bold" color="#0E4C5C">Ongoing Treatments</Typography>
-            </Box>
+        <div className="lg:col-span-7">
+          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-full flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-[#0E4C5C]">Ongoing Treatments</h2>
+            </div>
             
-            <List sx={{ p: 0 }}>
+            <div className="flex-grow space-y-6">
               {!dashboardData.ongoingTreatments || dashboardData.ongoingTreatments.length === 0 ? (
-                 <Box sx={{ textAlign: 'center', py: 4, bgcolor: '#f9f9f9', borderRadius: 2 }}>
-                    <Typography color="text.secondary">No ongoing treatments currently active.</Typography>
-                 </Box>
+                 <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    <p className="text-slate-500 font-medium">No ongoing treatments currently active.</p>
+                 </div>
               ) : (
                 dashboardData.ongoingTreatments.map((item, index) => (
-                  <Box key={`ongoing-${item.treatmentId || index}`} sx={{ mb: 3 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body1" fontWeight="600">{item.procedureName}</Typography>
-                      <Typography variant="body2" fontWeight="bold" color="#0E4C5C">{item.progressPercentage}%</Typography>
-                    </Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Patient: {item.patientName}</Typography>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={item.progressPercentage || 0} 
-                      sx={{ height: 8, borderRadius: 4, bgcolor: '#e0e0e0', '& .MuiLinearProgress-bar': { bgcolor: '#0E4C5C', borderRadius: 4 } }} 
-                    />
-                  </Box>
+                  <div key={`ongoing-${item.treatmentId || index}`} className="tracking-wide">
+                    <div className="flex justify-between items-end mb-2">
+                      <div>
+                          <p className="font-bold text-slate-800">{item.procedureName}</p>
+                          <p className="text-xs font-semibold text-slate-500 mt-1">Patient: {item.patientName}</p>
+                      </div>
+                      <p className="font-bold text-[#0E4C5C] text-sm">{item.progressPercentage}%</p>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                      <div 
+                        className="bg-[#0E4C5C] h-2.5 rounded-full transition-all duration-1000 ease-out" 
+                        style={{ width: `${item.progressPercentage || 0}%` }}
+                      ></div>
+                    </div>
+                  </div>
                 ))
               )}
-            </List>
-            <Button variant="text" fullWidth sx={{ mt: 2, color: '#0E4C5C', fontWeight: 'bold' }} onClick={() => navigate('/dentist/treatments')}>
+            </div>
+            
+            <button 
+                className="mt-6 w-full py-3 text-[#0E4C5C] font-bold text-sm bg-[#0E4C5C]/5 hover:bg-[#0E4C5C]/10 rounded-xl transition-colors focus:outline-none" 
+                onClick={() => navigate('/dentist/treatments')}
+            >
               View All Treatments
-            </Button>
-          </Paper>
-        </Grid>
+            </button>
+          </div>
+        </div>
 
         {/* --- NOTIFICATIONS --- */}
-        <Grid item xs={12} md={5}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 3, height: '100%', border: '1px solid #e0e0e0' }}>
-            <Typography variant="h6" fontWeight="bold" color="#0E4C5C" gutterBottom>Notifications & Alerts</Typography>
-            <List sx={{ p: 0 }}>
+        <div className="lg:col-span-5">
+          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-full flex flex-col">
+            <h2 className="text-xl font-bold text-[#0E4C5C] mb-6">Notifications & Alerts</h2>
+            
+            <div className="flex-grow">
               {!dashboardData.notifications || dashboardData.notifications.length === 0 ? (
-                 <Box sx={{ textAlign: 'center', py: 4, bgcolor: '#f9f9f9', borderRadius: 2 }}>
-                    <Typography color="text.secondary">You're all caught up!</Typography>
-                 </Box>
+                 <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200 h-full flex items-center justify-center">
+                    <p className="text-slate-500 font-medium">You're all caught up!</p>
+                 </div>
               ) : (
-                dashboardData.notifications.map((notif, index) => (
-                  <React.Fragment key={`notif-${notif.notificationId || index}`}>
-                    <ListItem alignItems="flex-start" sx={{ px: 0, py: 1.5 }}>
-                      <ListItemAvatar>
-                        <Avatar sx={{ 
-                          bgcolor: notif.type === 'ALERT' ? '#ffebee' : '#e8f5e9', 
-                          color: notif.type === 'ALERT' ? '#d32f2f' : '#2e7d32' 
-                        }}>
-                          {notif.type === 'ALERT' ? <Warning /> : <NotificationsActive />}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={<Typography fontWeight="bold" color="text.primary">{notif.title}</Typography>}
-                        secondary={<Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{notif.message}</Typography>}
-                      />
-                    </ListItem>
-                    {index < dashboardData.notifications.length - 1 && <Divider component="li" />}
-                  </React.Fragment>
-                ))
+                <div className="space-y-4">
+                    {dashboardData.notifications.map((notif, index) => (
+                      <div key={`notif-${notif.notificationId || index}`} className="flex items-start space-x-4 p-4 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${notif.type === 'ALERT' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                            {notif.type === 'ALERT' ? <Warning fontSize="small" /> : <NotificationsActive fontSize="small" />}
+                        </div>
+                        <div>
+                            <p className="font-bold text-slate-800 text-sm mb-1">{notif.title}</p>
+                            <p className="text-xs text-slate-500 font-medium leading-relaxed">{notif.message}</p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
               )}
-            </List>
-          </Paper>
-        </Grid>
-      </Grid>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* --- POPUP 1: TODAY'S PATIENTS --- */}
-      <Dialog open={patientsModalOpen} onClose={() => setPatientsModalOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ bgcolor: '#F8FAFC', borderBottom: '1px solid #eee', pb: 2 }}>
-          <Typography variant="h5" fontWeight="bold" color="#0E4C5C">Today's Patients</Typography>
-          <Typography variant="body2" color="text.secondary">Manage your patient roster for today</Typography>
-        </DialogTitle>
-        <DialogContent sx={{ p: 0 }}>
-          {!dashboardData.todaysPatients || dashboardData.todaysPatients.length === 0 ? (
-             <Box sx={{ textAlign: 'center', py: 6 }}><Typography color="text.secondary">No patients scheduled for today.</Typography></Box>
-          ) : (
-            <List sx={{ p: 0 }}>
-              {dashboardData.todaysPatients.map((patient, index) => (
-                <ListItem key={`patient-${patient.patientId || index}`} sx={{ borderBottom: '1px solid #eee', p: 3, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                    <Avatar sx={{ bgcolor: '#0E4C5C', mr: 2, width: 50, height: 50 }}>{patient.name?.charAt(0) || 'P'}</Avatar>
-                    <Box>
-                      <Typography variant="h6" fontWeight="bold">{patient.name}</Typography>
-                      <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 0.5 }}>
-                        <Typography variant="body2" color="text.secondary">Patient ID: #{patient.patientId}</Typography>
-                        <Chip size="small" icon={<AccessTime fontSize="small"/>} label={formatTime(patient.appointmentTime)} sx={{ bgcolor: '#e3f2fd', color: '#1565c0', fontWeight: 'bold' }} />
-                        {patient.appointmentStatus && (
-                          <Chip size="small" label={patient.appointmentStatus} color={patient.appointmentStatus === 'COMPLETED' ? 'success' : 'default'} variant="outlined" />
-                        )}
-                      </Stack>
-                    </Box>
-                  </Box>
-                  <Button 
-                    variant="contained" 
-                    startIcon={<AddCircleOutline />}
-                    sx={{ bgcolor: '#0E4C5C', '&:hover': { bgcolor: '#083642' }, borderRadius: 2, textTransform: 'none', px: 3 }}
-                    onClick={() => {
-                        setPatientsModalOpen(false);
-                        navigate(`/dentist/treatments?patientId=${patient.patientId}`);
-                    }}
-                  >
-                    Add Treatment
-                  </Button>
-                </ListItem>
-              ))}
-            </List>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 2, borderTop: '1px solid #eee' }}>
-          <Button onClick={() => setPatientsModalOpen(false)} sx={{ color: 'text.secondary', fontWeight: 'bold' }}>Close</Button>
-        </DialogActions>
-      </Dialog>
+      {patientsModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+                  {/* Header */}
+                  <div className="bg-slate-50 p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
+                      <div>
+                          <h2 className="text-xl font-bold font-poppins text-[#0E4C5C]">Today's Patients</h2>
+                          <p className="text-sm font-semibold text-slate-500 mt-1">Manage your patient roster for today</p>
+                      </div>
+                      <button 
+                         onClick={() => setPatientsModalOpen(false)}
+                         className="text-slate-400 hover:text-slate-600 bg-white p-2 rounded-full border border-slate-200 hover:bg-slate-50 transition-all focus:outline-none"
+                      >
+                         <Close fontSize="small" />
+                      </button>
+                  </div>
+
+                  {/* Content */}
+                  <div className="overflow-y-auto p-2 md:p-6 flex-grow bg-slate-50/30">
+                      {!dashboardData.todaysPatients || dashboardData.todaysPatients.length === 0 ? (
+                         <div className="text-center py-12">
+                             <p className="text-slate-500 font-medium">No patients scheduled for today.</p>
+                         </div>
+                      ) : (
+                          <div className="space-y-4">
+                              {dashboardData.todaysPatients.map((patient, index) => (
+                                  <div key={`patient-${patient.patientId || index}`} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                                      <div className="flex items-center space-x-4">
+                                          <div className="w-12 h-12 bg-[#0E4C5C] text-white rounded-full flex items-center justify-center font-bold text-xl shrink-0">
+                                              {patient.name?.charAt(0).toUpperCase() || 'P'}
+                                          </div>
+                                          <div>
+                                              <p className="font-bold text-slate-800 text-lg mb-1">{patient.name}</p>
+                                              <div className="flex flex-wrap items-center gap-2">
+                                                  <span className="text-xs font-semibold text-slate-500 border border-slate-200 px-2 py-1 rounded-md">ID: #{patient.patientId}</span>
+                                                  <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                                                      <AccessTime fontSize="inherit" className="mr-1" />
+                                                      {formatTime(patient.appointmentTime)}
+                                                  </span>
+                                                  {patient.appointmentStatus && (
+                                                      <span className={`px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${
+                                                          patient.appointmentStatus === 'COMPLETED' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-slate-100 text-slate-600 border border-slate-200'
+                                                      }`}>
+                                                          {patient.appointmentStatus}
+                                                      </span>
+                                                  )}
+                                              </div>
+                                          </div>
+                                      </div>
+                                      <button 
+                                          className="flex items-center justify-center sm:justify-start px-4 py-2.5 bg-[#0E4C5C] text-white hover:bg-[#0a3541] rounded-xl font-bold text-sm transition-all focus:outline-none shadow-md shadow-[#0E4C5C]/20 w-full sm:w-auto"
+                                          onClick={() => {
+                                              setPatientsModalOpen(false);
+                                              navigate(`/dentist/treatments?patientId=${patient.patientId}`);
+                                          }}
+                                      >
+                                          <AddCircleOutline fontSize="small" className="mr-2" />
+                                          Add Treatment
+                                      </button>
+                                  </div>
+                              ))}
+                          </div>
+                      )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="p-5 border-t border-slate-100 bg-white flex justify-end shrink-0">
+                      <button 
+                          onClick={() => setPatientsModalOpen(false)}
+                          className="px-6 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-100 transition-colors focus:outline-none"
+                      >
+                          Close
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
 
       {/* --- POPUP 2: COMPLETED TREATMENTS --- */}
-      <Dialog open={completedModalOpen} onClose={() => setCompletedModalOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ bgcolor: '#F8FAFC', borderBottom: '1px solid #eee', pb: 2 }}>
-          <Typography variant="h5" fontWeight="bold" color="#2e7d32">Completed Treatments</Typography>
-        </DialogTitle>
-        <DialogContent sx={{ p: 0 }}>
-          {!dashboardData.completedTreatments || dashboardData.completedTreatments.length === 0 ? (
-             <Box sx={{ textAlign: 'center', py: 6 }}><Typography color="text.secondary">No completed treatments yet.</Typography></Box>
-          ) : (
-            <List sx={{ p: 0 }}>
-              {dashboardData.completedTreatments.map((treatment, index) => (
-                <ListItem key={`completed-${treatment.treatmentId || index}`} sx={{ borderBottom: '1px solid #eee', p: 3 }}>
-                  <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: '#e8f5e9', color: '#2e7d32' }}><CheckCircle /></Avatar>
-                  </ListItemAvatar>
-                  <ListItemText 
-                    primary={<Typography variant="h6" fontWeight="bold">{treatment.procedureName}</Typography>}
-                    secondary={
-                      <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
-                        <Typography variant="body2" color="text.secondary"><strong>Patient:</strong> {treatment.patientName}</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          <strong>Date:</strong> {treatment.completionDate ? treatment.completionDate : 'N/A'}
-                        </Typography>
-                      </Stack>
-                    }
-                  />
-                </ListItem>
-              ))}
-            </List>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 2, borderTop: '1px solid #eee' }}>
-          <Button onClick={() => setCompletedModalOpen(false)} sx={{ color: 'text.secondary', fontWeight: 'bold' }}>Close Window</Button>
-        </DialogActions>
-      </Dialog>
+      {completedModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                  {/* Header */}
+                  <div className="bg-slate-50 p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
+                      <div>
+                          <h2 className="text-xl font-bold font-poppins text-green-700 flex items-center">
+                              <CheckCircle className="mr-2" />
+                              Completed Treatments
+                          </h2>
+                      </div>
+                      <button 
+                         onClick={() => setCompletedModalOpen(false)}
+                         className="text-slate-400 hover:text-slate-600 bg-white p-2 rounded-full border border-slate-200 hover:bg-slate-50 transition-all focus:outline-none"
+                      >
+                         <Close fontSize="small" />
+                      </button>
+                  </div>
 
-    </Box>
+                  {/* Content */}
+                  <div className="overflow-y-auto p-2 md:p-6 flex-grow bg-slate-50/30">
+                      {!dashboardData.completedTreatments || dashboardData.completedTreatments.length === 0 ? (
+                         <div className="text-center py-12">
+                             <p className="text-slate-500 font-medium">No completed treatments yet.</p>
+                         </div>
+                      ) : (
+                          <div className="space-y-4">
+                              {dashboardData.completedTreatments.map((treatment, index) => (
+                                  <div key={`completed-${treatment.treatmentId || index}`} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow">
+                                      <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-green-50 text-green-600 border border-green-100 mt-1">
+                                          <CheckCircle fontSize="small" />
+                                      </div>
+                                      <div className="flex-grow">
+                                          <p className="font-bold text-slate-800 text-lg mb-2">{treatment.procedureName}</p>
+                                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-sm">
+                                              <p className="text-slate-600"><span className="font-semibold text-slate-800 mr-1">Patient:</span> {treatment.patientName}</p>
+                                              <p className="text-slate-600"><span className="font-semibold text-slate-800 mr-1">Date:</span> {treatment.completionDate ? treatment.completionDate : 'N/A'}</p>
+                                          </div>
+                                      </div>
+                                  </div>
+                              ))}
+                          </div>
+                      )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="p-5 border-t border-slate-100 bg-white flex justify-end shrink-0">
+                      <button 
+                          onClick={() => setCompletedModalOpen(false)}
+                          className="px-6 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-100 transition-colors focus:outline-none"
+                      >
+                          Close Window
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
+
+    </div>
   );
 };
 

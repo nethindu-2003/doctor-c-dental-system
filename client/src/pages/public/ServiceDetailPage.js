@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Container, Typography, Button, Paper, Stack, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { motion } from 'framer-motion';
 import { CheckCircle, ArrowBack } from '@mui/icons-material';
 import PublicHeader from '../../components/Layout/PublicHeader';
 import Footer from '../../components/Layout/Footer';
@@ -127,60 +127,81 @@ const ServiceDetailPage = () => {
   const service = serviceData[id] || serviceData['extraction']; 
 
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
+    <div className="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col">
       <PublicHeader />
 
       {/* Hero Section */}
-      <Box sx={{ 
-        pt: 15, pb: 10, bgcolor: 'primary.dark', color: 'white', textAlign: 'center' 
-      }}>
-        <Container maxWidth="md">
-            <Typography variant="overline" color="secondary.main" letterSpacing={2}>OUR SERVICES</Typography>
-            <Typography variant="h2" fontFamily="Playfair Display" fontWeight="bold" sx={{ mt: 1, mb: 2 }}>{service.title}</Typography>
-            <Typography variant="h5" sx={{ opacity: 0.9, fontWeight: 300 }}>{service.subtitle}</Typography>
-        </Container>
-      </Box>
+      <section className="bg-primary-dark pt-32 pb-20 px-4 mt-16 md:mt-0 text-center text-white flex-shrink-0">
+        <div className="max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <p className="text-accent font-bold tracking-widest text-sm mb-4 uppercase">
+                OUR SERVICES
+              </p>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-poppins font-bold mb-4">
+                {service.title}
+              </h1>
+              <p className="text-xl md:text-2xl text-primary-light font-light max-w-2xl mx-auto">
+                {service.subtitle}
+              </p>
+            </motion.div>
+        </div>
+      </section>
 
       {/* Content Section */}
-      <Container maxWidth="md" sx={{ py: 8 }}>
-        <Paper elevation={0} sx={{ p: { xs: 4, md: 6 }, borderRadius: 4, border: '1px solid #e0e0e0' }}>
-            
-            <Box>
-                <Typography variant="h4" color="primary.dark" fontFamily="Playfair Display" fontWeight="bold" gutterBottom align="center">
-                    Overview
-                </Typography>
-                <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem', lineHeight: 1.8, color: 'text.secondary', textAlign: 'justify' }}>
-                    {service.desc}
-                </Typography>
+      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 -mt-10 relative z-10 w-full flex-grow">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="bg-white p-8 md:p-12 rounded-3xl shadow-xl border border-slate-100"
+        >
+          <div className="flex flex-col items-center">
+            <h2 className="text-3xl font-poppins font-bold text-primary-dark mb-6 text-center">
+                Overview
+            </h2>
+            <p className="text-lg text-slate-600 leading-relaxed text-center sm:text-justify max-w-3xl mb-12">
+                {service.desc}
+            </p>
 
-                <Box sx={{ mt: 5, maxWidth: 600, mx: 'auto' }}>
-                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }} align="center">Key Benefits & Features:</Typography>
-                    <List>
-                        {service.features.map((feature, i) => (
-                            <ListItem key={i} disablePadding sx={{ mb: 1 }}>
-                                <ListItemIcon sx={{ minWidth: 36 }}>
-                                    <CheckCircle sx={{ color: 'secondary.main' }} />
-                                </ListItemIcon>
-                                <ListItemText primary={feature} />
-                            </ListItem>
-                        ))}
-                    </List>
-                </Box>
+            <div className="w-full max-w-2xl bg-slate-50 rounded-2xl p-8 border border-slate-100 mb-10">
+                <h3 className="text-xl font-bold text-slate-800 mb-6 text-center">
+                  Key Benefits &amp; Features:
+                </h3>
+                <ul className="space-y-4">
+                    {service.features.map((feature, i) => (
+                        <li key={i} className="flex items-start">
+                            <CheckCircle className="text-accent flex-shrink-0 mr-3 mt-1" fontSize="small" />
+                            <span className="text-slate-700">{feature}</span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
 
-                <Stack direction="row" spacing={2} sx={{ mt: 6, justifyContent: 'center' }}>
-                    <Button variant="contained" size="large" onClick={() => navigate('/login')} sx={{ borderRadius: 50, px: 5 }}>
-                        Book Appointment
-                    </Button>
-                    <Button variant="outlined" size="large" onClick={() => navigate('/#services')} startIcon={<ArrowBack />} sx={{ borderRadius: 50, px: 5 }}>
-                        Back to Services
-                    </Button>
-                </Stack>
-            </Box>
-        </Paper>
-      </Container>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center w-full">
+                <button 
+                  onClick={() => navigate('/login')} 
+                  className="bg-primary hover:bg-primary-dark text-white px-8 py-3.5 rounded-full font-semibold shadow-md shadow-primary/20 transition-all duration-300 w-full sm:w-auto transform hover:-translate-y-0.5"
+                >
+                    Book Appointment
+                </button>
+                <button 
+                  onClick={() => navigate('/#services')} 
+                  className="bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 px-8 py-3.5 rounded-full font-semibold transition-all duration-300 flex items-center justify-center w-full sm:w-auto"
+                >
+                    <ArrowBack className="mr-2" fontSize="small" />
+                    Back to Services
+                </button>
+            </div>
+          </div>
+        </motion.div>
+      </main>
 
       <Footer />
-    </Box>
+    </div>
   );
 };
 

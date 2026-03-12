@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  Box, Typography, Paper, TextField, Button, Grid, MenuItem, 
-  InputAdornment, Alert, Stack, Container, Avatar, Card, CardContent 
-} from '@mui/material';
-import { 
   PersonAdd, Email, Phone, MedicalServices, Send, 
-  AdminPanelSettings, VerifiedUser 
+  AdminPanelSettings, VerifiedUser, ErrorOutline
 } from '@mui/icons-material';
 import api from '../../api/axios'; 
 import { validateAddDentist } from '../../utils/validation'; 
@@ -56,193 +52,206 @@ const AddDentist = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
       
       {/* HEADER SECTION (Optional, can be removed if relying on Sidebar context) */}
-      <Box mb={4}>
-        <Typography variant="h4" fontFamily="Playfair Display" fontWeight="bold" color="#1A237E" gutterBottom>
+      <div className="mb-8">
+        <h1 className="text-3xl md:text-4xl font-poppins font-bold text-primary-dark mb-2">
           Team Management
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
+        </h1>
+        <p className="text-slate-500 text-lg">
           Expand your clinic's capacity by inviting new specialists.
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* MAIN CARD WITH SPLIT LAYOUT */}
-      <Card 
-        elevation={0} 
-        sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', md: 'row' }, // Stack on mobile, row on desktop
-          borderRadius: 4, 
-          overflow: 'hidden', 
-          border: '1px solid #e0e0e0',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.05)'
-        }}
-      >
+      <div className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-xl flex flex-col md:flex-row">
         
         {/* --- LEFT PANEL: VISUAL CONTEXT --- */}
-        <Box 
-          sx={{ 
-            width: { xs: '100%', md: '35%' }, 
-            bgcolor: '#1A237E', // Brand Blue
-            background: 'linear-gradient(135deg, #1A237E 0%, #0E4C5C 100%)',
-            color: 'white',
-            p: 5,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            textAlign: 'center'
-          }}
-        >
-          <Avatar 
-            sx={{ 
-              width: 80, height: 80, mb: 3, 
-              bgcolor: 'rgba(255,255,255,0.2)', 
-              boxShadow: '0 8px 16px rgba(0,0,0,0.2)' 
-            }}
-          >
-            <PersonAdd sx={{ fontSize: 40, color: 'white' }} />
-          </Avatar>
+        <div className="w-full md:w-5/12 bg-gradient-to-br from-[#1A237E] to-[#0E4C5C] text-white p-10 flex flex-col justify-center items-center text-center relative overflow-hidden">
+          {/* Decorative background circles */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/3"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-5 rounded-full translate-y-1/3 -translate-x-1/4"></div>
 
-          <Typography variant="h5" fontWeight="bold" gutterBottom>
+          <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-2xl mb-6 relative z-10 border border-white/30">
+            <PersonAdd style={{ fontSize: 48, color: 'white' }} />
+          </div>
+
+          <h2 className="text-2xl font-bold mb-4 relative z-10 font-poppins text-white">
             Invite New Dentist
-          </Typography>
+          </h2>
           
-          <Typography variant="body2" sx={{ opacity: 0.8, mb: 4, maxWidth: 250 }}>
+          <p className="text-white/80 text-sm mb-8 max-w-[280px] leading-relaxed relative z-10">
             The new dentist will receive a secure link to set up their password and access their portal.
-          </Typography>
+          </p>
 
           {/* Simple Stats or Trust Indicators */}
-          <Stack spacing={2} sx={{ width: '100%', maxWidth: 280 }}>
-            <Paper sx={{ py: 1.5, px: 2, bgcolor: 'rgba(255,255,255,0.1)', color: 'white', display: 'flex', alignItems: 'center', borderRadius: 2 }}>
-              <AdminPanelSettings fontSize="small" sx={{ mr: 2, opacity: 0.8 }} />
-              <Typography variant="caption">Admin Approval Required</Typography>
-            </Paper>
-            <Paper sx={{ py: 1.5, px: 2, bgcolor: 'rgba(255,255,255,0.1)', color: 'white', display: 'flex', alignItems: 'center', borderRadius: 2 }}>
-              <VerifiedUser fontSize="small" sx={{ mr: 2, opacity: 0.8 }} />
-              <Typography variant="caption">Secure Invitation Link</Typography>
-            </Paper>
-          </Stack>
-        </Box>
-
+          <div className="flex flex-col space-y-3 w-full max-w-[280px] relative z-10">
+            <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-xl flex items-center border border-white/20">
+              <AdminPanelSettings fontSize="small" className="text-white/80 mr-3" />
+              <span className="text-sm font-medium text-white/90">Admin Approval Required</span>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-xl flex items-center border border-white/20">
+              <VerifiedUser fontSize="small" className="text-white/80 mr-3" />
+              <span className="text-sm font-medium text-white/90">Secure Invitation Link</span>
+            </div>
+          </div>
+        </div>
 
         {/* --- RIGHT PANEL: THE FORM --- */}
-        <Box sx={{ width: { xs: '100%', md: '65%' }, p: 5, bgcolor: '#ffffff' }}>
+        <div className="w-full md:w-7/12 p-8 md:p-12 bg-white flex flex-col justify-center">
           
           {status.msg && (
-            <Alert severity={status.type} sx={{ mb: 4, borderRadius: 2 }}>
-              {status.msg}
-            </Alert>
+            <div className={`mb-6 p-4 rounded-xl border flex items-center shadow-sm animate-fade-in ${
+                status.type === 'success' ? 'bg-green-50 text-green-800 border-green-200' : 'bg-red-50 text-red-800 border-red-200'
+            }`}>
+              <span className="font-semibold text-sm">{status.msg}</span>
+            </div>
           )}
 
-          <form onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               {/* Full Name */}
-              <Grid item xs={12}>
-                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1, color: '#1A237E' }}>Full Name</Typography>
-                <TextField 
-                  placeholder="e.g. Dr. Sarah Smith" 
-                  name="name" 
-                  fullWidth 
-                  required
-                  value={formData.name} 
-                  onChange={handleChange}
-                  error={!!errors.name}
-                  helperText={errors.name}
-                  InputProps={{ startAdornment: <InputAdornment position="start"><PersonAdd color="action" fontSize="small"/></InputAdornment> }}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                />
-              </Grid>
+              <div className="md:col-span-2 group">
+                <label className="block text-sm font-bold text-[#1A237E] mb-2 font-poppins tracking-wide">FULL NAME</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
+                    <PersonAdd fontSize="small" />
+                  </div>
+                  <input 
+                    type="text"
+                    name="name" 
+                    placeholder="e.g. Dr. Sarah Smith" 
+                    required
+                    value={formData.name} 
+                    onChange={handleChange}
+                    className={`w-full pl-11 pr-4 py-3.5 bg-slate-50 border rounded-xl outline-none transition-all duration-300 text-slate-800 font-medium ${
+                        errors.name 
+                        ? 'border-red-400 focus:ring-4 focus:ring-red-500/10' 
+                        : 'border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 hover:border-slate-300 hover:bg-white'
+                    }`}
+                  />
+                </div>
+                {errors.name && <p className="mt-2 text-xs text-red-500 font-semibold flex items-center"><ErrorOutline fontSize="inherit" className="mr-1"/> {errors.name}</p>}
+              </div>
 
               {/* Email */}
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1, color: '#1A237E' }}>Email Address</Typography>
-                <TextField 
-                  placeholder="doctor@clinic.com" 
-                  name="email" 
-                  type="email" 
-                  fullWidth 
-                  required
-                  value={formData.email} 
-                  onChange={handleChange}
-                  error={!!errors.email}
-                  helperText={errors.email}
-                  InputProps={{ startAdornment: <InputAdornment position="start"><Email color="action" fontSize="small"/></InputAdornment> }}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                />
-              </Grid>
+              <div className="group">
+                <label className="block text-sm font-bold text-[#1A237E] mb-2 font-poppins tracking-wide">EMAIL ADDRESS</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
+                    <Email fontSize="small" />
+                  </div>
+                  <input 
+                    type="email"
+                    name="email" 
+                    placeholder="doctor@clinic.com" 
+                    required
+                    value={formData.email} 
+                    onChange={handleChange}
+                    className={`w-full pl-11 pr-4 py-3.5 bg-slate-50 border rounded-xl outline-none transition-all duration-300 text-slate-800 font-medium ${
+                        errors.email 
+                        ? 'border-red-400 focus:ring-4 focus:ring-red-500/10' 
+                        : 'border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 hover:border-slate-300 hover:bg-white'
+                    }`}
+                  />
+                </div>
+                {errors.email && <p className="mt-2 text-xs text-red-500 font-semibold flex items-center"><ErrorOutline fontSize="inherit" className="mr-1"/> {errors.email}</p>}
+              </div>
 
               {/* Phone */}
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1, color: '#1A237E' }}>Phone Number</Typography>
-                <TextField 
-                  placeholder="077 123 4567" 
-                  name="phone" 
-                  fullWidth 
-                  required
-                  value={formData.phone} 
-                  onChange={handleChange}
-                  error={!!errors.phone}
-                  helperText={errors.phone}
-                  InputProps={{ startAdornment: <InputAdornment position="start"><Phone color="action" fontSize="small"/></InputAdornment> }}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                />
-              </Grid>
+              <div className="group">
+                <label className="block text-sm font-bold text-[#1A237E] mb-2 font-poppins tracking-wide">PHONE NUMBER</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
+                    <Phone fontSize="small" />
+                  </div>
+                  <input 
+                    type="tel"
+                    name="phone" 
+                    placeholder="077 123 4567" 
+                    required
+                    value={formData.phone} 
+                    onChange={handleChange}
+                    className={`w-full pl-11 pr-4 py-3.5 bg-slate-50 border rounded-xl outline-none transition-all duration-300 text-slate-800 font-medium ${
+                        errors.phone 
+                        ? 'border-red-400 focus:ring-4 focus:ring-red-500/10' 
+                        : 'border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 hover:border-slate-300 hover:bg-white'
+                    }`}
+                  />
+                </div>
+                {errors.phone && <p className="mt-2 text-xs text-red-500 font-semibold flex items-center"><ErrorOutline fontSize="inherit" className="mr-1"/> {errors.phone}</p>}
+              </div>
 
               {/* Specialization */}
-              <Grid item xs={12}>
-                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1, color: '#1A237E' }}>Specialization</Typography>
-                <TextField 
-                  select 
-                  fullWidth 
-                  required
-                  value={formData.specialization} 
-                  onChange={handleChange}
-                  name="specialization"
-                  error={!!errors.specialization}
-                  helperText={errors.specialization}
-                  InputProps={{ startAdornment: <InputAdornment position="start"><MedicalServices color="action" fontSize="small"/></InputAdornment> }}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                >
-                  <MenuItem value="">-- Select Specialization --</MenuItem>
-                  <MenuItem value="General Dentist">General Dentist</MenuItem>
-                  <MenuItem value="Orthodontist">Orthodontist</MenuItem>
-                  <MenuItem value="Periodontist">Periodontist</MenuItem>
-                  <MenuItem value="Oral Surgeon">Oral Surgeon</MenuItem>
-                  <MenuItem value="Pediatric Dentist">Pediatric Dentist</MenuItem>
-                </TextField>
-              </Grid>
-            </Grid>
+              <div className="md:col-span-2 group">
+                <label className="block text-sm font-bold text-[#1A237E] mb-2 font-poppins tracking-wide">SPECIALIZATION</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
+                    <MedicalServices fontSize="small" />
+                  </div>
+                  <select 
+                    name="specialization"
+                    required
+                    value={formData.specialization} 
+                    onChange={handleChange}
+                    className={`w-full pl-11 pr-10 py-3.5 bg-slate-50 border rounded-xl outline-none transition-all duration-300 text-slate-800 font-medium appearance-none ${
+                        errors.specialization 
+                        ? 'border-red-400 focus:ring-4 focus:ring-red-500/10' 
+                        : 'border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 hover:border-slate-300 hover:bg-white'
+                    }`}
+                  >
+                    <option value="" disabled>-- Select Specialization --</option>
+                    <option value="General Dentist">General Dentist</option>
+                    <option value="Orthodontist">Orthodontist</option>
+                    <option value="Periodontist">Periodontist</option>
+                    <option value="Oral Surgeon">Oral Surgeon</option>
+                    <option value="Pediatric Dentist">Pediatric Dentist</option>
+                  </select>
+                  {/* Custom select arrow */}
+                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                {errors.specialization && <p className="mt-2 text-xs text-red-500 font-semibold flex items-center"><ErrorOutline fontSize="inherit" className="mr-1"/> {errors.specialization}</p>}
+              </div>
+            </div>
 
             {/* Submit Button */}
-            <Stack direction="row" justifyContent="flex-end" sx={{ mt: 5 }}>
-              <Button 
-                variant="contained" 
-                size="large" 
+            <div className="flex justify-end mt-8 pt-4 border-t border-slate-100">
+              <button 
                 type="submit" 
                 disabled={loading}
-                endIcon={<Send />}
-                sx={{ 
-                  bgcolor: '#1A237E', 
-                  px: 5, py: 1.5, 
-                  borderRadius: 3, 
-                  textTransform: 'none',
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  boxShadow: '0 8px 16px rgba(26, 35, 126, 0.2)'
-                }}
+                className={`flex items-center justify-center px-8 py-4 rounded-xl font-bold text-base transition-all duration-300 outline-none focus:ring-4 focus:ring-[#1A237E]/20 shadow-[0_8px_16px_rgba(26,35,126,0.2)] ${
+                    loading 
+                    ? 'bg-[#1A237E]/80 text-white cursor-not-allowed transform scale-95 shadow-none' 
+                    : 'bg-[#1A237E] text-white hover:bg-[#12185c] hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(26,35,126,0.3)] active:scale-95'
+                }`}
               >
-                {loading ? 'Sending Invitation...' : 'Send Invitation'}
-              </Button>
-            </Stack>
+                {loading ? (
+                    <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Sending Invitation...
+                    </>
+                ) : (
+                    <>
+                        Send Invitation
+                        <Send fontSize="small" className="ml-2 -mr-1" />
+                    </>
+                )}
+              </button>
+            </div>
           </form>
-        </Box>
+        </div>
 
-      </Card>
-    </Container>
+      </div>
+    </div>
   );
 };
 
