@@ -5,8 +5,10 @@ import {
 } from '@mui/icons-material';
 import PublicHeader from '../../components/Layout/PublicHeader';
 import Footer from '../../components/Layout/Footer';
+import { useClinic } from '../../context/ClinicContext';
 
 const ContactPage = () => {
+  const { config } = useClinic();
   return (
     <div className="bg-slate-50 min-h-screen font-sans text-slate-800 overflow-x-hidden flex flex-col">
       
@@ -135,7 +137,7 @@ const ContactPage = () => {
                   <div>
                     <h3 className="font-bold text-primary-dark text-lg mb-1">Visit Us</h3>
                     <p className="text-slate-600 text-sm leading-relaxed">
-                      No. 20, Circular rd, <br /> Devinuwara, Sri Lanka <br /> 81000
+                      {config.clinicAddress || 'Address not available'}
                     </p>
                   </div>
                 </div>
@@ -147,8 +149,7 @@ const ContactPage = () => {
                   </div>
                   <div>
                     <h3 className="font-bold text-primary-dark text-lg mb-1">Call Us</h3>
-                    <p className="text-slate-600 font-medium">+94 70 513 9901</p>
-                    <p className="text-slate-500 text-sm mt-1">Mon-Fri from 4pm to 9pm</p>
+                    <p className="text-slate-600 font-medium">{config.clinicPhone || 'Phone not available'}</p>
                   </div>
                 </div>
 
@@ -159,7 +160,7 @@ const ContactPage = () => {
                   </div>
                   <div>
                     <h3 className="font-bold text-primary-dark text-lg mb-1">Email Us</h3>
-                    <p className="text-slate-600 text-sm">doctorcdentalsurgery@gmail.com</p>
+                    <p className="text-slate-600 text-sm">{config.clinicEmail || 'Email not available'}</p>
                   </div>
                 </div>
 

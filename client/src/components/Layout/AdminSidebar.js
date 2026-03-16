@@ -10,10 +10,12 @@ import {
   Logout 
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useClinic } from '../../context/ClinicContext';
 
 const AdminSidebar = ({ mobileOpen, handleDrawerToggle, handleLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { config } = useClinic();
 
   const menuItems = [
     { text: 'Dashboard', icon: <Dashboard fontSize="small" />, path: '/admin/dashboard' },
@@ -29,10 +31,14 @@ const AdminSidebar = ({ mobileOpen, handleDrawerToggle, handleLogout }) => {
     <div className="h-full flex flex-col bg-slate-900 text-white shadow-xl">
       {/* Brand Logo */}
       <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-700">
-        <div className="w-9 h-9 bg-primary-light rounded-lg flex items-center justify-center shadow-sm">
-            <span className="text-xl font-bold text-white">C</span>
-        </div>
-        <span className="text-xl font-poppins font-bold tracking-tight text-white">Doctor C</span>
+        {config.clinicLogo ? (
+          <img src={config.clinicLogo} alt={config.clinicName} className="w-9 h-9 rounded-lg object-contain shadow-sm" />
+        ) : (
+          <div className="w-9 h-9 bg-primary-light rounded-lg flex items-center justify-center shadow-sm">
+            <span className="text-xl font-bold text-white">{config.clinicName?.charAt(0) || 'C'}</span>
+          </div>
+        )}
+        <span className="text-xl font-poppins font-bold tracking-tight text-white">{config.clinicName}</span>
       </div>
 
       {/* Navigation List */}

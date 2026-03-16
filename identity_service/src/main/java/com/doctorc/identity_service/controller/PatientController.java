@@ -1,22 +1,30 @@
 package com.doctorc.identity_service.controller;
 
-import com.doctorc.identity_service.dto.AppointmentRequest;
-import com.doctorc.identity_service.entity.Appointment;
-import com.doctorc.identity_service.entity.Patient;
-import com.doctorc.identity_service.entity.Payment;
-import com.doctorc.identity_service.entity.Treatment;
-import com.doctorc.identity_service.service.AppointmentService;
-import com.doctorc.identity_service.repository.DentistRepository;
-import com.doctorc.identity_service.repository.AppointmentRepository;
-import com.doctorc.identity_service.dto.DentistDTO;
-import com.doctorc.identity_service.service.TreatmentService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.doctorc.identity_service.dto.AppointmentRequest;
+import com.doctorc.identity_service.dto.DentistDTO;
+import com.doctorc.identity_service.entity.Appointment;
+import com.doctorc.identity_service.entity.Patient;
+import com.doctorc.identity_service.entity.Treatment;
+import com.doctorc.identity_service.repository.AppointmentRepository;
+import com.doctorc.identity_service.repository.DentistRepository;
+import com.doctorc.identity_service.service.AppointmentService;
+import com.doctorc.identity_service.service.TreatmentService;
 
 @RestController
 @RequestMapping("/auth/patient")
@@ -82,8 +90,17 @@ public class PatientController {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
-        // Logic: Only allow cancelling if it's PENDING
+        // Logic: Only allow cancelling if it's PENDING or CONFIRMED
         if ("PENDING".equals(appointment.getStatus()) || "CONFIRMED".equals(appointment.getStatus())) {
+            // Check if appointment is within 1 hour
+            java.time.LocalDateTime apptDateTime = java.time.LocalDateTime.of(
+                    appointment.getAppointmentDate(), 
+                    appointment.getAppointmentTime()
+            );
+            if (apptDateTime.isBefore(java.time.LocalDateTime.now().plusHours(1))) {
+                throw new RuntimeException("Cannot cancel appointments within 1 hour of scheduled time.");
+            }
+            
             appointment.setStatus("CANCELLED");
             appointmentRepository.save(appointment);
             return "Appointment cancelled successfully.";
@@ -127,6 +144,9 @@ public class PatientController {
         patient.setAddress(request.getAddress());
         patient.setAllergies(request.getAllergies());
         patient.setEmailNotifications(request.getEmailNotifications());
+        if (request.getProfilePicture() != null) {
+            patient.setProfilePicture(request.getProfilePicture());
+        }
 
         return patientRepository.save(patient);
     }

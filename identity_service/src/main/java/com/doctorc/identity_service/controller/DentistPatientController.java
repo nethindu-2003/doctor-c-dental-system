@@ -1,5 +1,14 @@
 package com.doctorc.identity_service.controller;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.doctorc.identity_service.dto.DentistPatientRowDTO;
 import com.doctorc.identity_service.dto.TreatmentHistoryDTO;
 import com.doctorc.identity_service.entity.Patient;
@@ -7,11 +16,6 @@ import com.doctorc.identity_service.entity.Treatment;
 import com.doctorc.identity_service.entity.TreatmentSession;
 import com.doctorc.identity_service.repository.PatientRepository;
 import com.doctorc.identity_service.repository.TreatmentRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/auth/dentist/patients")
@@ -34,6 +38,7 @@ public class DentistPatientController {
             dto.setName(patient.getName());
             dto.setEmail(patient.getEmail());
             dto.setPhone(patient.getPhone());
+            dto.setProfilePicture(patient.getProfilePicture());  // Map profile picture
 
             // FIX: Using your exact repository method by passing the 'patient' object!
             List<Treatment> treatments = treatmentRepository.findByPatientOrderByStartDateDesc(patient);

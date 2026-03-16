@@ -41,6 +41,9 @@ public class Treatment {
     @Column(name = "end_date")
     private LocalDate endDate;
 
+    @Column(name = "total_sessions_planned")
+    private Integer totalSessionsPlanned;
+
     @OneToMany(mappedBy = "treatment", cascade = CascadeType.ALL)
     private List<TreatmentSession> sessions;
 }

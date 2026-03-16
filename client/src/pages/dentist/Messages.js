@@ -167,10 +167,14 @@ const DentistMessages = () => {
                   className={`w-full flex items-center p-3 rounded-2xl transition-all text-left focus:outline-none ${isSelected ? 'bg-slate-100 shadow-sm ring-1 ring-slate-200' : 'hover:bg-slate-50'}`}
                 >
                   <div className="relative">
-                      <div className="w-10 h-10 rounded-full bg-[#0E4C5C] flex items-center justify-center text-white font-bold shrink-0 shadow-sm">
-                        {patient.name ? patient.name.charAt(0).toUpperCase() : 'P'}
+                      {/* --- UPDATE: Profile Picture handling for Sidebar --- */}
+                      <div className="w-10 h-10 rounded-full bg-[#0E4C5C] flex items-center justify-center text-white font-bold shrink-0 shadow-sm overflow-hidden">
+                        {patient.profilePicture ? (
+                            <img src={patient.profilePicture} alt={patient.name} className="w-full h-full object-cover" />
+                        ) : (
+                            patient.name ? patient.name.charAt(0).toUpperCase() : 'P'
+                        )}
                       </div>
-                      {/* Active indicator placeholder */}
                       <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
                   </div>
                   <div className="ml-3 overflow-hidden">
@@ -192,8 +196,13 @@ const DentistMessages = () => {
               {/* Header */}
               <div className="p-4 sm:p-5 border-b border-slate-100 bg-white flex justify-between items-center shrink-0 z-10 shadow-sm">
                 <div className="flex items-center space-x-3 sm:space-x-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0E4C5C] flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                      {activePatient.name ? activePatient.name.charAt(0).toUpperCase() : 'P'}
+                  {/* --- UPDATE: Profile Picture handling for Chat Header --- */}
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0E4C5C] flex items-center justify-center text-white font-bold text-lg shadow-sm overflow-hidden">
+                      {activePatient.profilePicture ? (
+                          <img src={activePatient.profilePicture} alt={activePatient.name} className="w-full h-full object-cover" />
+                      ) : (
+                          activePatient.name ? activePatient.name.charAt(0).toUpperCase() : 'P'
+                      )}
                   </div>
                   <div>
                     <h2 className="text-lg sm:text-xl font-bold font-poppins text-slate-800 leading-tight">
@@ -221,7 +230,18 @@ const DentistMessages = () => {
                     const showMenu = menuOpenId === msg.messageId;
 
                     return (
-                      <div key={`msg-${msg.messageId || index}`} className={`flex ${isDentist ? 'justify-end' : 'justify-start'}`}>
+                      <div key={`msg-${msg.messageId || index}`} className={`flex gap-3 ${isDentist ? 'justify-end' : 'justify-start'}`}>
+                        {/* Patient Avatar - Left side */}
+                        {!isDentist && (
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#0E4C5C] flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm overflow-hidden border border-slate-200">
+                            {activePatient?.profilePicture ? (
+                              <img src={activePatient.profilePicture} alt={activePatient?.name} className="w-full h-full object-cover" />
+                            ) : (
+                              activePatient?.name ? activePatient.name.charAt(0).toUpperCase() : 'P'
+                            )}
+                          </div>
+                        )}
+
                         <div className={`relative max-w-[85%] sm:max-w-[70%] group`}>
                             <div className={`p-3 sm:p-4 rounded-2xl shadow-sm text-sm sm:text-base ${
                                 isDentist 

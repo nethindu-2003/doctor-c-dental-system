@@ -186,8 +186,12 @@ const PatientMessages = () => {
               {/* Header */}
               <div className="bg-white p-4 border-b border-slate-200 flex items-center justify-between shrink-0 shadow-sm z-10">
                 <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-full bg-primary-dark text-white flex items-center justify-center font-bold shadow-sm shrink-0 mr-4">
-                    {activeDentist.name ? activeDentist.name.charAt(0).toUpperCase() : 'D'}
+                  <div className="w-12 h-12 rounded-full bg-primary-dark text-white flex items-center justify-center font-bold shadow-sm shrink-0 mr-4 overflow-hidden border border-slate-200">
+                    {activeDentist.profilePicture ? (
+                      <img src={activeDentist.profilePicture} alt={activeDentist.name} className="w-full h-full object-cover" />
+                    ) : (
+                      activeDentist.name ? activeDentist.name.charAt(0).toUpperCase() : 'D'
+                    )}
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-800 text-lg">Dr. {activeDentist.name || 'Unknown'}</h3>
@@ -214,7 +218,18 @@ const PatientMessages = () => {
                     const showMenu = menuOpenForId === msg.messageId;
 
                     return (
-                      <div key={`msg-${msg.messageId || index}`} className={`flex mb-4 ${isPatient ? 'justify-end' : 'justify-start'}`}>
+                      <div key={`msg-${msg.messageId || index}`} className={`flex gap-3 mb-4 ${isPatient ? 'justify-end' : 'justify-start'}`}>
+                        {/* Dentist Avatar - Left side */}
+                        {!isPatient && (
+                          <div className="w-8 h-8 rounded-full bg-primary-dark text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm overflow-hidden border border-slate-200">
+                            {activeDentist.profilePicture ? (
+                              <img src={activeDentist.profilePicture} alt={activeDentist.name} className="w-full h-full object-cover" />
+                            ) : (
+                              activeDentist.name ? activeDentist.name.charAt(0).toUpperCase() : 'D'
+                            )}
+                          </div>
+                        )}
+
                         <div className={`relative max-w-[70%] group`}>
                            {/* Context Menu Button (visible on hover) */}
                            {isPatient && (

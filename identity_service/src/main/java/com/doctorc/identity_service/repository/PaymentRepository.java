@@ -8,4 +8,6 @@ import java.util.List;
 public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     // Get all payments for a user, newest first
     List<Payment> findByPatientOrderByPaymentDateDesc(Patient patient);
+
+    List<Payment> findByPatient_Id(Integer patientId);
 }

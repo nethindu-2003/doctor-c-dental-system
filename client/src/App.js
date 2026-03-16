@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import theme from './config/theme';
 import { AuthProvider } from './context/AuthContext';
+import { ClinicProvider } from './context/ClinicContext';
 import VerifyEmail from './pages/auth/VerifyEmail';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 
@@ -45,6 +46,7 @@ import AdminInventory from './pages/admin/Inventory';
 import AdminFinancial from './pages/admin/Financial';
 import AdminReports from './pages/admin/Reports';
 import AddDentist from './pages/admin/AddDentist';
+import AdminSettings from './pages/admin/Settings';
 
 import DentistSetup from './pages/auth/DentistSetup';
 
@@ -53,6 +55,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline /> {/* Normalizes CSS */}
       <AuthProvider>
+        <ClinicProvider>
         <Router>
           <ScrollToTop />
           <Routes>
@@ -102,6 +105,7 @@ function App() {
                 <Route path="financial" element={<AdminFinancial />} />
                 <Route path="reports" element={<AdminReports />} />
                 <Route path="add-dentist" element={<AddDentist />} />
+                <Route path="settings" element={<AdminSettings />} />
               </Route>
             </Route>
             
@@ -109,6 +113,7 @@ function App() {
             <Route path="*" element={<LandingPage />} />
           </Routes>
         </Router>
+        </ClinicProvider>
       </AuthProvider>
     </ThemeProvider>
   );

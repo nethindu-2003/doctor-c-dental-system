@@ -12,7 +12,7 @@ const DentistProfile = () => {
   const [status, setStatus] = useState(null);
 
   const [formData, setFormData] = useState({
-    name: '', email: '', phone: '', specialization: '', licenseId: '', bio: ''
+    name: '', email: '', phone: '', specialization: '', licenseId: '', bio: '', profilePicture: ''
   });
 
   const [originalData, setOriginalData] = useState({});
@@ -22,8 +22,14 @@ const DentistProfile = () => {
     const fetchProfile = async () => {
       try {
         const res = await axios.get('/dentist/profile');
-        setFormData(res.data);
-        setOriginalData(res.data);
+        setFormData({
+            ...res.data,
+            profilePicture: res.data.profilePicture || ''
+        });
+        setOriginalData({
+            ...res.data,
+            profilePicture: res.data.profilePicture || ''
+        });
       } catch (err) {
         setStatus({ type: 'error', msg: 'Failed to load profile data.' });
       } finally {
@@ -38,6 +44,30 @@ const DentistProfile = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // IMAGE UPLOAD LOGIC
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate size (2MB = 2 * 1024 * 1024 bytes)
+    if (file.size > 2097152) {
+      setStatus({ type: 'error', msg: "Profile picture must be less than 2MB." });
+      setTimeout(() => setStatus(null), 4000);
+      return;
+    }
+
+    // Convert to Base64 String
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData({ ...formData, profilePicture: reader.result });
+      setStatus({ type: 'success', msg: "Picture uploaded locally. Click 'Save Changes' to update your profile." });
+      // Automatically toggle edit mode on if they upload a picture so they can save it
+      setIsEditing(true); 
+      setTimeout(() => setStatus(null), 4000);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = async () => {
     if (!formData.name || !formData.phone) {
       setStatus({ type: 'error', msg: 'Name and Phone are required.' });
@@ -47,8 +77,14 @@ const DentistProfile = () => {
     try {
         setStatus(null);
         const res = await axios.put('/dentist/profile', formData);
-        setFormData(res.data);
-        setOriginalData(res.data);
+        setFormData({
+            ...res.data,
+            profilePicture: res.data.profilePicture || ''
+        });
+        setOriginalData({
+            ...res.data,
+            profilePicture: res.data.profilePicture || ''
+        });
         setIsEditing(false);
         setStatus({ type: 'success', msg: 'Profile updated successfully!' });
         setTimeout(() => setStatus(null), 4000);
@@ -103,12 +139,18 @@ const DentistProfile = () => {
 
             {/* Avatar Section */}
             <div className="relative inline-block mt-4 mb-4 z-10 mx-auto">
-              <div className="w-32 h-32 rounded-full bg-white text-[#0E4C5C] border-4 border-white shadow-xl flex items-center justify-center text-5xl font-bold mx-auto">
-                {formData.name ? formData.name.charAt(0).toUpperCase() : 'D'}
-              </div>
-              <button className="absolute bottom-1 right-1 bg-white p-2 rounded-full shadow-md text-[#0E4C5C] hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0E4C5C]/30">
-                <CameraAlt fontSize="small" />
-              </button>
+               <div className="w-32 h-32 rounded-full bg-white text-[#0E4C5C] border-4 border-white shadow-xl flex items-center justify-center text-5xl font-bold mx-auto overflow-hidden">
+                 {formData.profilePicture ? (
+                   <img src={formData.profilePicture} alt="Dr. Profile" className="w-full h-full object-cover" />
+                 ) : (
+                   formData.name ? formData.name.charAt(0).toUpperCase() : 'D'
+                 )}
+               </div>
+               
+               <label className="absolute bottom-1 right-1 bg-white p-2 rounded-full shadow-md text-[#0E4C5C] hover:bg-slate-50 transition-colors cursor-pointer flex items-center justify-center">
+                 <CameraAlt fontSize="small" />
+                 <input hidden accept="image/*" type="file" onChange={handleImageUpload} />
+               </label>
             </div>
 
             <h2 className="text-2xl font-black text-[#0E4C5C] mt-2 font-poppins z-10">
@@ -206,8 +248,8 @@ const DentistProfile = () => {
                     disabled={!isEditing}
                     className={`w-full px-4 py-3 rounded-xl border outline-none font-medium transition-all ${
                         isEditing 
-                            ? 'bg-slate-50 border-slate-200 focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 text-slate-800' 
-                            : 'bg-slate-100/50 border-transparent text-slate-600 cursor-not-allowed'
+                          ? 'bg-slate-50 border-slate-200 focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 text-slate-800' 
+                          : 'bg-slate-100/50 border-transparent text-slate-600 cursor-not-allowed'
                     }`}
                  />
               </div>
@@ -225,8 +267,8 @@ const DentistProfile = () => {
                     disabled={!isEditing}
                     className={`w-full px-4 py-3 rounded-xl border outline-none font-medium transition-all ${
                         isEditing 
-                            ? 'bg-slate-50 border-slate-200 focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 text-slate-800' 
-                            : 'bg-slate-100/50 border-transparent text-slate-600 cursor-not-allowed'
+                          ? 'bg-slate-50 border-slate-200 focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 text-slate-800' 
+                          : 'bg-slate-100/50 border-transparent text-slate-600 cursor-not-allowed'
                     }`}
                  />
               </div>
@@ -259,8 +301,8 @@ const DentistProfile = () => {
                     disabled={!isEditing}
                     className={`w-full px-4 py-3 rounded-xl border outline-none font-medium transition-all ${
                         isEditing 
-                            ? 'bg-slate-50 border-slate-200 focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 text-slate-800' 
-                            : 'bg-slate-100/50 border-transparent text-slate-600 cursor-not-allowed'
+                          ? 'bg-slate-50 border-slate-200 focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 text-slate-800' 
+                          : 'bg-slate-100/50 border-transparent text-slate-600 cursor-not-allowed'
                     }`}
                  />
               </div>
@@ -279,8 +321,8 @@ const DentistProfile = () => {
                     placeholder="e.g. SLMC-12345"
                     className={`w-full px-4 py-3 rounded-xl border outline-none font-medium transition-all ${
                         isEditing 
-                            ? 'bg-slate-50 border-slate-200 focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 text-slate-800' 
-                            : 'bg-slate-100/50 border-transparent text-slate-600 cursor-not-allowed'
+                          ? 'bg-slate-50 border-slate-200 focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 text-slate-800' 
+                          : 'bg-slate-100/50 border-transparent text-slate-600 cursor-not-allowed'
                     }`}
                  />
               </div>
@@ -299,8 +341,8 @@ const DentistProfile = () => {
                     placeholder="Share a brief overview of your clinical experience and expertise..."
                     className={`w-full px-4 py-3 rounded-xl border outline-none font-medium transition-all resize-none ${
                         isEditing 
-                            ? 'bg-slate-50 border-slate-200 focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 text-slate-800' 
-                            : 'bg-slate-100/50 border-transparent text-slate-600 cursor-not-allowed'
+                          ? 'bg-slate-50 border-slate-200 focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 text-slate-800' 
+                          : 'bg-slate-100/50 border-transparent text-slate-600 cursor-not-allowed'
                     }`}
                  ></textarea>
               </div>

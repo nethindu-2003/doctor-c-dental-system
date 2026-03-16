@@ -4,8 +4,14 @@ import {
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import axios from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
+import { useClinic } from '../../context/ClinicContext';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const PaymentHistory = () => {
+  const { user } = useAuth();
+  const { config } = useClinic();
   const [payments, setPayments] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -42,7 +48,7 @@ const PaymentHistory = () => {
       if (payment.appointment?.dentist) {
           return `Dr. ${payment.appointment.dentist.name}`;
       }
-      return 'Clinic Admin'; // Treatments without specific dentists assigned yet
+      return 'Clinic Admin'; 
   };
 
   // --- Filter Logic ---
@@ -58,15 +64,181 @@ const PaymentHistory = () => {
   const totalPaid = payments.filter(p => p.status === 'COMPLETED').reduce((acc, curr) => acc + (curr.amount || 0), 0);
   const totalPending = payments.filter(p => p.status === 'PENDING').reduce((acc, curr) => acc + (curr.amount || 0), 0);
   
-  // The backend returns them ordered by date descending, so index 0 is the latest
   const lastPaymentDate = payments.length > 0 && payments[0].paymentDate 
     ? dayjs(payments[0].paymentDate).format('MMMM D, YYYY') 
     : 'No Payments Yet';
 
-  // --- Modal Handlers ---
   const handleOpenDetails = (payment) => {
       setSelectedPayment(payment);
       setOpenModal(true);
+  };
+
+  // --- PDF GENERATOR 1: SINGLE RECEIPT ---
+  const generateReceiptPDF = (e, payment) => {
+    e.stopPropagation(); // Prevent the row click from opening the modal
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(14, 76, 92);
+    doc.setFont("helvetica", "bold");
+    doc.text(config.clinicName || 'Dental Clinic', 14, 22);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont("helvetica", "normal");
+    doc.text(config.clinicAddress || '', 14, 30);
+    const contactLine = [config.clinicPhone, config.clinicEmail].filter(Boolean).join(' | ');
+    if (contactLine) doc.text(contactLine, 14, 35);
+
+    // Divider
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, 42, 196, 42);
+
+    // Receipt Title & Status
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.text('PAYMENT RECEIPT', 14, 55);
+
+    doc.setFontSize(12);
+    if (payment.status === 'COMPLETED') {
+        doc.setTextColor(46, 125, 50); // Green
+        doc.text('PAID', 170, 55);
+    } else {
+        doc.setTextColor(211, 47, 47); // Red
+        doc.text('PENDING', 160, 55);
+    }
+
+    // Payment Details Box
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    
+    doc.text(`Receipt No:`, 14, 70);
+    doc.setFont("helvetica", "bold");
+    doc.text(`#TXN-00${payment.paymentId}`, 50, 70);
+    
+    doc.setFont("helvetica", "normal");
+    doc.text(`Date:`, 14, 78);
+    doc.text(`${dayjs(payment.paymentDate).format('MMMM D, YYYY h:mm A')}`, 50, 78);
+    
+    doc.text(`Patient Name:`, 14, 86);
+    doc.text(`${user?.name || 'Patient'}`, 50, 86);
+
+    doc.text(`Attending:`, 120, 70);
+    doc.text(`${getDentistName(payment)}`, 145, 70);
+
+    doc.text(`Method:`, 120, 78);
+    doc.text(`${payment.paymentType === 'BOOKING_FEE' ? 'Online' : 'Clinic'}`, 145, 78);
+
+    // Itemized Table
+    autoTable(doc, {
+      startY: 100,
+      head: [['Description', 'Amount (LKR)']],
+      body: [
+        [getDescription(payment), payment.amount.toLocaleString()]
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: [14, 76, 92], textColor: 255 },
+      styles: { fontSize: 11, cellPadding: 6 },
+    });
+
+    // Total Row
+    const finalY = doc.lastAutoTable.finalY || 120;
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Total: LKR ${payment.amount.toLocaleString()}`, 140, finalY + 10);
+
+    // Footer
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.setFont("helvetica", "italic");
+    doc.text(`Thank you for choosing ${config.clinicName || 'our clinic'}.`, 105, 280, { align: 'center' });
+
+    doc.save(`Receipt_TXN00${payment.paymentId}.pdf`);
+  };
+
+  // --- PDF GENERATOR 2: FULL STATEMENT ---
+  const generateStatementPDF = () => {
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(14, 76, 92);
+    doc.setFont("helvetica", "bold");
+    doc.text(config.clinicName || 'Dental Clinic', 14, 22);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont("helvetica", "normal");
+    doc.text(config.clinicAddress || '', 14, 30);
+
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, 38, 196, 38);
+
+    // Statement Title
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.text('PATIENT ACCOUNT STATEMENT', 105, 50, { align: 'center' });
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Patient Name: ${user?.name || 'Patient'}`, 14, 65);
+    doc.text(`Statement Date: ${dayjs().format('MMMM D, YYYY')}`, 14, 72);
+
+    // Summary Box
+    doc.setFont("helvetica", "bold");
+    doc.text(`Total Paid to Date: LKR ${totalPaid.toLocaleString()}`, 130, 65);
+    if (totalPending > 0) {
+        doc.setTextColor(211, 47, 47);
+        doc.text(`Outstanding Balance: LKR ${totalPending.toLocaleString()}`, 130, 72);
+        doc.setTextColor(0, 0, 0);
+    }
+
+    // Ledger Table
+    const tableColumn = ["Date", "Txn ID", "Description", "Status", "Amount"];
+    const tableRows = [];
+
+    // Sort all payments chronologically for the statement
+    const sortedPayments = [...payments].sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
+
+    sortedPayments.forEach(payment => {
+      const paymentData = [
+        dayjs(payment.paymentDate).format('DD/MM/YYYY'),
+        `#00${payment.paymentId}`,
+        getDescription(payment),
+        payment.status,
+        `LKR ${payment.amount.toLocaleString()}`
+      ];
+      tableRows.push(paymentData);
+    });
+
+    autoTable(doc, {
+      startY: 85,
+      head: [tableColumn],
+      body: tableRows,
+      theme: 'grid',
+      headStyles: { fillColor: [14, 76, 92], textColor: 255, fontStyle: 'bold' },
+      styles: { fontSize: 9, cellPadding: 4 },
+      columnStyles: {
+          4: { halign: 'right' } // Align amount to the right
+      }
+    });
+
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(`Page ${i} of ${pageCount}`, 105, 285, { align: 'center' });
+    }
+
+    doc.save(`Account_Statement_${user?.name?.replace(/\s+/g, '_') || 'Patient'}.pdf`);
   };
 
   return (
@@ -81,7 +253,7 @@ const PaymentHistory = () => {
           </p>
         </div>
         <button 
-          onClick={() => alert("Statement generation coming soon!")}
+          onClick={generateStatementPDF}
           className="bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-full font-bold shadow-md transition-all flex items-center space-x-2 transform hover:-translate-y-0.5"
         >
           <Download fontSize="small" />
@@ -188,15 +360,15 @@ const PaymentHistory = () => {
                     </div>
                   </td>
                   <td className="px-4 py-4">
-                     <span className={`px-3 py-1 text-xs font-semibold rounded-lg ${row.status === 'COMPLETED' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-yellow-100 text-yellow-800'}`}>
+                     <span className={`px-3 py-1 text-xs font-semibold rounded-lg border ${row.status === 'COMPLETED' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-100 text-yellow-800'}`}>
                         {row.status === 'COMPLETED' ? 'Paid' : 'Pending'}
                      </span>
                   </td>
-                  <td className="px-4 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-4 py-4 text-center">
                     {row.status === 'COMPLETED' ? (
                         <button 
                             className="p-2 text-primary hover:bg-primary-light/20 rounded-full transition-colors focus:outline-none"
-                            onClick={() => alert("Downloading Receipt...")}
+                            onClick={(e) => generateReceiptPDF(e, row)}
                             title="Download Receipt"
                         >
                             <ReceiptLong fontSize="small" />
@@ -204,7 +376,7 @@ const PaymentHistory = () => {
                     ) : (
                       <button 
                         className="bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 px-4 py-1.5 rounded-full text-xs font-bold transition-colors focus:outline-none"
-                        onClick={() => alert(`Redirecting to payment gateway for LKR ${row.amount}`)}
+                        onClick={(e) => { e.stopPropagation(); alert(`Redirecting to payment gateway for LKR ${row.amount}`); }}
                       >
                         Pay Now
                       </button>
@@ -299,7 +471,10 @@ const PaymentHistory = () => {
                          Close
                      </button>
                      {selectedPayment?.status === 'COMPLETED' && (
-                         <button className="flex items-center space-x-2 bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-xl font-bold shadow-sm transition-colors focus:outline-none block">
+                         <button 
+                            className="flex items-center space-x-2 bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-xl font-bold shadow-sm transition-colors focus:outline-none block"
+                            onClick={(e) => generateReceiptPDF(e, selectedPayment)}
+                         >
                              <ReceiptLong fontSize="small" />
                              <span>Download Receipt</span>
                          </button>

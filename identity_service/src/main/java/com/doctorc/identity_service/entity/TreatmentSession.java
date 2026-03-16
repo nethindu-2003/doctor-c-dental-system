@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -17,33 +18,30 @@ public class TreatmentSession {
 
     @ManyToOne
     @JoinColumn(name = "treatment_id")
-    @JsonIgnore // Prevents loop: Treatment -> Session -> Treatment
+    @JsonIgnore
     private Treatment treatment;
 
-    // Links this session to the calendar.
-    // If null, it means the session is planned but not yet scheduled.
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "appointment_id")
     private Appointment appointment;
 
     @Column(name = "session_name")
-    private String sessionName; // e.g., "Pulp Removal"
+    private String sessionName;
 
     private String note;
 
     @Column(name = "session_date")
     private LocalDate sessionDate;
 
-    private String status; // PENDING, COMPLETED
+    private String status; // e.g., "COMPLETED", "SCHEDULED"
+    private Double cost;
 
-    private Double cost; // Cost for THIS specific session
-
-    @Column(name = "created_at")
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
-    @PreUpdate
-    public void setLastUpdate() {  this.updatedAt = LocalDateTime.now(); }
+    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL)
+    private List<TreatmentEquipment> usedEquipment;
 }

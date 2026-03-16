@@ -1,14 +1,20 @@
 package com.doctorc.identity_service.controller;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.doctorc.identity_service.dto.DentistApptDTO;
 import com.doctorc.identity_service.entity.Appointment;
 import com.doctorc.identity_service.repository.AppointmentRepository;
 import com.doctorc.identity_service.service.EmailService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/auth/dentist/appointments")
@@ -57,6 +63,9 @@ public class DentistAppointmentController {
 
         if (!appt.getDentist().getId().equals(dentistId)) throw new RuntimeException("Unauthorized");
 
+        // Validate that appointment is in the future
+        validateFutureAppointment(appt);
+
         appt.setStatus("CANCELLED");
         Appointment saved = appointmentRepository.save(appt);
 
@@ -87,5 +96,13 @@ public class DentistAppointmentController {
         dto.setReasonForVisit(a.getReasonForVisit());
         dto.setStatus(a.getStatus());
         return dto;
+    }
+
+    // Helper to prevent cancelling past appointments
+    private void validateFutureAppointment(Appointment appt) {
+        java.time.LocalDateTime apptDateTime = java.time.LocalDateTime.of(appt.getAppointmentDate(), appt.getAppointmentTime());
+        if (apptDateTime.isBefore(java.time.LocalDateTime.now())) {
+            throw new RuntimeException("Action denied: Cannot cancel past appointments.");
+        }
     }
 }

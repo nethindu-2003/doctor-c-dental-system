@@ -12,6 +12,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     // Find all appointments for a specific patient
     List<Appointment> findByPatient(Patient patient);
 
+    List<Appointment> findByPatient_Id(Integer patientId);
+
     boolean existsByAppointmentDateAndAppointmentTimeAndStatusNot(LocalDate date, LocalTime time, String status);
 
     // Get all taken slots for a specific date
@@ -23,6 +25,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     // Get today's appointments for a specific dentist
     List<Appointment> findByDentist_IdAndAppointmentDateOrderByAppointmentTimeAsc(Integer dentistId, LocalDate date);
 
-    // Count today's appointments
+    // Count today's appointments (for dentist dashboard)
     int countByDentist_IdAndAppointmentDate(Integer dentistId, LocalDate date);
+
+    // Fetch ALL appointments on a given date (for admin today's stats)
+    List<Appointment> findByAppointmentDate(LocalDate date);
 }

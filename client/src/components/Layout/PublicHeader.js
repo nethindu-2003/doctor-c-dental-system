@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Menu as MenuIcon, Close as CloseIcon } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useClinic } from '../../context/ClinicContext';
 
 const PublicHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { config } = useClinic();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,11 +62,21 @@ const PublicHeader = () => {
               className="flex items-center cursor-pointer group" 
               onClick={() => navigate('/')}
             >
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-3 shadow-md group-hover:bg-primary-dark transition-colors">
-                <span className="text-xl font-bold text-white">C</span>
-              </div>
+              {config.clinicLogo ? (
+                <img
+                  src={config.clinicLogo}
+                  alt={config.clinicName}
+                  className="w-10 h-10 rounded-lg mr-3 object-contain shadow-md group-hover:opacity-90 transition-opacity"
+                />
+              ) : (
+                <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-3 shadow-md group-hover:bg-primary-dark transition-colors">
+                  <span className="text-xl font-bold text-white">
+                    {config.clinicName?.charAt(0) || 'C'}
+                  </span>
+                </div>
+              )}
               <span className="text-xl md:text-2xl font-poppins font-bold text-primary-dark tracking-tight">
-                Doctor C
+                {config.clinicName}
               </span>
             </div>
 

@@ -5,6 +5,9 @@ import {
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import axios from '../../api/axios';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx'; // Import the new Excel library
 
 const AdminFinancial = () => {
   const [transactions, setTransactions] = useState([]);
@@ -12,6 +15,9 @@ const AdminFinancial = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDate, setFilterDate] = useState('');
+  
+  // NEW: Export Mode State ('PDF' or 'Excel')
+  const [exportMode, setExportMode] = useState('PDF');
 
   // Modal State
   const [openDetails, setOpenDetails] = useState(false);
@@ -46,9 +52,9 @@ const AdminFinancial = () => {
 
   // --- FILTER LOGIC ---
   const filteredTransactions = transactions.filter(t => {
-    const matchesSearch = t.patientName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = t.patientName?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Check if the transaction's Year-Month matches the filterDate (e.g., "2024-07")
+    // Check if the transaction's Year-Month matches the filterDate
     const txnMonth = dayjs(t.paymentDate).format('YYYY-MM');
     const matchesDate = filterDate ? txnMonth === filterDate : true;
     
@@ -61,8 +67,170 @@ const AdminFinancial = () => {
       setOpenDetails(true);
   };
 
-  const handleExportMock = (type) => {
-      alert(`Generating ${type} report... (Feature requires file generation library)`);
+  // --- PDF: SINGLE RECEIPT ---
+  const handleDownloadReceipt = (txn) => {
+    const doc = new jsPDF();
+
+    doc.setFontSize(22);
+    doc.setTextColor(26, 35, 126); // #1A237E (Admin Blue)
+    doc.setFont("helvetica", "bold");
+    doc.text('Doctor C Dental Clinic', 14, 22);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont("helvetica", "normal");
+    doc.text('123 Smile Avenue, Colombo, Sri Lanka', 14, 30);
+    doc.text('Phone: +94 11 234 5678 | Email: billing@doctorcdental.com', 14, 35);
+
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, 42, 196, 42);
+
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.text('PAYMENT RECEIPT (ADMIN COPY)', 14, 55);
+
+    doc.setFontSize(12);
+    if (txn.status === 'COMPLETED') {
+        doc.setTextColor(46, 125, 50); 
+        doc.text('PAID', 170, 55);
+    } else {
+        doc.setTextColor(211, 47, 47); 
+        doc.text('PENDING', 160, 55);
+    }
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    
+    doc.text(`Receipt No:`, 14, 70);
+    doc.setFont("helvetica", "bold");
+    doc.text(`#TXN-00${txn.paymentId}`, 45, 70);
+    
+    doc.setFont("helvetica", "normal");
+    doc.text(`Date:`, 14, 78);
+    doc.text(`${dayjs(txn.paymentDate).format('MMMM D, YYYY h:mm A')}`, 45, 78);
+    
+    doc.text(`Patient:`, 14, 86);
+    doc.text(`${txn.patientName}`, 45, 86);
+
+    doc.text(`Method:`, 120, 70);
+    doc.text(`${txn.paymentType === 'BOOKING_FEE' ? 'Online' : 'Clinic'}`, 140, 70);
+
+    autoTable(doc, {
+      startY: 100,
+      head: [['Description', 'Amount (LKR)']],
+      body: [[txn.description, txn.amount?.toLocaleString()]],
+      theme: 'striped',
+      headStyles: { fillColor: [26, 35, 126], textColor: 255 },
+      styles: { fontSize: 11, cellPadding: 6 },
+    });
+
+    const finalY = doc.lastAutoTable.finalY || 120;
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Total: LKR ${txn.amount?.toLocaleString()}`, 140, finalY + 10);
+
+    doc.save(`Receipt_TXN00${txn.paymentId}.pdf`);
+  };
+
+  // --- PDF / EXCEL: MONTHLY REPORT ---
+  const handleGenerateReport = () => {
+    // 1. Identify target month (Use filterDate, or current month if empty)
+    const targetMonthStr = filterDate || dayjs().format('YYYY-MM');
+    const formattedMonth = dayjs(targetMonthStr).format('MMMM YYYY');
+
+    // 2. Isolate transactions for only this month
+    const reportTxns = transactions.filter(t => dayjs(t.paymentDate).format('YYYY-MM') === targetMonthStr);
+
+    if (reportTxns.length === 0) {
+      alert(`No transactions found for ${formattedMonth}.`);
+      return;
+    }
+
+    // Calculate stats for the report
+    const monthIncome = reportTxns.filter(t => t.status === 'COMPLETED').reduce((s, t) => s + (t.amount || 0), 0);
+    const monthPending = reportTxns.filter(t => t.status === 'PENDING').reduce((s, t) => s + (t.amount || 0), 0);
+
+    if (exportMode === 'PDF') {
+      // --- GENERATE PDF ---
+      const doc = new jsPDF();
+      
+      doc.setFontSize(22);
+      doc.setTextColor(26, 35, 126);
+      doc.setFont("helvetica", "bold");
+      doc.text('Doctor C Dental Clinic', 14, 22);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.setFont("helvetica", "normal");
+      doc.text('Financial Report', 14, 30);
+      
+      doc.setLineWidth(0.5);
+      doc.line(14, 35, 196, 35);
+
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "bold");
+      doc.text(`MONTHLY FINANCIAL REPORT - ${formattedMonth.toUpperCase()}`, 105, 48, { align: 'center' });
+
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Total Collected: LKR ${monthIncome.toLocaleString()}`, 14, 60);
+      doc.text(`Total Pending: LKR ${monthPending.toLocaleString()}`, 14, 67);
+      doc.text(`Transaction Count: ${reportTxns.length}`, 140, 60);
+
+      const tableData = reportTxns.map(t => [
+        dayjs(t.paymentDate).format('DD/MM/YY'),
+        `#00${t.paymentId}`,
+        t.patientName,
+        t.description,
+        t.status,
+        `LKR ${t.amount?.toLocaleString()}`
+      ]);
+
+      autoTable(doc, {
+        startY: 75,
+        head: [['Date', 'Txn ID', 'Patient', 'Description', 'Status', 'Amount']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: { fillColor: [26, 35, 126], textColor: 255 },
+        styles: { fontSize: 9, cellPadding: 3 },
+        columnStyles: { 5: { halign: 'right' } }
+      });
+
+      doc.save(`Financial_Report_${targetMonthStr}.pdf`);
+
+    } else if (exportMode === 'Excel') {
+      // --- GENERATE EXCEL ---
+      const worksheetData = reportTxns.map(t => ({
+        "Date & Time": dayjs(t.paymentDate).format('YYYY-MM-DD HH:mm'),
+        "Transaction ID": `TXN-00${t.paymentId}`,
+        "Patient Name": t.patientName,
+        "Description": t.description,
+        "Status": t.status,
+        "Payment Method": t.paymentType === 'BOOKING_FEE' ? 'Online' : 'Clinic',
+        "Amount (LKR)": t.amount
+      }));
+
+      // Add a summary row at the bottom
+      worksheetData.push({}); // Empty row
+      worksheetData.push({ "Description": "TOTAL COLLECTED INCOME:", "Amount (LKR)": monthIncome });
+      worksheetData.push({ "Description": "TOTAL PENDING:", "Amount (LKR)": monthPending });
+
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+      const workbook = XLSX.utils.book_new();
+      
+      // Adjust column widths automatically
+      const colWidths = [
+        { wch: 20 }, { wch: 15 }, { wch: 25 }, { wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 15 }
+      ];
+      worksheet['!cols'] = colWidths;
+
+      XLSX.utils.book_append_sheet(workbook, worksheet, formattedMonth);
+      XLSX.writeFile(workbook, `Financial_Report_${targetMonthStr}.xlsx`);
+    }
   };
 
   if (loading) {
@@ -86,7 +254,7 @@ const AdminFinancial = () => {
 
       {/* 1. FINANCIAL SUMMARY CARDS  */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-[#E8F5E9] p-6 rounded-3xl border border-[#C8E6C9] flex justify-between items-center transition-transform hover:-translate-y-1">
+        <div className="bg-[#E8F5E9] p-6 rounded-3xl border border-[#C8E6C9] flex justify-between items-center transition-transform hover:-translate-y-1 shadow-sm">
           <div>
             <p className="text-sm font-bold text-slate-500 mb-1 tracking-wider">TOTAL INCOME</p>
             <h2 className="text-3xl font-bold text-[#2E7D32]">LKR {totalIncome.toLocaleString()}</h2>
@@ -94,7 +262,7 @@ const AdminFinancial = () => {
           <AttachMoney sx={{ fontSize: 48, color: '#4CAF50' }} />
         </div>
         
-        <div className="bg-[#FFF3E0] p-6 rounded-3xl border border-[#FFE0B2] flex justify-between items-center transition-transform hover:-translate-y-1">
+        <div className="bg-[#FFF3E0] p-6 rounded-3xl border border-[#FFE0B2] flex justify-between items-center transition-transform hover:-translate-y-1 shadow-sm">
           <div>
             <p className="text-sm font-bold text-slate-500 mb-1 tracking-wider">PENDING PAYMENTS</p>
             <h2 className="text-3xl font-bold text-[#EF6C00]">LKR {pendingPayments.toLocaleString()}</h2>
@@ -102,7 +270,7 @@ const AdminFinancial = () => {
           <PendingActions sx={{ fontSize: 48, color: '#FF9800' }} />
         </div>
 
-        <div className="bg-[#FFEBEE] p-6 rounded-3xl border border-[#FFCDD2] flex justify-between items-center transition-transform hover:-translate-y-1">
+        <div className="bg-[#FFEBEE] p-6 rounded-3xl border border-[#FFCDD2] flex justify-between items-center transition-transform hover:-translate-y-1 shadow-sm">
           <div>
             <p className="text-sm font-bold text-slate-500 mb-1 tracking-wider">REFUNDS</p>
             <h2 className="text-3xl font-bold text-[#C62828]">LKR {totalRefunds.toLocaleString()}</h2>
@@ -139,19 +307,23 @@ const AdminFinancial = () => {
                     />
                 </div>
 
-                {/* Export Buttons */}
-                <div className="flex gap-2">
+                {/* Export Mode Toggles */}
+                <div className="flex gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200">
                     <button 
-                        onClick={() => handleExportMock('PDF')}
-                        className="flex items-center justify-center px-4 py-2.5 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-[#1A237E] hover:border-[#1A237E] transition-all font-semibold text-sm focus:outline-none"
+                        onClick={() => setExportMode('PDF')}
+                        className={`flex items-center justify-center px-4 py-1.5 rounded-lg transition-all font-semibold text-sm focus:outline-none ${
+                           exportMode === 'PDF' ? 'bg-white text-[#1A237E] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        }`}
                     >
-                        <PictureAsPdf fontSize="small" className="mr-2" /> PDF
+                        <PictureAsPdf fontSize="small" className="mr-1.5" /> PDF
                     </button>
                     <button 
-                        onClick={() => handleExportMock('Excel')}
-                        className="flex items-center justify-center px-4 py-2.5 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-[#1A237E] hover:border-[#1A237E] transition-all font-semibold text-sm focus:outline-none"
+                        onClick={() => setExportMode('Excel')}
+                        className={`flex items-center justify-center px-4 py-1.5 rounded-lg transition-all font-semibold text-sm focus:outline-none ${
+                           exportMode === 'Excel' ? 'bg-white text-[#1A237E] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        }`}
                     >
-                        <TableView fontSize="small" className="mr-2" /> Excel
+                        <TableView fontSize="small" className="mr-1.5" /> Excel
                     </button>
                 </div>
             </div>
@@ -159,10 +331,11 @@ const AdminFinancial = () => {
             {/* Generate Report Button */}
              <div className="w-full lg:w-auto flex justify-end">
                 <button 
-                    onClick={() => handleExportMock('Monthly Report')}
+                    onClick={handleGenerateReport}
                     className="w-full sm:w-auto flex items-center justify-center px-6 py-3 bg-[#1A237E] hover:bg-[#12185c] text-white rounded-xl font-bold transition-transform hover:-translate-y-0.5 shadow-md focus:outline-none"
                 >
-                    <Download fontSize="small" className="mr-2" /> Generate Monthly Report
+                    <Download fontSize="small" className="mr-2" /> 
+                    Generate Monthly {exportMode}
                 </button>
              </div>
         </div>
@@ -215,7 +388,7 @@ const AdminFinancial = () => {
               ))}
               {filteredTransactions.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="p-8 text-center text-slate-500">No transactions found for this period.</td>
+                  <td colSpan="6" className="p-8 text-center text-slate-500">No transactions found.</td>
                 </tr>
               )}
             </tbody>
@@ -298,7 +471,7 @@ const AdminFinancial = () => {
                       </button>
                       {selectedTxn?.status === 'COMPLETED' && (
                           <button 
-                              onClick={() => alert("Downloading Receipt...")}
+                              onClick={() => handleDownloadReceipt(selectedTxn)}
                               className="px-5 py-2.5 rounded-xl bg-[#1A237E] text-white font-bold flex items-center hover:bg-[#12185c] hover:-translate-y-0.5 transition-all focus:outline-none shadow-md"
                           >
                               <ReceiptLong fontSize="small" className="mr-2 -ml-1" />

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, Visibility, Assessment, Phone, Email, Close, MedicalServices, 
-  CalendarToday, AssignmentTurnedIn, LocalHospital
+  AssignmentTurnedIn, LocalHospital
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import axios from '../../api/axios';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable'; // Ensure correct autotable import
 
 const Patients = () => {
   const [patients, setPatients] = useState([]);
@@ -48,10 +50,157 @@ const Patients = () => {
     }
   };
 
-  // Triggers browser's native print dialogue for PDF generation
-  const handleGeneratePDF = (e, patient) => {
-    e.stopPropagation(); // Prevents row click
-    window.print(); 
+  // --- PDF GENERATION LOGIC ---
+  const handleGeneratePDF = async (e, patient) => {
+    if (e) e.stopPropagation(); // Prevents opening the row modal if clicked from the table
+
+    let historyToPrint = [];
+
+    // If we already opened this patient's modal, we have the history.
+    // Otherwise, we need to fetch it specifically for the PDF.
+    if (selectedPatient?.patientId === patient.patientId && treatmentHistory.length > 0) {
+      historyToPrint = treatmentHistory;
+    } else {
+      try {
+        const res = await axios.get(`/dentist/patients/${patient.patientId}/history`);
+        historyToPrint = res.data;
+      } catch (err) {
+        console.error("Error fetching history for PDF", err);
+        alert("Failed to load patient records for the report.");
+        return;
+      }
+    }
+
+    generatePatientReport(patient, historyToPrint);
+  };
+
+  const generatePatientReport = (patient, history) => {
+    const doc = new jsPDF();
+
+    // 1. Clinic Header
+    doc.setFontSize(22);
+    doc.setTextColor(14, 76, 92); // #0E4C5C
+    doc.setFont("helvetica", "bold");
+    doc.text('Doctor C Dental Clinic', 14, 22);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont("helvetica", "normal");
+    doc.text('No 20, Circular Road, Devinuwara, Sri Lanka', 14, 30);
+    doc.text('Phone: +94 70 513 9901 | Email: doctorcdentalsurgery@gmail.com', 14, 35);
+
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, 42, 196, 42);
+
+    // 2. Report Title & Patient Info
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.text('PATIENT MEDICAL REPORT', 105, 55, { align: 'center' });
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    
+    doc.text(`Patient Name:`, 14, 70);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${patient.name}`, 45, 70);
+    
+    doc.setFont("helvetica", "normal");
+    doc.text(`Patient ID:`, 14, 78);
+    doc.text(`#PT-${patient.patientId}`, 45, 78);
+
+    doc.text(`Email:`, 120, 70);
+    doc.text(`${patient.email || 'N/A'}`, 140, 70);
+    
+    doc.text(`Phone:`, 120, 78);
+    doc.text(`${patient.phone || 'N/A'}`, 140, 78);
+
+    // 3. Separate Treatments by Status
+    const ongoingTreatments = history.filter(t => t.status === 'ONGOING' || t.status === 'IN_PROGRESS');
+    const completedTreatments = history.filter(t => t.status === 'COMPLETED');
+
+    let currentY = 95;
+
+    // --- ONGOING TREATMENTS SECTION ---
+    doc.setFontSize(14);
+    doc.setTextColor(14, 76, 92);
+    doc.setFont("helvetica", "bold");
+    doc.text('Ongoing Treatments', 14, currentY);
+    
+    if (ongoingTreatments.length > 0) {
+      const ongoingRows = ongoingTreatments.map(t => [
+        t.treatmentName,
+        t.diagnosis || 'N/A',
+        `Dr. ${t.dentistName}`,
+        t.startDate ? dayjs(t.startDate).format('MMM D, YYYY') : '-',
+        `${t.sessions?.length || 0} session(s)`
+      ]);
+
+      autoTable(doc, {
+        startY: currentY + 5,
+        head: [['Procedure', 'Diagnosis', 'Assigned Dentist', 'Started On', 'Progress']],
+        body: ongoingRows,
+        theme: 'striped',
+        headStyles: { fillColor: [14, 76, 92], textColor: 255 },
+        styles: { fontSize: 9, cellPadding: 4 }
+      });
+      currentY = doc.lastAutoTable.finalY + 15;
+    } else {
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.setFont("helvetica", "italic");
+      doc.text('No ongoing treatments found.', 14, currentY + 8);
+      currentY += 20;
+    }
+
+    // --- COMPLETED TREATMENTS SECTION ---
+    doc.setFontSize(14);
+    doc.setTextColor(46, 125, 50); // Green color for completed
+    doc.setFont("helvetica", "bold");
+    doc.text('Completed Treatments', 14, currentY);
+
+    if (completedTreatments.length > 0) {
+      const completedRows = completedTreatments.map(t => [
+        t.treatmentName,
+        t.diagnosis || 'N/A',
+        `Dr. ${t.dentistName}`,
+        t.endDate ? dayjs(t.endDate).format('MMM D, YYYY') : (t.startDate ? dayjs(t.startDate).format('MMM D, YYYY') : '-'),
+        t.cost ? `LKR ${t.cost.toLocaleString()}` : 'N/A'
+      ]);
+
+      autoTable(doc, {
+        startY: currentY + 5,
+        head: [['Procedure', 'Diagnosis', 'Attending Dentist', 'Completed On', 'Total Cost']],
+        body: completedRows,
+        theme: 'striped',
+        headStyles: { fillColor: [46, 125, 50], textColor: 255 },
+        styles: { fontSize: 9, cellPadding: 4 }
+      });
+    } else {
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.setFont("helvetica", "italic");
+      doc.text('No completed treatments found.', 14, currentY + 8);
+    }
+
+    // 4. Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        `Generated on ${dayjs().format('MMMM D, YYYY at h:mm A')}  |  Page ${i} of ${pageCount}`, 
+        105, 
+        285, 
+        { align: 'center' }
+      );
+    }
+
+    // Download the PDF
+    doc.save(`Patient_Report_${patient.name.replace(/\s+/g, '_')}.pdf`);
   };
 
   // --- FILTER LOGIC ---
@@ -114,8 +263,12 @@ const Patients = () => {
                     {/* Name & Avatar */}
                     <td className="p-4 align-middle">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full bg-[#0E4C5C] text-white flex items-center justify-center font-bold shadow-sm shrink-0">
-                          {patient.name?.charAt(0).toUpperCase()}
+                        <div className="w-10 h-10 rounded-full bg-[#0E4C5C] text-white flex items-center justify-center font-bold shadow-sm shrink-0 overflow-hidden">
+                           {patient.profilePicture ? (
+                               <img src={patient.profilePicture} alt={patient.name} className="w-full h-full object-cover" />
+                           ) : (
+                               patient.name ? patient.name.charAt(0).toUpperCase() : 'P'
+                           )}
                         </div>
                         <p className="font-bold text-[#0E4C5C] truncate max-w-[150px]">
                           {patient.name}
@@ -148,14 +301,14 @@ const Patients = () => {
                     <td className="p-4 align-middle">
                       <span className="inline-flex items-center px-3 py-1.5 bg-[#E0F2F1] text-[#00695C] text-xs font-bold rounded-lg truncate max-w-[200px]">
                           <MedicalServices fontSize="inherit" className="mr-1.5 text-[14px]" />
-                          <span className="truncate">{patient.currentTreatment}</span>
+                          <span className="truncate">{patient.currentTreatment || 'None'}</span>
                       </span>
                     </td>
 
                     {/* Last Visit */}
                     <td className="p-4 align-middle">
                       <p className="font-medium text-slate-700 text-sm">
-                        {patient.lastVisit !== 'Never' ? dayjs(patient.lastVisit).format('MMM D, YYYY') : 'No Visits'}
+                        {patient.lastVisit !== 'Never' && patient.lastVisit ? dayjs(patient.lastVisit).format('MMM D, YYYY') : 'No Visits'}
                       </p>
                     </td>
 
@@ -204,8 +357,12 @@ const Patients = () => {
                   {/* Header */}
                   <div className="bg-[#0E4C5C] px-6 py-4 flex justify-between items-center text-white shrink-0">
                       <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 rounded-full bg-white text-[#0E4C5C] flex items-center justify-center font-bold text-xl shadow-lg shrink-0">
-                              {selectedPatient.name?.charAt(0).toUpperCase()}
+                          <div className="w-12 h-12 rounded-full bg-white text-[#0E4C5C] flex items-center justify-center font-bold text-xl shadow-lg shrink-0 overflow-hidden">
+                              {selectedPatient.profilePicture ? (
+                                  <img src={selectedPatient.profilePicture} alt={selectedPatient.name} className="w-full h-full object-cover" />
+                              ) : (
+                                  selectedPatient.name?.charAt(0).toUpperCase()
+                              )}
                           </div>
                           <div>
                               <h2 className="text-xl font-bold font-poppins">{selectedPatient.name}</h2>
@@ -268,7 +425,7 @@ const Patients = () => {
                                                           ? 'bg-green-100 text-green-700 border-green-200' 
                                                           : 'bg-yellow-100 text-yellow-800 border-yellow-300'
                                                   }`}>
-                                                      {treatment.status}
+                                                      {treatment.status === 'IN_PROGRESS' ? 'ONGOING' : treatment.status}
                                                   </span>
                                               </div>
                                               
@@ -283,13 +440,13 @@ const Patients = () => {
                                                           {treatment.sessions.map((session, idx) => (
                                                               <div key={idx} className={`flex flex-col sm:flex-row gap-2 sm:gap-6 pb-4 ${idx !== treatment.sessions.length - 1 ? 'border-b border-dashed border-slate-200' : 'pb-0'}`}>
                                                                   <div className="sm:w-32 shrink-0">
-                                                                       <p className="text-sm font-bold text-[#0E4C5C]">
-                                                                           {dayjs(session.sessionDate).format('MMM D, YYYY')}
-                                                                       </p>
+                                                                      <p className="text-sm font-bold text-[#0E4C5C]">
+                                                                          {dayjs(session.sessionDate).format('MMM D, YYYY')}
+                                                                      </p>
                                                                   </div>
                                                                   <div className="flex-grow">
                                                                       <p className="text-sm font-medium text-slate-700 leading-relaxed bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
-                                                                          {session.notes || 'No clinical notes recorded.'}
+                                                                          {session.note || session.notes || 'No clinical notes recorded.'}
                                                                       </p>
                                                                   </div>
                                                               </div>

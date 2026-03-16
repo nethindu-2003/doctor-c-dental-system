@@ -1,14 +1,26 @@
-import React, { useState } from 'react';
-import { Menu as MenuIcon, Notifications } from '@mui/icons-material';
-import { Outlet, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Menu as MenuIcon, Settings, AccessTime } from '@mui/icons-material';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import dayjs from 'dayjs';
+
 import AdminSidebar from './AdminSidebar';
 import { useAuth } from '../../context/AuthContext';
 
 const AdminLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, logout } = useAuth(); // Get admin user info
+  const { user, logout } = useAuth(); 
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // --- LIVE CLOCK STATE ---
+  const [currentTime, setCurrentTime] = useState(dayjs());
+
+  useEffect(() => {
+    // Update the clock every minute
+    const timer = setInterval(() => setCurrentTime(dayjs()), 60000);
+    return () => clearInterval(timer);
+  }, []);
   
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -26,25 +38,35 @@ const AdminLayout = () => {
           <MenuIcon />
         </button>
         
-        <h1 className="text-xl font-poppins font-semibold text-primary flex-grow">
+        <h1 className="text-xl font-poppins font-semibold text-[#1A237E] flex-grow">
           Admin Portal
         </h1>
 
-        <div className="flex items-center space-x-4">
-           <button className="relative p-2 text-slate-400 hover:text-slate-600 transition-colors rounded-full hover:bg-slate-100">
-              <Notifications />
-              <span className="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 border-2 border-white rounded-full">
-                 4
-              </span>
+        <div className="flex items-center space-x-3 sm:space-x-4">
+           
+           {/* FEATURE 1: Live Clinic Clock (Hidden on very small screens) */}
+           <div className="hidden lg:flex items-center text-slate-600 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 shadow-sm">
+              <AccessTime fontSize="small" className="mr-2 text-[#1A237E]" />
+              <span className="text-sm font-bold tracking-wide">{currentTime.format('MMM D, YYYY  •  h:mm A')}</span>
+           </div>
+
+           {/* FEATURE 2: Quick Settings */}
+           <button 
+              className="p-2 text-slate-400 hover:text-[#1A237E] transition-colors rounded-full hover:bg-slate-100 focus:outline-none"
+              title="System Settings"
+              onClick={() => navigate('/admin/settings')}
+           >
+              <Settings />
            </button>
            
-           <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
-              <div className="flex items-center justify-center w-9 h-9 bg-primary text-white font-semibold rounded-full shadow-sm">
-                  {user?.name ? user.name.charAt(0) : 'A'}
+           {/* Admin Profile Section */}
+           <div className="flex items-center gap-3 pl-3 sm:pl-4 border-l border-slate-200">
+              <div className="flex items-center justify-center w-9 h-9 bg-[#1A237E] text-white font-bold rounded-full shadow-sm">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
               </div>
-              <div className="hidden sm:block">
-                 <p className="text-sm font-semibold text-slate-700 leading-tight">Admin</p>
-                 <p className="text-xs text-slate-500">{user?.name || 'Super Admin'}</p>
+              <div className="hidden sm:block text-left">
+                 <p className="text-sm font-bold text-slate-700 leading-tight">Admin</p>
+                 <p className="text-xs font-medium text-slate-500">{user?.name || 'Super Admin'}</p>
               </div>
            </div>
         </div>
@@ -58,8 +80,8 @@ const AdminLayout = () => {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 p-6 md:ml-72 mt-16 mt-16 max-w-7xl mx-auto w-full overflow-hidden">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 min-h-[calc(100vh-8rem)] w-full">
+      <main className="flex-1 p-4 sm:p-6 md:ml-72 mt-16 max-w-7xl mx-auto w-full overflow-hidden">
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-4 sm:p-6 min-h-[calc(100vh-8rem)] w-full">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}

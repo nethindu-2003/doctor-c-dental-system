@@ -44,6 +44,11 @@ public class Patient {
     private String bloodGroup;
 
     private String address;
+
+    @Lob
+    @Column(name = "profile_picture", columnDefinition = "LONGTEXT")
+    private String profilePicture;
+
     private String allergies;
 
     @Column(name = "email_notifications")

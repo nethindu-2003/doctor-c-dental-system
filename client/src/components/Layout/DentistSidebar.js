@@ -3,10 +3,12 @@ import {
   Dashboard, CalendarMonth, MedicalServices, AccountCircle, People, Inventory, Chat, Logout 
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useClinic } from '../../context/ClinicContext';
 
 const DentistSidebar = ({ mobileOpen, handleDrawerToggle, handleLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { config } = useClinic();
 
   const menuItems = [
     { text: 'Dashboard', icon: <Dashboard fontSize="small" />, path: '/dentist/dashboard' },
@@ -22,10 +24,14 @@ const DentistSidebar = ({ mobileOpen, handleDrawerToggle, handleLogout }) => {
     <div className="h-full flex flex-col bg-teal-900 text-white shadow-xl">
       {/* Brand Logo */}
       <div className="flex items-center gap-3 px-6 py-5 border-b border-teal-800">
-        <div className="w-9 h-9 bg-teal-400 rounded-lg flex items-center justify-center shadow-sm">
-            <span className="text-xl font-bold text-teal-900">C</span>
-        </div>
-        <span className="text-xl font-poppins font-bold tracking-tight text-white">Doctor C</span>
+        {config.clinicLogo ? (
+          <img src={config.clinicLogo} alt={config.clinicName} className="w-9 h-9 rounded-lg object-contain shadow-sm" />
+        ) : (
+          <div className="w-9 h-9 bg-teal-400 rounded-lg flex items-center justify-center shadow-sm">
+            <span className="text-xl font-bold text-teal-900">{config.clinicName?.charAt(0) || 'C'}</span>
+          </div>
+        )}
+        <span className="text-xl font-poppins font-bold tracking-tight text-white">{config.clinicName}</span>
       </div>
 
       {/* Navigation */}

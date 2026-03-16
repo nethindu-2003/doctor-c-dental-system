@@ -33,6 +33,7 @@ public class DentistProfileController {
         dentist.setSpecialization(request.getSpecialization());
         dentist.setLicenseId(request.getLicenseId());
         dentist.setBio(request.getBio());
+        dentist.setProfilePicture(request.getProfilePicture());
 
         return mapToDTO(dentistRepository.save(dentist));
     }
@@ -45,6 +46,7 @@ public class DentistProfileController {
         dto.setSpecialization(d.getSpecialization());
         dto.setLicenseId(d.getLicenseId());
         dto.setBio(d.getBio());
+        dto.setProfilePicture(d.getProfilePicture());
         return dto;
     }
 }

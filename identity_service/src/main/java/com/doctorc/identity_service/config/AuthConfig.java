@@ -33,15 +33,15 @@ public class AuthConfig {
                                 "/auth/forgot-password",
                                 "/auth/reset-password",
                                 "/auth/setup-dentist",
-                                "/auth/dentists"
-                        ).permitAll()
+                                "/auth/dentists",
+                                "/auth/public/**")  // <-- Public clinic config endpoint
+                        .permitAll()
 
                         // 2. ALLOW PRE-FLIGHT CHECKS (CORS)
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
                         // 3. SECURED ENDPOINTS (Like Add Dentist)
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 // 4. STATELESS SESSION (No Cookies)
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 

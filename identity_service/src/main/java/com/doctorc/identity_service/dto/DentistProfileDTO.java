@@ -9,4 +9,5 @@ public class DentistProfileDTO {
     private String specialization;
     private String licenseId;
     private String bio;
+    private String profilePicture;
 }

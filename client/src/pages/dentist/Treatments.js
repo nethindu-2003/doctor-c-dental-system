@@ -1,57 +1,165 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Save, History, ExpandMore, ExpandLess, MedicalServices, Event 
+  Save, History, ExpandMore, ExpandLess, MedicalServices, Event, Add, Delete, CheckCircle 
 } from '@mui/icons-material';
-
-// --- MOCK DATA: Treatment + Sessions Structure ---
-const mockTreatments = [
-  {
-    id: 1,
-    patientName: 'Sophia Clark',
-    diagnosis: 'Malocclusion (Misaligned Teeth)',
-    procedure: 'Braces Installation',
-    totalSessions: 5,
-    completedSessions: 3,
-    status: 'Ongoing',
-    cost: 1500,
-    sessions: [ // <--- The "Sessions" Table you mentioned
-      { id: 101, date: '2024-06-01', notes: 'Initial Consultation & X-Rays', dentist: 'Dr. Emily' },
-      { id: 102, date: '2024-06-15', notes: 'Brackets bonded to teeth', dentist: 'Dr. Emily' },
-      { id: 103, date: '2024-07-01', notes: 'Wire tightening and adjustment', dentist: 'Dr. Emily' }
-    ]
-  },
-  {
-    id: 2,
-    patientName: 'David Lee',
-    diagnosis: 'Dental Caries',
-    procedure: 'Composite Filling',
-    totalSessions: 1,
-    completedSessions: 1,
-    status: 'Completed',
-    cost: 120,
-    sessions: [
-      { id: 201, date: '2024-06-20', notes: 'Cavity cleaned and filled', dentist: 'Dr. Emily' }
-    ]
-  }
-];
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, CircularProgress, Chip } from '@mui/material';
+import api from '../../api/axios'; // Ensure this points to your identity_service axios instance
+import { useAuth } from '../../context/AuthContext';
+import dayjs from 'dayjs';
 
 const Treatments = () => {
-  const [treatments, setTreatments] = useState(mockTreatments);
-  const [expandedId, setExpandedId] = useState(null); // For toggling session details
+  const { user } = useAuth();
+  const dentistId = user?.id || 1;
 
-  // Form State
-  const [formData, setFormData] = useState({
-    patient: '',
+  // --- STATE ---
+  const [loading, setLoading] = useState(true);
+  const [treatments, setTreatments] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [equipmentList, setEquipmentList] = useState([]);
+  
+  const [expandedId, setExpandedId] = useState(null);
+  const [filterStatus, setFilterStatus] = useState('ONGOING'); // 'ONGOING' or 'COMPLETED'
+  const [searchPatient, setSearchPatient] = useState('');
+
+  // Form State: New Base Treatment
+  const [treatmentForm, setTreatmentForm] = useState({
+    patientId: '',
     diagnosis: '',
-    procedure: '',
-    sessions: 1,
-    cost: '',
-    date: new Date().toISOString().split('T')[0],
-    notes: ''
+    treatmentName: '',
+    totalSessionsPlanned: 1, // Requires DB update!
+    totalCost: '',
+    startDate: new Date().toISOString().split('T')[0],
   });
 
-  const handleExpandClick = (id) => {
-    setExpandedId(expandedId === id ? null : id);
+  // Modal State: Log New Session
+  const [sessionModalOpen, setSessionModalOpen] = useState(false);
+  const [activeTreatmentId, setActiveTreatmentId] = useState(null);
+  const [sessionForm, setSessionForm] = useState({
+    sessionName: '',
+    note: '',
+    sessionDate: new Date().toISOString().split('T')[0],
+    cost: '',
+    status: 'COMPLETED',
+    equipmentUsed: [] // Array of { equipmentId, quantity }
+  });
+
+  // --- FETCH DATA ---
+  useEffect(() => {
+    fetchInitialData();
+  }, [dentistId]);
+
+  useEffect(() => {
+    fetchTreatments();
+  }, [filterStatus, searchPatient]);
+
+  const fetchInitialData = async () => {
+    try {
+      // You need to ensure these endpoints exist in your backend!
+      const [patientsRes, equipRes] = await Promise.all([
+        api.get('/patients'), 
+        api.get('/equipment')
+      ]);
+      setPatients(patientsRes.data);
+      setEquipmentList(equipRes.data);
+    } catch (err) {
+      console.error("Failed to load dropdown data", err);
+    }
+  };
+
+  const fetchTreatments = async () => {
+    try {
+      setLoading(true);
+      // Calls your new endpoint: GET /auth/treatments/dentist/{id}?status=ONGOING
+      const res = await api.get(`/treatments/dentist/${dentistId}?status=${filterStatus}`);
+      
+      // Basic local filtering for patient name search
+      let data = res.data;
+      if (searchPatient) {
+        data = data.filter(t => t.patient?.name.toLowerCase().includes(searchPatient.toLowerCase()));
+      }
+      setTreatments(data);
+    } catch (err) {
+      console.error("Failed to fetch treatments", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- HANDLERS ---
+  const handleCreateTreatment = async () => {
+    try {
+      if (!treatmentForm.patientId || !treatmentForm.treatmentName) return alert("Missing required fields");
+      
+      const payload = {
+        patientId: treatmentForm.patientId,
+        dentistId: dentistId,
+        treatmentName: treatmentForm.treatmentName,
+        diagnosis: treatmentForm.diagnosis,
+        startDate: treatmentForm.startDate,
+        totalCost: parseFloat(treatmentForm.totalCost) || 0
+      };
+
+      await api.post('/treatments', payload);
+      alert("Treatment created successfully!");
+      setTreatmentForm({ ...treatmentForm, treatmentName: '', diagnosis: '', totalCost: '' });
+      if (filterStatus === 'ONGOING') fetchTreatments();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to create treatment.");
+    }
+  };
+
+  const handleOpenSessionModal = (treatmentId) => {
+    setActiveTreatmentId(treatmentId);
+    setSessionForm({ sessionName: '', note: '', sessionDate: new Date().toISOString().split('T')[0], cost: '', status: 'COMPLETED', equipmentUsed: [] });
+    setSessionModalOpen(true);
+  };
+
+  const handleAddEquipmentToSession = () => {
+    setSessionForm({
+      ...sessionForm,
+      equipmentUsed: [...sessionForm.equipmentUsed, { equipmentId: '', quantity: 1 }]
+    });
+  };
+
+  const handleEquipmentChange = (index, field, value) => {
+    const updated = [...sessionForm.equipmentUsed];
+    updated[index][field] = value;
+    setSessionForm({ ...sessionForm, equipmentUsed: updated });
+  };
+
+  const handleRemoveEquipment = (index) => {
+    const updated = sessionForm.equipmentUsed.filter((_, i) => i !== index);
+    setSessionForm({ ...sessionForm, equipmentUsed: updated });
+  };
+
+  const handleSaveSession = async () => {
+    try {
+      // Filter out empty equipment rows
+      const validEquipment = sessionForm.equipmentUsed.filter(e => e.equipmentId !== '');
+      const payload = {
+        ...sessionForm,
+        cost: parseFloat(sessionForm.cost) || 0,
+        equipmentUsed: validEquipment
+      };
+
+      await api.post(`/treatments/${activeTreatmentId}/sessions`, payload);
+      setSessionModalOpen(false);
+      fetchTreatments(); // Refresh list to show new session and updated progress
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data || "Failed to save session. Check stock levels.");
+    }
+  };
+
+  const handleMarkCompleted = async (treatmentId) => {
+    if(!window.confirm("Mark this entire treatment as fully completed?")) return;
+    try {
+      await api.put(`/treatments/${treatmentId}/complete`);
+      fetchTreatments();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -62,100 +170,67 @@ const Treatments = () => {
 
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         
-        {/* --- LEFT: ADD NEW TREATMENT / SESSION FORM --- */}
+        {/* --- LEFT: ADD NEW TREATMENT FORM --- */}
         <div className="w-full lg:w-5/12">
           <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 h-full">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="p-2 bg-[#E0F7FA] rounded-xl text-[#0E4C5C] shadow-sm">
-                 <MedicalServices />
-              </div>
-              <h2 className="text-xl font-bold font-poppins text-slate-800">Add New Treatment</h2>
+              <div className="p-2 bg-[#E0F7FA] rounded-xl text-[#0E4C5C] shadow-sm"><MedicalServices /></div>
+              <h2 className="text-xl font-bold font-poppins text-slate-800">Start New Treatment</h2>
             </div>
-            
             <hr className="border-slate-100 mb-6" />
 
             <div className="space-y-5">
-              {/* Patient Search */}
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Search Patient</label>
-                <input 
-                  type="text" 
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all text-sm"
-                  placeholder="Name or ID" 
-                />
-                <p className="text-xs text-slate-500 mt-1.5 font-medium ml-1">Selected: Sophia Clark (ID: #12345)</p>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Select Patient</label>
+                <select 
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] focus:ring-2 transition-all text-sm"
+                  value={treatmentForm.patientId}
+                  onChange={e => setTreatmentForm({...treatmentForm, patientId: e.target.value})}
+                >
+                  <option value="">Select a patient...</option>
+                  {patients.map(p => <option key={p.id} value={p.id}>{p.name} (ID: {p.id})</option>)}
+                </select>
               </div>
 
-              {/* Diagnosis */}
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Diagnosis</label>
                 <input 
                     type="text" 
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all text-sm" 
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] transition-all text-sm" 
                     placeholder="e.g. Gingivitis" 
+                    value={treatmentForm.diagnosis}
+                    onChange={e => setTreatmentForm({...treatmentForm, diagnosis: e.target.value})}
                 />
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Procedure</label>
-                  <select className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all text-sm appearance-none">
-                     <option value="" disabled selected>Select...</option>
-                     <option value="Cleaning">Cleaning</option>
-                     <option value="Filling">Filling</option>
-                     <option value="Root Canal">Root Canal</option>
-                     <option value="Braces">Braces</option>
-                  </select>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Procedure Name</label>
+                  <input 
+                    type="text" 
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] transition-all text-sm" 
+                    placeholder="e.g. Root Canal" 
+                    value={treatmentForm.treatmentName}
+                    onChange={e => setTreatmentForm({...treatmentForm, treatmentName: e.target.value})}
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Est. Cost (Rs.)</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Initial Est. Cost (Rs.)</label>
                   <input 
                       type="number" 
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all text-sm" 
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] transition-all text-sm" 
+                      value={treatmentForm.totalCost}
+                      onChange={e => setTreatmentForm({...treatmentForm, totalCost: e.target.value})}
                   />
                 </div>
               </div>
 
-              {/* Session Planning */}
-              <div className="pt-2">
-                  <h3 className="text-sm font-bold text-[#0E4C5C] mb-3 uppercase tracking-wider">Session Planning</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-1">Total Sessions</label>
-                        <input 
-                            type="number" 
-                            defaultValue={1} 
-                            min={1}
-                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all text-sm" 
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-1">Session Date</label>
-                        <input 
-                            type="date" 
-                            defaultValue={formData.date} 
-                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all text-sm text-slate-600" 
-                        />
-                    </div>
-                  </div>
-              </div>
-
-              <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Clinical Notes</label>
-                  <textarea 
-                    rows={4} 
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all text-sm resize-none" 
-                    placeholder="Details about today's procedure..." 
-                  ></textarea>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                <button className="flex-1 bg-[#0E4C5C] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#0a3541] focus:ring-4 focus:ring-[#0E4C5C]/30 transition-all shadow-md flex items-center justify-center">
-                  <Save className="mr-2" fontSize="small" />
-                  Save Treatment
-                </button>
-                <button className="sm:w-32 bg-white text-red-600 border border-red-200 px-6 py-3 rounded-xl font-bold hover:bg-red-50 focus:ring-4 focus:ring-red-500/20 transition-all flex items-center justify-center">
-                  Reset
+              <div className="pt-4">
+                <button 
+                  onClick={handleCreateTreatment}
+                  className="w-full bg-[#0E4C5C] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#0a3541] transition-all shadow-md flex items-center justify-center"
+                >
+                  <Save className="mr-2" fontSize="small" /> Create Treatment
                 </button>
               </div>
             </div>
@@ -165,103 +240,184 @@ const Treatments = () => {
         {/* --- RIGHT: TREATMENT HISTORY & SESSIONS --- */}
         <div className="w-full lg:w-7/12">
           <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 h-full flex flex-col">
-            <div className="flex justify-between items-center mb-6 shrink-0">
-              <h2 className="text-xl font-bold font-poppins text-slate-800">Patient History</h2>
-              <button className="text-[#0E4C5C] hover:bg-[#E0F7FA] px-3 py-1.5 rounded-lg text-sm font-bold transition-colors flex items-center focus:outline-none">
-                  <History className="mr-1.5" fontSize="small" />
-                  View All
-              </button>
+            
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+              <h2 className="text-xl font-bold font-poppins text-slate-800">Treatment Records</h2>
+              <div className="flex bg-slate-100 p-1 rounded-lg">
+                <button 
+                  onClick={() => setFilterStatus('ONGOING')}
+                  className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${filterStatus === 'ONGOING' ? 'bg-white shadow text-[#0E4C5C]' : 'text-slate-500 hover:text-slate-700'}`}
+                >Ongoing</button>
+                <button 
+                  onClick={() => setFilterStatus('COMPLETED')}
+                  className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${filterStatus === 'COMPLETED' ? 'bg-white shadow text-[#2e7d32]' : 'text-slate-500 hover:text-slate-700'}`}
+                >Completed</button>
+              </div>
             </div>
 
+            <input 
+              type="text" 
+              placeholder="Filter by patient name..." 
+              className="w-full mb-4 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+              value={searchPatient}
+              onChange={e => setSearchPatient(e.target.value)}
+            />
+
             {/* List of Treatments */}
-            <div className="space-y-4 overflow-y-auto flex-grow pr-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-              {treatments.map((t) => (
-                <div 
-                    key={t.id} 
-                    className={`bg-white border rounded-2xl p-5 shadow-sm transition-all hover:shadow-md ${
-                        t.status === 'Ongoing' ? 'border-[#4DB6AC]' : 'border-slate-200'
-                    }`}
-                >
+            <div className="space-y-4 overflow-y-auto flex-grow pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+              {loading ? <div className="text-center py-10"><CircularProgress size={30} /></div> : 
+               treatments.length === 0 ? <p className="text-center text-slate-500 py-10">No treatments found.</p> :
+               treatments.map((t) => {
+                 // Fallback if backend doesn't have totalSessionsPlanned yet
+                 const totalPlanned = t.totalSessionsPlanned || t.sessions?.length || 1; 
+                 const completedCount = t.sessions?.length || 0;
+                 const progress = Math.min((completedCount / totalPlanned) * 100, 100);
+
+                 return (
+                <div key={t.treatmentId} className={`bg-white border rounded-2xl p-5 shadow-sm transition-all ${t.status === 'ONGOING' ? 'border-[#4DB6AC]' : 'border-slate-200'}`}>
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <h3 className="text-lg font-bold text-slate-800 leading-tight mb-1">{t.procedure}</h3>
-                        <p className="text-sm font-medium text-slate-500">Diagnosis: <span className="text-slate-700">{t.diagnosis}</span></p>
+                        <h3 className="text-lg font-bold text-slate-800 leading-tight mb-1">{t.treatmentName}</h3>
+                        <p className="text-sm font-medium text-slate-500">Patient: <span className="text-slate-700">{t.patient?.name}</span></p>
                       </div>
-                      <span className={`inline-block px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg border shrink-0 ml-4 ${
-                          t.status === 'Ongoing' 
-                            ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                            : 'bg-green-50 text-green-700 border-green-200'
-                      }`}>
-                          {t.status}
-                      </span>
+                      <div className="flex flex-col gap-2 items-end">
+                        <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg border ${t.status === 'ONGOING' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
+                            {t.status}
+                        </span>
+                        {t.status === 'ONGOING' && (
+                          <button onClick={() => handleMarkCompleted(t.treatmentId)} className="text-xs text-green-600 hover:text-green-800 flex items-center font-bold">
+                            <CheckCircle fontSize="inherit" className="mr-1"/> Mark Done
+                          </button>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Progress Bar for Multi-Session Treatments */}
+                    {/* Progress Bar */}
                     <div className="mb-4">
                       <div className="flex justify-between items-end mb-1.5">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Progress</span>
-                        <span className="text-xs font-bold font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
-                           {t.completedSessions} / {t.totalSessions}
-                        </span>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Session Progress</span>
+                        <span className="text-xs font-bold font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded">{completedCount} Completed</span>
                       </div>
                       <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/50">
-                        <div 
-                            className="bg-[#0E4C5C] h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden" 
-                            style={{ width: `${(t.completedSessions / t.totalSessions) * 100}%` }}
-                        >
-                            <div className="absolute inset-0 bg-white/20"></div>
-                        </div>
+                        <div className="bg-[#0E4C5C] h-full rounded-full transition-all" style={{ width: `${progress}%` }} />
                       </div>
                     </div>
 
-                    {/* Expand Button for Sessions Table */}
                     <button 
-                      onClick={() => handleExpandClick(t.id)}
-                      className="text-[#0E4C5C] hover:text-[#0a3541] hover:bg-slate-50 px-2 py-1 -ml-2 rounded text-sm font-bold transition-colors flex items-center focus:outline-none"
+                      onClick={() => setExpandedId(expandedId === t.treatmentId ? null : t.treatmentId)}
+                      className="text-[#0E4C5C] hover:bg-slate-50 px-2 py-1 -ml-2 rounded text-sm font-bold transition-colors flex items-center"
                     >
-                      View Session Records
-                      {expandedId === t.id ? <ExpandLess fontSize="small" className="ml-1" /> : <ExpandMore fontSize="small" className="ml-1" />}
+                      View Session Records {expandedId === t.treatmentId ? <ExpandLess fontSize="small" className="ml-1" /> : <ExpandMore fontSize="small" className="ml-1" />}
                     </button>
 
-                    {/* --- COLLAPSIBLE SESSION TABLE --- */}
-                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedId === t.id ? 'max-h-[500px] mt-4 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    {/* COLLAPSIBLE SESSION TABLE */}
+                    <div className={`overflow-hidden transition-all duration-300 ${expandedId === t.treatmentId ? 'max-h-[800px] mt-4 opacity-100' : 'max-h-0 opacity-0'}`}>
                       <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse min-w-[400px]">
                               <thead>
-                                <tr className="border-b-2 border-slate-200 text-slate-400 text-[10px] uppercase tracking-wider">
+                                <tr className="border-b-2 border-slate-200 text-slate-400 text-[10px] uppercase">
                                   <th className="pb-2 font-bold">Date</th>
-                                  <th className="pb-2 font-bold">Dentist</th>
+                                  <th className="pb-2 font-bold">Session Name</th>
                                   <th className="pb-2 font-bold">Notes</th>
+                                  <th className="pb-2 font-bold">Cost</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-slate-100">
-                                {t.sessions.map((session) => (
-                                  <tr key={session.id} className="hover:bg-slate-100/50 transition-colors">
-                                    <td className="py-2 text-xs font-bold text-slate-600 whitespace-nowrap pr-4">{session.date}</td>
-                                    <td className="py-2 text-xs font-medium text-slate-700 whitespace-nowrap pr-4">{session.dentist}</td>
-                                    <td className="py-2 text-xs text-slate-500 leading-snug min-w-[150px]">{session.notes}</td>
+                                {t.sessions?.length === 0 ? <tr><td colSpan="4" className="py-4 text-center text-sm text-slate-500">No sessions logged yet.</td></tr> :
+                                 t.sessions?.map((session) => (
+                                  <tr key={session.sessionId} className="hover:bg-slate-100/50 transition-colors">
+                                    <td className="py-2 text-xs font-bold text-slate-600 pr-4">{session.sessionDate}</td>
+                                    <td className="py-2 text-xs font-medium text-slate-700 pr-4">{session.sessionName}</td>
+                                    <td className="py-2 text-xs text-slate-500 pr-4">{session.note}</td>
+                                    <td className="py-2 text-xs font-mono text-slate-600">Rs.{session.cost}</td>
                                   </tr>
                                 ))}
                               </tbody>
                             </table>
                         </div>
-                        {/* Quick Add Session Button for Ongoing Treatments */}
-                        {t.status === 'Ongoing' && (
-                          <button className="mt-4 w-full bg-white border border-[#0E4C5C] text-[#0E4C5C] px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#E0F7FA] focus:ring-2 focus:ring-[#0E4C5C]/20 transition-all flex items-center justify-center shadow-sm">
-                            <Event className="mr-2" fontSize="small" />
-                            Log Next Session
+                        {t.status === 'ONGOING' && (
+                          <button 
+                            onClick={() => handleOpenSessionModal(t.treatmentId)}
+                            className="mt-4 w-full bg-white border border-[#0E4C5C] text-[#0E4C5C] px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#E0F7FA] transition-all flex items-center justify-center shadow-sm"
+                          >
+                            <Event className="mr-2" fontSize="small" /> Log Next Session
                           </button>
                         )}
                       </div>
                     </div>
 
                 </div>
-              ))}
+              )})}
             </div>
           </div>
         </div>
       </div>
+
+      {/* --- MODAL: LOG NEXT SESSION --- */}
+      <Dialog open={sessionModalOpen} onClose={() => setSessionModalOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 'bold', color: '#0E4C5C' }}>Log New Session</DialogTitle>
+        <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Session Name</label>
+              <input type="text" className="w-full px-3 py-2 border rounded-lg" value={sessionForm.sessionName} onChange={e => setSessionForm({...sessionForm, sessionName: e.target.value})} placeholder="e.g. Wire Adjustment" />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Date</label>
+              <input type="date" className="w-full px-3 py-2 border rounded-lg" value={sessionForm.sessionDate} onChange={e => setSessionForm({...sessionForm, sessionDate: e.target.value})} />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-1">Clinical Notes</label>
+            <textarea className="w-full px-3 py-2 border rounded-lg" rows="3" value={sessionForm.note} onChange={e => setSessionForm({...sessionForm, note: e.target.value})} />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-1">Session Cost (Rs.)</label>
+            <input type="number" className="w-full px-3 py-2 border rounded-lg" value={sessionForm.cost} onChange={e => setSessionForm({...sessionForm, cost: e.target.value})} />
+          </div>
+
+          {/* DYNAMIC EQUIPMENT SELECTOR */}
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div className="flex justify-between items-center mb-3">
+              <label className="text-sm font-bold text-[#0E4C5C]">Equipment Used (Auto-Deducts Stock)</label>
+              <button onClick={handleAddEquipmentToSession} className="text-xs bg-white border border-slate-300 px-2 py-1 rounded shadow-sm hover:bg-slate-100 flex items-center">
+                <Add fontSize="small" /> Add Item
+              </button>
+            </div>
+            
+            {sessionForm.equipmentUsed.length === 0 && <p className="text-xs text-slate-500 italic">No equipment recorded.</p>}
+            
+            {sessionForm.equipmentUsed.map((equip, index) => (
+              <div key={index} className="flex gap-2 mb-2 items-center">
+                <select 
+                  className="flex-grow px-2 py-1 text-sm border rounded"
+                  value={equip.equipmentId}
+                  onChange={e => handleEquipmentChange(index, 'equipmentId', e.target.value)}
+                >
+                  <option value="">Select Item...</option>
+                  {equipmentList.map(item => (
+                    <option key={item.equipmentId} value={item.equipmentId}>{item.name} (In Stock: {item.stockQuantity})</option>
+                  ))}
+                </select>
+                <input 
+                  type="number" min="1" placeholder="Qty" className="w-20 px-2 py-1 text-sm border rounded"
+                  value={equip.quantity} onChange={e => handleEquipmentChange(index, 'quantity', e.target.value)}
+                />
+                <button onClick={() => handleRemoveEquipment(index)} className="text-red-500 hover:text-red-700"><Delete fontSize="small"/></button>
+              </div>
+            ))}
+          </div>
+
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setSessionModalOpen(false)} color="inherit">Cancel</Button>
+          <Button onClick={handleSaveSession} variant="contained" sx={{ bgcolor: '#0E4C5C' }}>Save Session</Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
