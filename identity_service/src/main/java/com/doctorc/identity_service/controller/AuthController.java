@@ -41,7 +41,7 @@ public class AuthController {
     @GetMapping("/dentists")
     public List<DentistDTO> getAllDentists() {
         return dentistRepository.findAll().stream()
-                .map(dentist -> new DentistDTO(dentist.getId(), dentist.getName(), dentist.getSpecialization()))
+                .map(dentist -> new DentistDTO(dentist.getId(), dentist.getName(), dentist.getSpecialization(), dentist.getProfilePicture()))
                 .collect(Collectors.toList());
     }
 

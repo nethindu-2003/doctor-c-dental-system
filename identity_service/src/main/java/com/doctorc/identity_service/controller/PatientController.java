@@ -79,7 +79,8 @@ public class PatientController {
                 .map(dentist -> new DentistDTO(
                         dentist.getId(),
                         dentist.getName(),
-                        dentist.getSpecialization()
+                        dentist.getSpecialization(),
+                        dentist.getProfilePicture()
                 ))
                 .collect(Collectors.toList());
     }

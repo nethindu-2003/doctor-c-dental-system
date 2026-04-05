@@ -14,4 +14,5 @@ public class DentistDTO {
     private Integer id;
     private String name;
     private String specialization;
+    private String profilePicture;
 }

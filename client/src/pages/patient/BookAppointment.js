@@ -238,7 +238,7 @@ const BookAppointment = () => {
                 onClick={() => setSelectedDentist(doctor.id)}
                 className={`cursor-pointer rounded-2xl p-4 text-center border-2 transition-all duration-300 transform hover:-translate-y-1 ${selectedDentist === doctor.id ? 'border-primary bg-primary/5 shadow-md' : 'border-slate-100 bg-white hover:border-slate-300'}`}
               >
-                <img src={getDoctorImage(doctor.id)} alt={doctor.name} className="w-20 h-20 rounded-full mx-auto mb-3 object-cover border-2 border-white" />
+                <img src={doctor.profilePicture || getDoctorImage(doctor.id)} alt={doctor.name} className="w-20 h-20 rounded-full mx-auto mb-3 object-cover border-2 border-white" />
                 <h4 className="font-bold text-slate-800">Dr. {doctor.name}</h4>
                 <p className="text-sm text-slate-500">{doctor.specialization}</p>
               </div>

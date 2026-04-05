@@ -163,7 +163,11 @@ const PatientMessages = () => {
                   }`}
                 >
                   <div className="w-12 h-12 rounded-full bg-primary-dark text-white flex items-center justify-center font-bold shadow-sm shrink-0 mr-4">
-                    {dentist.name ? dentist.name.charAt(0).toUpperCase() : 'D'}
+                    {dentist.profilePicture ? (
+                      <img src={dentist.profilePicture} alt={dentist.name} className="w-full h-full object-cover rounded-full" />
+                    ) : (
+                      dentist.name ? dentist.name.charAt(0).toUpperCase() : 'D'
+                    )}
                   </div>
                   <div className="overflow-hidden">
                     <p className={`font-bold truncate ${isSelected ? 'text-slate-800' : 'text-slate-700'}`}>
