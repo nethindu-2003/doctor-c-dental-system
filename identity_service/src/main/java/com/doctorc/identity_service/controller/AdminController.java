@@ -89,6 +89,7 @@ public class AdminController {
         dto.setGender(p.getGender());
         dto.setDob(p.getDob());
         dto.setIsActive(p.getIsActive() != null ? p.getIsActive() : true);
+        dto.setProfilePicture(p.getProfilePicture());
         return dto;
     }
 }

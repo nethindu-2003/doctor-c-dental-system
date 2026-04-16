@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { 
-  Search, Edit, Cancel, EventAvailable, CheckCircle, Person, Close 
+  Search, Edit, Cancel, EventAvailable, CheckCircle, Person, Close, FilterList
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
+import isBetween from 'dayjs/plugin/isBetween';
 import axios from '../../api/axios'; 
+
+dayjs.extend(isBetween);
 
 const AdminAppointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -12,6 +15,8 @@ const AdminAppointments = () => {
   const [loading, setLoading] = useState(true);
   
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('All');
+  const [filterDays, setFilterDays] = useState('All'); // All, Today, Tomorrow, This Week, Past
   const [successMsg, setSuccessMsg] = useState('');
   
   // Edit Dialog State
@@ -42,7 +47,7 @@ const AdminAppointments = () => {
   const handleEditClick = (appt) => {
     setCurrentAppt({
         ...appt,
-        dentistId: appt.dentistId || '' // Uses the flat ID from the new DTO
+        dentistId: appt.dentistId || '' 
     });
     setOpenDialog(true);
   };
@@ -100,10 +105,30 @@ const AdminAppointments = () => {
 
   // --- FILTER LOGIC ---
   const filteredAppointments = appointments.filter(a => {
-    // Now we can easily search against the flat strings!
+    // 1. Search Filter
     const patientName = a.patientName?.toLowerCase() || '';
     const dentistName = a.dentistName?.toLowerCase() || '';
-    return patientName.includes(searchTerm.toLowerCase()) || dentistName.includes(searchTerm.toLowerCase());
+    const matchesSearch = patientName.includes(searchTerm.toLowerCase()) || dentistName.includes(searchTerm.toLowerCase());
+    
+    // 2. Status Filter
+    const matchesStatus = filterStatus === 'All' || a.status === filterStatus;
+    
+    // 3. Days Filter
+    let matchesDays = true;
+    const apptDate = dayjs(a.appointmentDate);
+    const today = dayjs().startOf('day');
+    
+    if (filterDays === 'Today') {
+        matchesDays = apptDate.isSame(today, 'day');
+    } else if (filterDays === 'Tomorrow') {
+        matchesDays = apptDate.isSame(today.add(1, 'day'), 'day');
+    } else if (filterDays === 'This Week') {
+        matchesDays = apptDate.isBetween(today, today.add(7, 'day'), 'day', '[]');
+    } else if (filterDays === 'Past') {
+        matchesDays = apptDate.isBefore(today, 'day');
+    }
+
+    return matchesSearch && matchesStatus && matchesDays;
   });
 
   return (
@@ -124,19 +149,62 @@ const AdminAppointments = () => {
           </div>
       )}
 
-      {/* SEARCH BAR */}
-      <div className="bg-white p-4 mb-6 rounded-2xl shadow-sm border border-slate-200">
+      {/* FILTERS SECTION */}
+      <div className="bg-white p-4 mb-6 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Search */}
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
             <Search fontSize="small" />
           </div>
           <input
             type="text"
-            placeholder="Search by Patient or Dentist Name..."
+            placeholder="Search by Patient or Dentist..."
             className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 outline-none transition-all text-sm font-medium"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+        </div>
+
+        {/* Status Filter */}
+        <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <FilterList fontSize="small" />
+            </div>
+            <select
+                className="w-full pl-11 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 outline-none transition-all text-sm font-medium appearance-none"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+            >
+                <option value="All">All Statuses</option>
+                <option value="PENDING">Pending</option>
+                <option value="CONFIRMED">Confirmed</option>
+                <option value="CANCELLED">Cancelled</option>
+                <option value="COMPLETED">Completed</option>
+            </select>
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400 text-xs">
+                ▼
+            </div>
+        </div>
+
+        {/* Days Filter */}
+        <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <EventAvailable fontSize="small" />
+            </div>
+            <select
+                className="w-full pl-11 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 outline-none transition-all text-sm font-medium appearance-none"
+                value={filterDays}
+                onChange={(e) => setFilterDays(e.target.value)}
+            >
+                <option value="All">Any Date</option>
+                <option value="Today">Today</option>
+                <option value="Tomorrow">Tomorrow</option>
+                <option value="This Week">Next 7 Days</option>
+                <option value="Past">Past Dates</option>
+            </select>
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400 text-xs">
+                ▼
+            </div>
         </div>
       </div>
 
@@ -162,7 +230,7 @@ const AdminAppointments = () => {
                     <tbody className="divide-y divide-slate-100">
                         {filteredAppointments.length === 0 ? (
                             <tr>
-                                <td colSpan="6" className="p-8 text-center text-slate-500">No appointments found.</td>
+                                <td colSpan="6" className="p-8 text-center text-slate-500">No appointments found matching your filters.</td>
                             </tr>
                         ) : (
                             filteredAppointments.map((row) => {
@@ -208,7 +276,6 @@ const AdminAppointments = () => {
                                     </td>
                                     <td className="p-4 w-1/6 align-middle text-center">
                                         <div className="flex justify-center items-center space-x-2">
-                                            {/* Confirm Button */}
                                             {row.status === 'PENDING' && (
                                                 <button 
                                                     className={`p-1.5 rounded-lg transition-colors focus:outline-none ${isPast ? 'text-slate-300 cursor-not-allowed' : 'text-green-600 hover:bg-green-50 hover:text-green-700'}`}
@@ -220,7 +287,6 @@ const AdminAppointments = () => {
                                                 </button>
                                             )}
                                             
-                                            {/* Edit Button */}
                                             <button 
                                                 className={`p-1.5 rounded-lg transition-colors focus:outline-none ${isPast ? 'text-slate-300 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50 hover:text-blue-700'}`}
                                                 onClick={() => !isPast && handleEditClick(row)}
@@ -230,7 +296,6 @@ const AdminAppointments = () => {
                                                 <Edit fontSize="small" />
                                             </button>
 
-                                            {/* Cancel Button */}
                                             {row.status !== 'CANCELLED' && (
                                                 <button 
                                                     className={`p-1.5 rounded-lg transition-colors focus:outline-none ${isPast ? 'text-slate-300 cursor-not-allowed' : 'text-red-500 hover:bg-red-50 hover:text-red-600'}`}
@@ -253,7 +318,7 @@ const AdminAppointments = () => {
         )}
       </div>
 
-      {/* 4. EDIT/RESCHEDULE DIALOG */}
+      {/* EDIT/RESCHEDULE DIALOG */}
       {openDialog && (
           ReactDOM.createPortal(<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">

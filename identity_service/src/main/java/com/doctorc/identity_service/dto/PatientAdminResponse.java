@@ -11,4 +11,5 @@ public class PatientAdminResponse {
     private String gender;
     private LocalDate dob;
     private Boolean isActive;
+    private String profilePicture;
 }

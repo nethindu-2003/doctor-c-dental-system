@@ -183,8 +183,12 @@ const Patients = () => {
                     <tr key={row.patientId} className="hover:bg-slate-50/50 transition-colors group">
                     <td className="p-4 align-middle">
                         <div className="flex items-center space-x-4">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${row.isActive ? 'bg-[#1A237E]' : 'bg-slate-400'}`}>
-                                {row.name.charAt(0).toUpperCase()}
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden ${row.isActive ? 'bg-[#1A237E]' : 'bg-slate-400'}`}>
+                                {row.profilePicture ? (
+                                    <img src={row.profilePicture} alt={row.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    row.name.charAt(0).toUpperCase()
+                                )}
                             </div>
                             <div>
                                 <p className="font-bold text-slate-800">{row.name}</p>
