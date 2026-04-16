@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { 
   CalendarToday, CheckCircle, Warning, NotificationsActive, 
   PersonOutline, AddCircleOutline, AccessTime, Close 
@@ -204,7 +205,7 @@ const Dashboard = () => {
 
       {/* --- POPUP 1: TODAY'S PATIENTS --- */}
       {patientsModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+          ReactDOM.createPortal(<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
                   {/* Header */}
                   <div className="bg-slate-50 p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
@@ -278,12 +279,12 @@ const Dashboard = () => {
                       </button>
                   </div>
               </div>
-          </div>
+          </div>, document.body)
       )}
 
       {/* --- POPUP 2: COMPLETED TREATMENTS --- */}
       {completedModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+          ReactDOM.createPortal(<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
                   {/* Header */}
                   <div className="bg-slate-50 p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
@@ -337,7 +338,7 @@ const Dashboard = () => {
                       </button>
                   </div>
               </div>
-          </div>
+          </div>, document.body)
       )}
 
     </div>

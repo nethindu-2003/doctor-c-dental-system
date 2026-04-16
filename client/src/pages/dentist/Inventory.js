@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { 
   Search, Inventory as InventoryIcon, Warning, CheckCircle, ErrorOutline, 
   History, Close, Assignment 
@@ -174,7 +175,7 @@ const DentistInventory = () => {
 
       {/* --- USAGE HISTORY DIALOG --- */}
       {openUsageDialog && selectedItem && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+          ReactDOM.createPortal(<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
                   
                   {/* Header */}
@@ -235,7 +236,7 @@ const DentistInventory = () => {
                   </div>
 
               </div>
-          </div>
+          </div>, document.body)
       )}
     </div>
   );

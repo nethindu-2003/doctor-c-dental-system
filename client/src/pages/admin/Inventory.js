@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { 
   Search, Add, Edit, Delete, Warning, CheckCircle, Inventory as InventoryIcon, History, Close 
 } from '@mui/icons-material';
@@ -205,7 +206,7 @@ const AdminInventory = () => {
 
       {/* --- CRUD DIALOG (Add/Edit) --- */}
       {openDialog && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+          ReactDOM.createPortal(<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
                   
                   {/* Header */}
@@ -311,12 +312,12 @@ const AdminInventory = () => {
                       </div>
                   </form>
               </div>
-          </div>
+          </div>, document.body)
       )}
 
       {/* --- ITEM DETAILS / PAST USAGE MODAL (Row Click) --- */}
       {openDetails && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+          ReactDOM.createPortal(<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
                   
                   {/* Header */}
@@ -396,7 +397,7 @@ const AdminInventory = () => {
                       </button>
                   </div>
               </div>
-          </div>
+          </div>, document.body)
       )}
     </div>
   );

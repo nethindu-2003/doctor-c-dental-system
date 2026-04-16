@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { Visibility, VisibilityOff, Email, Lock, ArrowBack } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -289,7 +290,7 @@ const LoginPage = () => {
       {/* --- POPUP 1: FORGOT PASSWORD (NO ADMIN) --- */}
       <AnimatePresence>
         {openForgot && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          ReactDOM.createPortal(<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -357,14 +358,14 @@ const LoginPage = () => {
                 </button>
               </div>
             </motion.div>
-          </div>
+          </div>, document.body)
         )}
       </AnimatePresence>
 
       {/* --- POPUP 2: UPDATE PASSWORD --- */}
       <AnimatePresence>
         {openReset && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          ReactDOM.createPortal(<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -415,7 +416,7 @@ const LoginPage = () => {
                 Update Password
               </button>
             </motion.div>
-          </div>
+          </div>, document.body)
         )}
       </AnimatePresence>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { 
   Search, Visibility, Assessment, Phone, Email, Close, MedicalServices, 
   AssignmentTurnedIn, LocalHospital
@@ -351,7 +352,7 @@ const Patients = () => {
 
       {/* --- PATIENT DOSSIER MODAL --- */}
       {openModal && selectedPatient && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in print:hidden">
+          ReactDOM.createPortal(<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in print:hidden">
               <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
                   
                   {/* Header */}
@@ -489,7 +490,7 @@ const Patients = () => {
                      </button>
                   </div>
               </div>
-          </div>
+          </div>, document.body)
       )}
     </div>
   );

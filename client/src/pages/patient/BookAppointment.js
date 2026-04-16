@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import {
   CalendarMonth, LocalHospital, History, CheckCircle
 } from '@mui/icons-material';
@@ -324,7 +325,7 @@ const BookAppointment = () => {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       {paymentProcessing && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm animate-fade-in"><div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mb-4"></div><h2 className="text-xl font-bold text-white">Processing...</h2></div>
+        ReactDOM.createPortal(<div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm animate-fade-in"><div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mb-4"></div><h2 className="text-xl font-bold text-white">Processing...</h2></div>, document.body)
       )}
       <div className="mb-10"><h1 className="text-3xl font-poppins font-bold text-slate-800">Book Appointment</h1><p className="text-slate-500">Choose your preferred slot below.</p></div>
       <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-200 mb-12">

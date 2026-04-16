@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { 
   Search, CheckCircle, RadioButtonUnchecked, 
   MedicalServices, Assignment, Close, PictureAsPdf
@@ -325,7 +326,7 @@ const TreatmentHistory = () => {
 
       {/* --- POPUP WINDOW (MODAL) FOR DETAILS --- */}
       {openModal && selectedTreatment && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+         ReactDOM.createPortal(<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
                 
                 <div className="bg-primary-dark text-white px-6 py-4 flex justify-between items-center shrink-0">
@@ -407,7 +408,7 @@ const TreatmentHistory = () => {
                 </div>
                 
             </div>
-         </div>
+         </div>, document.body)
       )}
     </div>
   );

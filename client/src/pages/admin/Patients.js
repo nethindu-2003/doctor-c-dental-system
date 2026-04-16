@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { 
   Search, PersonAdd, Block, CheckCircle, Delete, FilterList, Warning, Send, Close
 } from '@mui/icons-material';
@@ -233,7 +234,7 @@ const Patients = () => {
 
       {/* ADD PATIENT DIALOG */}
       {openAdd && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+          ReactDOM.createPortal(<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
                   
                   {/* Header */}
@@ -364,12 +365,12 @@ const Patients = () => {
                       </div>
                   </form>
               </div>
-          </div>
+          </div>, document.body)
       )}
 
       {/* DELETE CONFIRMATION */}
       {deleteConfirmOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+          ReactDOM.createPortal(<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
               <div className="bg-white rounded-3xl shadow-xl w-full max-w-sm overflow-hidden text-center p-6">
                   <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
                       <Warning fontSize="large" />
@@ -394,7 +395,7 @@ const Patients = () => {
                       </button>
                   </div>
               </div>
-          </div>
+          </div>, document.body)
       )}
     </div>
   );
