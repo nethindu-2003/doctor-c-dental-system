@@ -5,6 +5,7 @@ import {
   History, Close, Assignment 
 } from '@mui/icons-material';
 import axios from '../../api/axios'; 
+import dayjs from 'dayjs';
 
 const DentistInventory = () => {
   const [items, setItems] = useState([]);
@@ -14,6 +15,8 @@ const DentistInventory = () => {
   // Usage Modal State
   const [openUsageDialog, setOpenUsageDialog] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [usageHistory, setUsageHistory] = useState([]);
+  const [usageLoading, setUsageLoading] = useState(false);
 
   // --- FETCH DATA ---
   useEffect(() => {
@@ -32,9 +35,19 @@ const DentistInventory = () => {
   };
 
   // --- HANDLERS ---
-  const handleRowClick = (item) => {
+  const handleRowClick = async (item) => {
       setSelectedItem(item);
       setOpenUsageDialog(true);
+      setUsageLoading(true);
+      try {
+          const res = await axios.get(`/dentist/inventory/${item.equipmentId}/usage`);
+          setUsageHistory(res.data);
+      } catch (err) {
+          console.error("Failed to fetch usage history", err);
+          setUsageHistory([]);
+      } finally {
+          setUsageLoading(false);
+      }
   };
 
   // --- FILTER & CALCULATIONS ---
@@ -212,16 +225,40 @@ const DentistInventory = () => {
                           <p className="font-bold text-sm">Recent Treatments Involving This Item</p>
                       </div>
                       
-                      {/* Placeholder for Treatment Module Integration */}
-                      <div className="bg-slate-50 p-6 text-center rounded-2xl border border-dashed border-slate-300">
-                          <Assignment sx={{ fontSize: 40 }} className="text-slate-400 mb-3" />
-                          <p className="font-semibold text-slate-600 mb-1">
-                              No recent usage records found.
-                          </p>
-                          <p className="text-xs text-[#0E4C5C] font-medium max-w-[250px] mx-auto">
-                              Usage logs will appear here once this item is deducted during patient treatments.
-                          </p>
-                      </div>
+                      {usageLoading ? (
+                         <div className="flex justify-center py-10"><div className="w-8 h-8 border-2 border-slate-200 border-t-[#0E4C5C] rounded-full animate-spin"></div></div>
+                      ) : usageHistory.length > 0 ? (
+                        <div className="overflow-x-auto rounded-xl border border-slate-100">
+                          <table className="w-full text-left text-xs">
+                            <thead className="bg-slate-50 text-slate-500 font-bold uppercase">
+                              <tr>
+                                <th className="p-3">Date</th>
+                                <th className="p-3">Patient</th>
+                                <th className="p-3">Treatment</th>
+                                <th className="p-3">Used</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                               {usageHistory.map((u, index) => (
+                                 <tr key={index} className="hover:bg-slate-50">
+                                   <td className="p-3 whitespace-nowrap">{u.date ? dayjs(u.date).format('MMM D, YYYY') : 'N/A'}</td>
+                                   <td className="p-3 font-semibold text-slate-700">{u.patientName}</td>
+                                   <td className="p-3 text-slate-500">{u.treatmentName} ({u.sessionName})</td>
+                                   <td className="p-3 font-bold text-[#0E4C5C]">{u.quantityUsed} Units</td>
+                                 </tr>
+                               ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="bg-slate-50 p-6 text-center rounded-2xl border border-dashed border-slate-300">
+                           <Assignment sx={{ fontSize: 40 }} className="text-slate-400 mb-3" />
+                           <p className="font-semibold text-slate-600 mb-1">No recent usage records found.</p>
+                           <p className="text-xs text-[#0E4C5C] font-medium max-w-[250px] mx-auto">
+                               Usage logs will appear here once this item is deducted during patient treatments.
+                           </p>
+                        </div>
+                      )}
 
                   </div>
                   

@@ -22,6 +22,8 @@ const AdminInventory = () => {
     // Details Modal State (Row Click)
     const [openDetails, setOpenDetails] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
+    const [usageHistory, setUsageHistory] = useState([]);
+    const [loadingUsage, setLoadingUsage] = useState(false);
 
     // --- FETCH DATA ---
     useEffect(() => {
@@ -53,9 +55,19 @@ const AdminInventory = () => {
         setOpenDialog(true);
     };
 
-    const handleRowClick = (item) => {
+    const handleRowClick = async (item) => {
         setSelectedItem(item);
         setOpenDetails(true);
+        setLoadingUsage(true);
+        try {
+            const res = await axios.get(`/admin/inventory/${item.equipmentId}/usage`);
+            setUsageHistory(res.data);
+        } catch (err) {
+            console.error("Error fetching usage history", err);
+            setUsageHistory([]);
+        } finally {
+            setLoadingUsage(false);
+        }
     };
 
     const handleDelete = async (e, id) => {
@@ -280,6 +292,7 @@ const AdminInventory = () => {
                                     <input
                                         type="text"
                                         required
+                                        minLength="3"
                                         className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 outline-none focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 transition-all"
                                         value={currentItem.name}
                                         onChange={(e) => setCurrentItem({ ...currentItem, name: e.target.value })}
@@ -417,19 +430,43 @@ const AdminInventory = () => {
 
                                     <hr className="border-slate-100" />
 
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <History className="text-[#1A237E]" />
-                                        <h3 className="text-lg font-bold text-[#1A237E]">Past Usage History</h3>
+                                    <div className="flex items-center gap-2 mb-2 pt-2">
+                                        <History sx={{ color: '#1A237E' }} />
+                                        <h3 className="text-lg font-bold text-[#1A237E]">Consumption History</h3>
                                     </div>
 
-                                    <div className="bg-slate-50 p-6 text-center rounded-2xl border border-dashed border-slate-300">
-                                        <p className="text-sm text-slate-500 mb-2">
-                                            Usage history will populate here automatically once this item is utilized in clinical Treatments.
-                                        </p>
-                                        <p className="text-xs font-semibold text-blue-600">
-                                            (Treatment linking module in development)
-                                        </p>
-                                    </div>
+                                    {loadingUsage ? (
+                                        <div className="py-8 flex justify-center"><div className="w-6 h-6 border-2 border-slate-200 border-t-[#1A237E] rounded-full animate-spin"></div></div>
+                                    ) : usageHistory.length > 0 ? (
+                                        <div className="overflow-hidden border border-slate-100 rounded-2xl">
+                                            <table className="w-full text-left text-xs border-collapse">
+                                                <thead className="bg-[#1A237E]/5 text-[#1A237E] font-bold">
+                                                    <tr>
+                                                        <th className="p-3">Date</th>
+                                                        <th className="p-3">Patient</th>
+                                                        <th className="p-3">Treatment</th>
+                                                        <th className="p-3 text-right">Qty</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100">
+                                                    {usageHistory.map((u, idx) => (
+                                                        <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                                            <td className="p-3 font-semibold text-slate-600">{u.usageDate}</td>
+                                                            <td className="p-3 font-bold text-slate-800">{u.patientName}</td>
+                                                            <td className="p-3 text-slate-600">{u.treatmentName} <br/><span className="text-[10px] text-slate-400">({u.sessionName})</span></td>
+                                                            <td className="p-3 text-right font-bold text-[#1A237E]">{u.quantityUsed}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-slate-50 p-6 text-center rounded-2xl border border-dashed border-slate-300">
+                                            <p className="text-sm text-slate-500">
+                                                No consumption records found for this item yet. 
+                                            </p>
+                                        </div>
+                                    )}
 
                                 </div>
                             )}

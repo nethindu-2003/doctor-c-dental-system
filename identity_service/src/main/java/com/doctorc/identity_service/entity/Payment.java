@@ -31,6 +31,11 @@ public class Payment {
     @JsonIgnore // Prevent loop: Treatment -> Payment -> Treatment
     private Treatment treatment;
 
+    @ManyToOne
+    @JoinColumn(name = "session_id")
+    @JsonIgnore
+    private TreatmentSession session;
+
     private Double amount;
 
     @Column(name = "payment_type")

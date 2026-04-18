@@ -14,6 +14,7 @@ const PaymentHistory = () => {
   const { user } = useAuth();
   const { config } = useClinic();
   const [payments, setPayments] = useState([]);
+  const [treatments, setTreatments] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   
@@ -27,10 +28,14 @@ const PaymentHistory = () => {
 
   const fetchPayments = async () => {
     try {
-      const res = await axios.get('/patient/payments');
-      setPayments(res.data);
+      const [payRes, treatRes] = await Promise.all([
+        axios.get('/patient/payments'),
+        axios.get('/patient/treatments')
+      ]);
+      setPayments(payRes.data || []);
+      setTreatments(treatRes.data || []);
     } catch (err) {
-      console.error("Error fetching payments:", err);
+      console.error("Error fetching financial data:", err);
     }
   };
 
@@ -40,7 +45,7 @@ const PaymentHistory = () => {
         return `Booking Fee - ${payment.appointment?.reasonForVisit || 'General'}`;
     }
     if (payment.paymentType === 'TREATMENT_PAYMENT') {
-        return `Treatment - ${payment.treatment?.treatmentName || 'Procedure'}`;
+        return `Treatment Session - ${payment.treatment?.treatmentName || 'Procedure'}`;
     }
     return 'Clinic Payment';
   };
@@ -48,6 +53,9 @@ const PaymentHistory = () => {
   const getDentistName = (payment) => {
       if (payment.appointment?.dentist) {
           return `Dr. ${payment.appointment.dentist.name}`;
+      }
+      if (payment.treatment?.dentist) {
+          return `Dr. ${payment.treatment.dentist.name}`;
       }
       return 'Clinic Admin'; 
   };
@@ -63,7 +71,11 @@ const PaymentHistory = () => {
 
   // --- Summary Calculations ---
   const totalPaid = payments.filter(p => p.status === 'COMPLETED').reduce((acc, curr) => acc + (curr.amount || 0), 0);
-  const totalPending = payments.filter(p => p.status === 'PENDING').reduce((acc, curr) => acc + (curr.amount || 0), 0);
+  
+  // Outstanding = (Total value of all treatments) - (Total amount already paid)
+  // This helps patients see how much of their treatment plan is left to pay
+  const totalTreatmentValue = treatments.reduce((acc, curr) => acc + (curr.totalCost || 0), 0);
+  const totalOutstanding = Math.max(0, totalTreatmentValue - totalPaid);
   
   const lastPaymentDate = payments.length > 0 && payments[0].paymentDate 
     ? dayjs(payments[0].paymentDate).format('MMMM D, YYYY') 
@@ -83,12 +95,12 @@ const PaymentHistory = () => {
     doc.setFontSize(22);
     doc.setTextColor(14, 76, 92);
     doc.setFont("helvetica", "bold");
-    doc.text(config.clinicName || 'Dental Clinic', 14, 22);
+    doc.text(config.clinicName || 'Doctor C Dental Clinic', 14, 22);
 
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
     doc.setFont("helvetica", "normal");
-    doc.text(config.clinicAddress || '', 14, 30);
+    doc.text(config.clinicAddress || '123 Smile Avenue, Colombo', 14, 30);
     const contactLine = [config.clinicPhone, config.clinicEmail].filter(Boolean).join(' | ');
     if (contactLine) doc.text(contactLine, 14, 35);
 
@@ -147,7 +159,7 @@ const PaymentHistory = () => {
     });
 
     // Total Row
-    const finalY = doc.lastAutoTable.finalY || 120;
+    const finalY = (doc).lastAutoTable.finalY || 120;
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     doc.text(`Total: LKR ${payment.amount.toLocaleString()}`, 140, finalY + 10);
@@ -156,7 +168,7 @@ const PaymentHistory = () => {
     doc.setFontSize(9);
     doc.setTextColor(150, 150, 150);
     doc.setFont("helvetica", "italic");
-    doc.text(`Thank you for choosing ${config.clinicName || 'our clinic'}.`, 105, 280, { align: 'center' });
+    doc.text(`Thank you for choosing ${config.clinicName || 'Doctor C Dental Clinic'}.`, 105, 280, { align: 'center' });
 
     doc.save(`Receipt_TXN00${payment.paymentId}.pdf`);
   };
@@ -169,12 +181,12 @@ const PaymentHistory = () => {
     doc.setFontSize(22);
     doc.setTextColor(14, 76, 92);
     doc.setFont("helvetica", "bold");
-    doc.text(config.clinicName || 'Dental Clinic', 14, 22);
+    doc.text(config.clinicName || 'Doctor C Dental Clinic', 14, 22);
 
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
     doc.setFont("helvetica", "normal");
-    doc.text(config.clinicAddress || '', 14, 30);
+    doc.text(config.clinicAddress || '123 Smile Avenue, Colombo', 14, 30);
 
     doc.setLineWidth(0.5);
     doc.setDrawColor(200, 200, 200);
@@ -194,9 +206,9 @@ const PaymentHistory = () => {
     // Summary Box
     doc.setFont("helvetica", "bold");
     doc.text(`Total Paid to Date: LKR ${totalPaid.toLocaleString()}`, 130, 65);
-    if (totalPending > 0) {
+    if (totalOutstanding > 0) {
         doc.setTextColor(211, 47, 47);
-        doc.text(`Outstanding Balance: LKR ${totalPending.toLocaleString()}`, 130, 72);
+        doc.text(`Outstanding Balance: LKR ${totalOutstanding.toLocaleString()}`, 130, 72);
         doc.setTextColor(0, 0, 0);
     }
 
@@ -231,7 +243,7 @@ const PaymentHistory = () => {
     });
 
     // Footer
-    const pageCount = doc.internal.getNumberOfPages();
+    const pageCount = (doc).internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.setFontSize(8);
@@ -279,9 +291,9 @@ const PaymentHistory = () => {
             <div className="w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center shrink-0">
               <Payment fontSize="small" />
             </div>
-            <h3 className="text-slate-600 font-semibold text-sm uppercase tracking-wider">Pending</h3>
+            <h3 className="text-slate-600 font-semibold text-sm uppercase tracking-wider">Outstanding Balance</h3>
           </div>
-          <h2 className="text-3xl font-bold text-red-600 ml-13">LKR {totalPending.toLocaleString()}</h2>
+          <h2 className="text-3xl font-bold text-red-600 ml-13">LKR {totalOutstanding.toLocaleString()}</h2>
         </div>
 
         <div className="bg-blue-50/50 border border-blue-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
@@ -484,7 +496,7 @@ const PaymentHistory = () => {
              </div>
           </div>, document.body)
       )}
-
+ 
     </div>
   );
 };

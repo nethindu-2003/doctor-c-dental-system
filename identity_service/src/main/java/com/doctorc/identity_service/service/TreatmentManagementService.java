@@ -21,6 +21,8 @@ public class TreatmentManagementService {
     @Autowired private PatientRepository patientRepository; // Assuming you have this
     @Autowired private DentistRepository dentistRepository; // Assuming you have this
     @Autowired private AppointmentRepository appointmentRepository;
+    @Autowired private EmailService emailService;
+    @Autowired private PaymentRepository paymentRepository;
 
     // 1. Create a New Base Treatment
     public Treatment createTreatment(TreatmentRequestDTO.CreateTreatment req) {
@@ -33,10 +35,21 @@ public class TreatmentManagementService {
         treatment.setTotalCost(req.getTotalCost() != null ? req.getTotalCost() : 0.0);
 
         treatment.setTotalSessionsPlanned(req.getTotalSessionsPlanned() != null ? req.getTotalSessionsPlanned() : 1);
-
         treatment.setStatus("ONGOING");
+        
+        Treatment savedTreatment = treatmentRepository.save(treatment);
 
-        return treatmentRepository.save(treatment);
+        // Pre-create empty session slots
+        for (int i = 1; i <= savedTreatment.getTotalSessionsPlanned(); i++) {
+            TreatmentSession session = new TreatmentSession();
+            session.setTreatment(savedTreatment);
+            session.setSessionName("Session #" + i);
+            session.setStatus("PLANNED"); // Initial status
+            session.setSessionDate(null); // No date yet
+            sessionRepository.save(session);
+        }
+
+        return savedTreatment;
     }
 
     // 2. Add a Session & Deduct Stock (TRANSACTIONAL IS CRITICAL HERE)
@@ -45,20 +58,67 @@ public class TreatmentManagementService {
         Treatment treatment = treatmentRepository.findById(treatmentId)
                 .orElseThrow(() -> new RuntimeException("Treatment not found"));
 
-        // A. Create & Save the Session
-        TreatmentSession session = new TreatmentSession();
-        session.setTreatment(treatment);
+        // A. Create OR Fetch the Session (to support pre-created rows)
+        TreatmentSession session;
+        if (req.getSessionId() != null) {
+            session = sessionRepository.findById(req.getSessionId())
+                    .orElseThrow(() -> new RuntimeException("Session slot not found"));
+        } else {
+            session = new TreatmentSession();
+            session.setTreatment(treatment);
+        }
+
         session.setSessionName(req.getSessionName());
         session.setNote(req.getNote());
         session.setSessionDate(req.getSessionDate());
+        session.setNextDate(req.getNextDate());
         session.setCost(req.getCost());
         session.setStatus(req.getStatus());
+
         if (req.getAppointmentId() != null) {
             Appointment appt = appointmentRepository.findById(req.getAppointmentId())
                     .orElseThrow(() -> new RuntimeException("Appointment not found"));
             session.setAppointment(appt);
         }
         session = sessionRepository.save(session);
+
+        // EXTRA: Automate Next Session Scheduling
+        if (session.getNextDate() != null) {
+            // Find the next session in the sequence for this treatment
+            List<TreatmentSession> allSessions = sessionRepository.findAllByTreatmentOrderBySessionIdAsc(treatment);
+            int currentIndex = allSessions.indexOf(session);
+            if (currentIndex >= 0 && currentIndex < allSessions.size() - 1) {
+                TreatmentSession nextSession = allSessions.get(currentIndex + 1);
+                // Only update if the next session hasn't been completed yet
+                if (!"COMPLETED".equals(nextSession.getStatus())) {
+                    nextSession.setSessionDate(session.getNextDate());
+                    sessionRepository.save(nextSession);
+                }
+            }
+
+            if (treatment.getPatient() != null) {
+                final String email = treatment.getPatient().getEmail();
+                final String name = treatment.getPatient().getName();
+                final String tName = treatment.getTreatmentName();
+                final String nDate = session.getNextDate().toString();
+                new Thread(() -> {
+                    emailService.sendNextSessionScheduled(email, name, tName, nDate);
+                }).start();
+            }
+        }
+
+        // NEW: Log a Payment entry for this session cost
+        if (session.getCost() != null && session.getCost() > 0) {
+            Payment payment = new Payment();
+            payment.setPatient(treatment.getPatient());
+            payment.setTreatment(treatment);
+            payment.setSession(session);
+            payment.setAppointment(session.getAppointment()); // Link the appointment if it exists!
+            payment.setAmount(session.getCost());
+            payment.setPaymentType("TREATMENT_PAYMENT");
+            payment.setStatus("COMPLETED"); // Payment is assumed collected at the session visit
+            paymentRepository.save(payment);
+        }
 
         // B. Process Equipment and Deduct Stock
         if (req.getEquipmentUsed() != null && !req.getEquipmentUsed().isEmpty()) {
@@ -85,10 +145,6 @@ public class TreatmentManagementService {
             }
         }
 
-        // C. Update the parent Treatment's total cost
-        treatment.setTotalCost(treatment.getTotalCost() + req.getCost());
-        treatmentRepository.save(treatment);
-
         return session;
     }
 
@@ -97,6 +153,12 @@ public class TreatmentManagementService {
         Treatment treatment = treatmentRepository.findById(treatmentId).orElseThrow();
         treatment.setStatus("COMPLETED");
         treatment.setEndDate(LocalDate.now());
+        return treatmentRepository.save(treatment);
+    }
+    public Treatment reopenTreatment(Integer treatmentId) {
+        Treatment treatment = treatmentRepository.findById(treatmentId).orElseThrow();
+        treatment.setStatus("ONGOING");
+        treatment.setEndDate(null);
         return treatmentRepository.save(treatment);
     }
 }

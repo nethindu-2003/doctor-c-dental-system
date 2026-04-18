@@ -126,6 +126,8 @@ const RegisterPage = () => {
                 <input 
                   type="text"
                   name="name"
+                  required
+                  minLength="3"
                   value={formData.name}
                   onChange={handleChange}
                   className={`w-full pl-11 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all ${
@@ -146,6 +148,7 @@ const RegisterPage = () => {
                 <input 
                   type="email"
                   name="email"
+                  required
                   value={formData.email}
                   onChange={handleChange}
                   className={`w-full pl-11 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all ${
@@ -166,12 +169,15 @@ const RegisterPage = () => {
                 <input 
                   type="tel"
                   name="phone"
+                  required
+                  pattern="[0-9]{10}"
+                  title="10-digit phone number"
                   value={formData.phone}
                   onChange={handleChange}
                   className={`w-full pl-11 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all ${
                     errors.phone ? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/30' : 'border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20'
                   }`}
-                  placeholder="+94 7X XXX XXXX"
+                  placeholder="07X XXX XXXX"
                 />
               </div>
               {errors.phone && <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.phone}</p>}
@@ -202,6 +208,8 @@ const RegisterPage = () => {
                   <input 
                     type="date"
                     name="dob"
+                    required
+                    max={new Date().toISOString().split('T')[0]}
                     value={formData.dob}
                     onChange={handleChange}
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all text-slate-700"
@@ -220,6 +228,8 @@ const RegisterPage = () => {
                 <input 
                   type={showPassword ? 'text' : 'password'}
                   name="password"
+                  required
+                  minLength="8"
                   value={formData.password}
                   onChange={handleChange}
                   className={`w-full pl-11 pr-12 py-3 bg-slate-50 border rounded-xl outline-none transition-all ${
@@ -248,6 +258,7 @@ const RegisterPage = () => {
                 <input 
                   type="password"
                   name="confirmPassword"
+                  required
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   className={`w-full pl-11 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all ${

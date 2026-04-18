@@ -98,6 +98,22 @@ const AdminAppointments = () => {
       }
   };
 
+  const handleMarkCompleted = async (appt) => {
+      try {
+          const payload = {
+              appointmentDate: appt.appointmentDate,
+              appointmentTime: appt.appointmentTime,
+              status: 'COMPLETED',
+              dentistId: appt.dentistId || null
+          };
+          const res = await axios.put(`/admin/appointments/${appt.appointmentId}`, payload);
+          setAppointments(appointments.map(a => a.appointmentId === appt.appointmentId ? res.data : a));
+          showSuccess("Appointment marked as Completed.");
+      } catch (err) {
+          alert("Failed to update status.");
+      }
+  };
+
   const showSuccess = (msg) => {
       setSuccessMsg(msg);
       setTimeout(() => setSuccessMsg(''), 5000);
@@ -234,14 +250,18 @@ const AdminAppointments = () => {
                             </tr>
                         ) : (
                             filteredAppointments.map((row) => {
-                                const apptDateTime = dayjs(`${row.appointmentDate}T${row.appointmentTime}`);
-                                const isPast = apptDateTime.isBefore(dayjs());
-                                const displayStatus = isPast && row.status !== 'CANCELLED' ? 'COMPLETED' : row.status;
+                                const apptDate = dayjs(row.appointmentDate);
+                                const today = dayjs().startOf('day');
+                                const isPast = apptDate.isBefore(today);
+                                const isToday = apptDate.isSame(today, 'day');
+                                const isFuture = apptDate.isAfter(today);
+                                const status = row.status;
 
                                 let statusClasses = 'bg-slate-100 text-slate-700';
-                                if (displayStatus === 'CONFIRMED') statusClasses = 'bg-green-100 text-green-700 border-green-200';
-                                else if (displayStatus === 'PENDING') statusClasses = 'bg-yellow-50 text-yellow-700 border border-yellow-200';
-                                else if (displayStatus === 'CANCELLED') statusClasses = 'bg-red-50 text-red-600 border border-red-200';
+                                if (status === 'CONFIRMED') statusClasses = 'bg-green-100 text-green-700 border-green-200';
+                                else if (status === 'PENDING') statusClasses = 'bg-yellow-50 text-yellow-700 border border-yellow-200';
+                                else if (status === 'CANCELLED') statusClasses = 'bg-red-50 text-red-600 border border-red-200';
+                                else if (status === 'COMPLETED') statusClasses = 'bg-blue-100 text-blue-700 border border-blue-200';
 
                                 return (
                                 <tr key={row.appointmentId} className="hover:bg-slate-50/50 transition-colors group">
@@ -271,40 +291,58 @@ const AdminAppointments = () => {
                                     </td>
                                     <td className="p-4 w-1/6 align-middle text-center md:text-left">
                                         <span className={`inline-block px-3 py-1.5 text-[0.65rem] font-bold uppercase tracking-wider rounded-lg ${statusClasses}`}>
-                                            {displayStatus}
+                                            {status}
                                         </span>
                                     </td>
                                     <td className="p-4 w-1/6 align-middle text-center">
                                         <div className="flex justify-center items-center space-x-2">
-                                            {row.status === 'PENDING' && (
+                                            {/* 1. Mark Completed (Allowed on Appointment Day or Past if Confirmed) */}
+                                            {(row.status === 'CONFIRMED' && (isToday || isPast)) && (
                                                 <button 
-                                                    className={`p-1.5 rounded-lg transition-colors focus:outline-none ${isPast ? 'text-slate-300 cursor-not-allowed' : 'text-green-600 hover:bg-green-50 hover:text-green-700'}`}
-                                                    onClick={() => !isPast && handleConfirmClick(row)}
-                                                    disabled={isPast}
-                                                    title={isPast ? "Past appointment" : "Confirm Appointment"}
+                                                    className="p-1.5 rounded-lg transition-colors focus:outline-none text-blue-600 hover:bg-blue-50"
+                                                    onClick={() => handleMarkCompleted(row)}
+                                                    title="Mark as Completed"
+                                                >
+                                                    <CheckCircle fontSize="small" />
+                                                </button>
+                                            )}
+
+                                            {/* 2. Confirm (Allowed Today or Future) */}
+                                            {(row.status === 'PENDING' && (isToday || isFuture)) && (
+                                                <button 
+                                                    className={`p-1.5 rounded-lg transition-colors focus:outline-none text-green-600 hover:bg-green-50`}
+                                                    onClick={() => handleConfirmClick(row)}
+                                                    title="Confirm Appointment"
                                                 >
                                                     <CheckCircle fontSize="small" />
                                                 </button>
                                             )}
                                             
-                                            <button 
-                                                className={`p-1.5 rounded-lg transition-colors focus:outline-none ${isPast ? 'text-slate-300 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50 hover:text-blue-700'}`}
-                                                onClick={() => !isPast && handleEditClick(row)}
-                                                disabled={isPast}
-                                                title={isPast ? "Cannot edit past appointments" : "Edit / Reschedule"}
-                                            >
-                                                <Edit fontSize="small" />
-                                            </button>
-
-                                            {row.status !== 'CANCELLED' && (
+                                            {/* 3. Edit/Reschedule (Only Future) */}
+                                            {isFuture && (
                                                 <button 
-                                                    className={`p-1.5 rounded-lg transition-colors focus:outline-none ${isPast ? 'text-slate-300 cursor-not-allowed' : 'text-red-500 hover:bg-red-50 hover:text-red-600'}`}
-                                                    onClick={() => !isPast && handleCancelClick(row.appointmentId)}
-                                                    disabled={isPast}
-                                                    title={isPast ? "Cannot cancel past appointments" : "Cancel Appointment"}
+                                                    className={`p-1.5 rounded-lg transition-colors focus:outline-none text-blue-600 hover:bg-blue-50`}
+                                                    onClick={() => handleEditClick(row)}
+                                                    title="Edit / Reschedule"
+                                                >
+                                                    <Edit fontSize="small" />
+                                                </button>
+                                            )}
+
+                                            {/* 4. Cancel (Today or Future) */}
+                                            {(row.status !== 'CANCELLED' && row.status !== 'COMPLETED' && (isToday || isFuture)) && (
+                                                <button 
+                                                    className={`p-1.5 rounded-lg transition-colors focus:outline-none text-red-500 hover:bg-red-50`}
+                                                    onClick={() => handleCancelClick(row.appointmentId)}
+                                                    title="Cancel Appointment"
                                                 >
                                                     <Cancel fontSize="small" />
                                                 </button>
+                                            )}
+                                            
+                                            {/* 5. Restricted Placeholder for Past */}
+                                            {(isPast && !isToday && row.status !== 'CONFIRMED') && (
+                                                <span className="text-[10px] text-slate-400 font-bold uppercase">Locked</span>
                                             )}
                                         </div>
                                     </td>
@@ -374,6 +412,8 @@ const AdminAppointments = () => {
                                       <label className="block text-xs font-bold text-[#1A237E] uppercase tracking-wider mb-2">Date</label>
                                       <input 
                                           type="date"
+                                          required
+                                          min={new Date().toISOString().split('T')[0]}
                                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 outline-none focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 transition-all uppercase"
                                           value={currentAppt.appointmentDate} 
                                           onChange={(e) => setCurrentAppt({...currentAppt, appointmentDate: e.target.value})}

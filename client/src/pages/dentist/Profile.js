@@ -246,6 +246,8 @@ const DentistProfile = () => {
                     value={formData.name}
                     onChange={handleChange}
                     disabled={!isEditing}
+                    required
+                    minLength="3"
                     className={`w-full px-4 py-3 rounded-xl border outline-none font-medium transition-all ${
                         isEditing 
                           ? 'bg-slate-50 border-slate-200 focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 text-slate-800' 
@@ -294,11 +296,14 @@ const DentistProfile = () => {
                     <Phone fontSize="small" className="mr-1.5 text-slate-400" /> Contact Number
                  </label>
                  <input
-                    type="text"
+                    type="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
                     disabled={!isEditing}
+                    required
+                    pattern="[0-9]{10}"
+                    title="10-digit phone number"
                     className={`w-full px-4 py-3 rounded-xl border outline-none font-medium transition-all ${
                         isEditing 
                           ? 'bg-slate-50 border-slate-200 focus:border-[#0E4C5C] focus:ring-2 focus:ring-[#0E4C5C]/20 text-slate-800' 
@@ -318,6 +323,8 @@ const DentistProfile = () => {
                     value={formData.licenseId || ''}
                     onChange={handleChange}
                     disabled={!isEditing}
+                    required
+                    minLength="5"
                     placeholder="e.g. SLMC-12345"
                     className={`w-full px-4 py-3 rounded-xl border outline-none font-medium transition-all ${
                         isEditing 

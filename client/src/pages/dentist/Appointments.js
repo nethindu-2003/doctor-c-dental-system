@@ -283,6 +283,16 @@ const Appointments = () => {
                         <p className="font-medium text-slate-700 leading-relaxed pl-7">{selectedAppt.reasonForVisit}</p>
                       </div>
 
+                      {selectedAppt.additionalNotes && (
+                        <div className="p-4 bg-amber-50/50 rounded-2xl border-l-4 border-amber-500 text-sm">
+                          <div className="flex items-center space-x-2 mb-1.5 text-amber-800">
+                              <Assignment fontSize="small" />
+                              <p className="font-bold text-xs uppercase tracking-wider">Additional Notes</p>
+                          </div>
+                          <p className="font-medium text-slate-700 leading-relaxed pl-7">{selectedAppt.additionalNotes}</p>
+                        </div>
+                      )}
+
                   </div>
                   
                   {/* Footer */}

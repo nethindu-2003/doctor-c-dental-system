@@ -94,6 +94,7 @@ public class DentistAppointmentController {
         dto.setAppointmentDate(a.getAppointmentDate());
         dto.setAppointmentTime(a.getAppointmentTime());
         dto.setReasonForVisit(a.getReasonForVisit());
+        dto.setAdditionalNotes(a.getAdditionalNotes());
         dto.setStatus(a.getStatus());
         return dto;
     }

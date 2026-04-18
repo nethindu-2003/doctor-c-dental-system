@@ -101,7 +101,7 @@ const TreatmentHistory = () => {
     doc.text(`${dayjs(treatment.startDate).format('MMM D, YYYY')}`, 145, 70);
     
     doc.text(`Total Cost:`, 120, 78);
-    doc.text(`LKR ${treatment.cost ? treatment.cost.toLocaleString() : '0.00'}`, 145, 78);
+    doc.text(`LKR ${treatment.totalCost ? treatment.totalCost.toLocaleString() : '0.00'}`, 145, 78);
 
     // 4. Session Breakdown Table
     if (treatment.sessions && treatment.sessions.length > 0) {
@@ -167,11 +167,13 @@ const TreatmentHistory = () => {
               {step.status === 'COMPLETED' ? <CheckCircle style={{ fontSize: 16 }} /> : <RadioButtonUnchecked style={{ fontSize: 16 }} />}
             </span>
             <div className="pl-2">
-              <h5 className={`text-sm font-bold ${step.status === 'PENDING' ? 'text-slate-400' : 'text-slate-800'}`}>
+              <h5 className={`text-sm font-bold ${step.status === 'PLANNED' ? 'text-slate-400' : 'text-slate-800'}`}>
                 {step.sessionName}
               </h5>
-              <p className="text-xs text-slate-500 mt-1">
-                {step.sessionDate ? dayjs(step.sessionDate).format('MMM D, YYYY') : 'Date TBD'}
+              <p className="text-xs text-slate-500 mt-1 uppercase tracking-wider font-semibold">
+                {step.sessionDate 
+                  ? `${step.status === 'COMPLETED' ? 'Done' : 'Next Due'}: ${dayjs(step.sessionDate).format('MMM D, YYYY')}` 
+                  : 'Awaiting Schedule'}
               </p>
             </div>
           </div>
@@ -213,11 +215,24 @@ const TreatmentHistory = () => {
                       <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Progress</span>
                       <span className="text-sm font-bold text-primary">{calculateProgress(activeTreatment.sessions)}%</span>
                   </div>
-                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mb-8">
+                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mb-6">
                       <div 
                           className="bg-primary h-full rounded-full transition-all duration-1000" 
                           style={{ width: `${calculateProgress(activeTreatment.sessions)}%` }}
                       ></div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Plan</p>
+                          <p className="text-sm font-bold text-slate-800">LKR {activeTreatment.totalCost?.toLocaleString()}</p>
+                      </div>
+                      <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Outstanding</p>
+                          <p className="text-sm font-bold text-red-600">
+                             LKR {(activeTreatment.totalCost - (activeTreatment.sessions?.filter(s => s.status === 'COMPLETED').reduce((acc, s) => acc + (s.cost || 0), 0) || 0)).toLocaleString()}
+                          </p>
+                      </div>
                   </div>
 
                   <CustomTimeline sessions={activeTreatment.sessions} />
@@ -277,8 +292,8 @@ const TreatmentHistory = () => {
                         <span className="font-bold text-slate-800">{row.treatmentName}</span>
                       </td>
                       <td className="px-4 py-4 text-slate-500 truncate max-w-[150px]" title={row.diagnosis}>{row.diagnosis}</td>
-                      <td className="px-4 py-4 text-slate-500">
-                          {row.cost ? `LKR ${row.cost.toLocaleString()}` : '-'}
+                      <td className="px-4 py-4 text-slate-500 font-bold">
+                          {row.totalCost ? `LKR ${row.totalCost.toLocaleString()}` : '-'}
                       </td>
                       <td className="px-4 py-4">
                          <span className={`px-3 py-1 text-xs font-semibold rounded-lg border ${row.status === 'COMPLETED' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
@@ -369,6 +384,11 @@ const TreatmentHistory = () => {
                                               {session.sessionDate ? dayjs(session.sessionDate).format('MMM D, YYYY') : 'TBD'}
                                             </span>
                                         </div>
+                                        {session.nextDate && (
+                                            <p className="text-[10px] text-blue-600 font-bold mb-1">
+                                                Next Recommended: {dayjs(session.nextDate).format('MMM D, YYYY')}
+                                            </p>
+                                        )}
                                         {session.note && (
                                             <p className="text-sm text-slate-500 italic mt-1 mb-3 bg-white p-2 border border-slate-100 rounded-lg">
                                                 "{session.note}"
@@ -378,7 +398,7 @@ const TreatmentHistory = () => {
                                             <span className={`px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider rounded-md ${session.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600'}`}>
                                                 {session.status}
                                             </span>
-                                            {session.cost > 0 && <span className="text-xs font-bold text-slate-700">LKR {session.cost.toLocaleString()}</span>}
+                                            {session.cost > 0 && <span className="text-xs font-bold text-slate-700">Cost: LKR {session.cost.toLocaleString()}</span>}
                                         </div>
                                     </div>
                                 ))

@@ -139,6 +139,24 @@ public class EmailService {
         sendHtmlEmail(toEmail, "Doctor C Dental - Patient Account Invitation", htmlContent);
     }
 
+    // --- 9. NEXT SESSION SCHEDULED ---
+    public void sendNextSessionScheduled(String toEmail, String patientName, String sessionName, String nextDate) {
+        String link = "http://localhost:3000/login";
+        String message = String.format(
+                "Dear %s,<br><br>The dentist has scheduled your next treatment session.<br><br>" +
+                        "<b>Treatment:</b> %s<br>" +
+                        "<b>Next Scheduled Date:</b> %s<br><br>" +
+                        "Please mark your calendar.",
+                patientName, sessionName, nextDate
+        );
+
+        String htmlContent = getHtmlTemplate(
+                "Next Session Scheduled", message, "View Details", link
+        );
+
+        sendHtmlEmail(toEmail, "Next Treatment Session - Doctor C Dental", htmlContent);
+    }
+
     // --- 8. APPOINTMENT CANCELLATION EMAIL ---
     public void sendCancellationEmail(String toEmail, String patientName, String date, String time) {
         String link = "http://localhost:3000/login";

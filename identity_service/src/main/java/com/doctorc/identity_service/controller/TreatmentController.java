@@ -21,6 +21,12 @@ public class TreatmentController {
     @Autowired
     private TreatmentRepository treatmentRepository;
 
+    // Get All Treatments (For Admin Financial Dashboard)
+    @GetMapping("/all")
+    public ResponseEntity<List<Treatment>> getAllTreatments() {
+        return ResponseEntity.ok(treatmentRepository.findAll());
+    }
+
     // Get Treatments (With Optional Patient Filter)
     @GetMapping("/dentist/{dentistId}")
     public ResponseEntity<List<Treatment>> getTreatments(
@@ -59,5 +65,9 @@ public class TreatmentController {
     @PutMapping("/{treatmentId}/complete")
     public ResponseEntity<Treatment> completeTreatment(@PathVariable Integer treatmentId) {
         return ResponseEntity.ok(treatmentService.completeTreatment(treatmentId));
+    }
+    @PutMapping("/{treatmentId}/reopen")
+    public ResponseEntity<Treatment> reopenTreatment(@PathVariable Integer treatmentId) {
+        return ResponseEntity.ok(treatmentService.reopenTreatment(treatmentId));
     }
 }

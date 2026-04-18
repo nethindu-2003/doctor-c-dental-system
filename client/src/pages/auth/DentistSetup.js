@@ -64,6 +64,7 @@ const DentistSetup = () => {
             <input 
               type="password"
               required
+              minLength="8"
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all"
               value={passwords.new} 
               onChange={(e) => setPasswords({...passwords, new: e.target.value})}

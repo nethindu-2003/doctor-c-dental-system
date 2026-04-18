@@ -33,17 +33,18 @@ const Dashboard = () => {
       // 1. Set Profile
       setProfile(profileRes.data);
 
-      // 2. Calculate Next Appointment
-      const futureAppts = apptsRes.data.filter(a => 
-          (a.status === 'PENDING' || a.status === 'CONFIRMED') && 
-          dayjs(a.appointmentDate).isAfter(dayjs().subtract(1, 'day')) // Today or future
-      );
+      // 2. Calculate Next Appointment (Strictly future: Date > Today OR (Date == Today AND Time > Now))
+      const now = dayjs();
+      const futureAppts = apptsRes.data.filter(a => {
+          const apptDateTime = dayjs(`${a.appointmentDate}T${a.appointmentTime}`);
+          return (a.status === 'PENDING' || a.status === 'CONFIRMED') && apptDateTime.isAfter(now);
+      });
       // Sort to find the closest one
       futureAppts.sort((a, b) => dayjs(a.appointmentDate).diff(dayjs(b.appointmentDate)));
       setNextAppointment(futureAppts.length > 0 ? futureAppts[0] : null);
 
-      // 3. Calculate Active Treatment
-      const active = treatmentsRes.data.find(t => t.status === 'IN_PROGRESS');
+      // 3. Calculate Active Treatment (Ensure status matches backend 'ONGOING')
+      const active = treatmentsRes.data.find(t => t.status === 'ONGOING');
       if (active) {
           const sessions = active.sessions || [];
           const completedCount = sessions.filter(s => s.status === 'COMPLETED').length;
@@ -58,21 +59,28 @@ const Dashboard = () => {
               progress: progress,
               completed: completedCount,
               total: totalCount,
-              nextStep: nextSession ? nextSession.sessionName : 'Awaiting Schedule'
+              nextStep: nextSession 
+                  ? `${nextSession.sessionName}${nextSession.sessionDate ? ` (Scheduled: ${dayjs(nextSession.sessionDate).format('MMM D')})` : ''}` 
+                  : 'Awaiting Schedule'
           });
       }
 
-      // 4. Calculate Payment Stats
+      // 4. Calculate True Payment Stats (Total Plan Gap)
       const payments = paymentsRes.data || [];
-      const pendingList = payments.filter(p => p.status === 'PENDING');
-      const paidList = payments.filter(p => p.status === 'COMPLETED');
+      const treatments = treatmentsRes.data || [];
       
-      const totalOutstanding = pendingList.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+      const treatmentPayments = payments.filter(p => p.status === 'COMPLETED' && p.paymentType === 'TREATMENT_PAYMENT');
+      const totalPaidOnTreatments = treatmentPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
+      const totalTreatmentValue = treatments.reduce((sum, t) => sum + (t.totalCost || 0), 0);
+      const trueOutstanding = Math.max(0, totalTreatmentValue - totalPaidOnTreatments);
+      
+      const pendingInvoices = payments.filter(p => p.status === 'PENDING');
       
       setPaymentStats({
-          outstanding: totalOutstanding,
-          pendingCount: pendingList.length,
-          paidCount: paidList.length
+          outstanding: trueOutstanding,
+          pendingCount: pendingInvoices.length,
+          paidCount: payments.filter(p => p.status === 'COMPLETED').length
       });
 
       setLoading(false);

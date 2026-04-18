@@ -180,6 +180,7 @@ const Settings = () => {
               <label className="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Clinic Name</label>
               <input 
                 type="text" name="clinicName" value={config.clinicName} onChange={handleConfigChange}
+                required minLength="3"
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 outline-none transition-all font-medium"
               />
             </div>
@@ -188,6 +189,7 @@ const Settings = () => {
               <label className="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Primary Address</label>
               <input 
                 type="text" name="clinicAddress" value={config.clinicAddress} onChange={handleConfigChange}
+                required minLength="5"
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 outline-none transition-all font-medium"
               />
             </div>
@@ -196,7 +198,8 @@ const Settings = () => {
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Contact Phone</label>
                 <input 
-                  type="text" name="clinicPhone" value={config.clinicPhone} onChange={handleConfigChange}
+                  type="tel" name="clinicPhone" value={config.clinicPhone} onChange={handleConfigChange}
+                  required pattern="[0-9]{10}" title="10-digit phone number"
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 outline-none transition-all font-medium"
                 />
               </div>
@@ -204,6 +207,7 @@ const Settings = () => {
                 <label className="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Billing Email</label>
                 <input 
                   type="email" name="clinicEmail" value={config.clinicEmail} onChange={handleConfigChange}
+                  required
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 outline-none transition-all font-medium"
                 />
               </div>
@@ -228,6 +232,7 @@ const Settings = () => {
               </span>
               <input 
                 type="number" name="standardBookingFee" 
+                required min="0"
                 value={config.standardBookingFee} 
                 onChange={handleConfigChange}
                 className="w-full pl-12 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 outline-none transition-all font-bold text-slate-800"

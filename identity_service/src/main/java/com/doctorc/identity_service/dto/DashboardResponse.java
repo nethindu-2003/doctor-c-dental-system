@@ -21,6 +21,7 @@ public class DashboardResponse {
     @Data
     @AllArgsConstructor
     public static class PatientSummary {
+        private Integer appointmentId;
         private Integer patientId;
         private String name;
         private LocalTime appointmentTime; // Using LocalTime based on your repo

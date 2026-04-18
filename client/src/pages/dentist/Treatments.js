@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Save, History, ExpandMore, ExpandLess, MedicalServices, Event, Add, Delete, CheckCircle 
 } from '@mui/icons-material';
@@ -10,6 +11,12 @@ import dayjs from 'dayjs';
 const Treatments = () => {
   const { user } = useAuth();
   const dentistId = user?.id || 1;
+  const [searchParams] = useSearchParams();
+  
+  // URL Params for external navigation (e.g., from Dashboard)
+  const paramPatientId = searchParams.get('patientId');
+  const paramPatientName = searchParams.get('patientName');
+  const paramAppointmentId = searchParams.get('appointmentId');
 
   // --- STATE ---
   const [loading, setLoading] = useState(true);
@@ -26,22 +33,25 @@ const Treatments = () => {
     patientId: '',
     diagnosis: '',
     treatmentName: '',
-    totalSessionsPlanned: 1, // Requires DB update!
+    totalSessionsPlanned: 4, 
     totalCost: '',
     startDate: new Date().toISOString().split('T')[0],
   });
 
-  // Modal State: Log New Session
   const [sessionModalOpen, setSessionModalOpen] = useState(false);
   const [activeTreatmentId, setActiveTreatmentId] = useState(null);
+  const [patientAppointments, setPatientAppointments] = useState([]);
   const [sessionForm, setSessionForm] = useState({
     sessionName: '',
     note: '',
     sessionDate: new Date().toISOString().split('T')[0],
+    nextDate: '',
     cost: '',
     status: 'COMPLETED',
     equipmentUsed: [] // Array of { equipmentId, quantity }
   });
+
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState(paramAppointmentId || null);
 
   // --- FETCH DATA ---
   useEffect(() => {
@@ -51,6 +61,19 @@ const Treatments = () => {
   useEffect(() => {
     fetchTreatments();
   }, [filterStatus, searchPatient]);
+
+  // Handle URL parameters for pre-filling
+  useEffect(() => {
+    if (paramPatientId) {
+      setTreatmentForm(prev => ({ ...prev, patientId: paramPatientId }));
+    }
+    if (paramPatientName) {
+      setSearchPatient(paramPatientName);
+    }
+    if (paramAppointmentId) {
+      setSelectedAppointmentId(paramAppointmentId);
+    }
+  }, [paramPatientId, paramPatientName, paramAppointmentId]);
 
   const fetchInitialData = async () => {
     try {
@@ -96,7 +119,8 @@ const Treatments = () => {
         treatmentName: treatmentForm.treatmentName,
         diagnosis: treatmentForm.diagnosis,
         startDate: treatmentForm.startDate,
-        totalCost: parseFloat(treatmentForm.totalCost) || 0
+        totalCost: parseFloat(treatmentForm.totalCost) || 0,
+        totalSessionsPlanned: parseInt(treatmentForm.totalSessionsPlanned) || 1
       };
 
       await api.post('/treatments', payload);
@@ -109,9 +133,31 @@ const Treatments = () => {
     }
   };
 
-  const handleOpenSessionModal = (treatmentId) => {
+  const handleOpenSessionModal = async (treatmentId, sessionId, baseName, patientId) => {
     setActiveTreatmentId(treatmentId);
-    setSessionForm({ sessionName: '', note: '', sessionDate: new Date().toISOString().split('T')[0], cost: '', status: 'COMPLETED', equipmentUsed: [] });
+    setSessionForm({ 
+      sessionId: sessionId || null,
+      sessionName: baseName || '', 
+      note: '', 
+      sessionDate: new Date().toISOString().split('T')[0], 
+      nextDate: '', 
+      cost: '', 
+      status: 'COMPLETED', 
+      appointmentId: selectedAppointmentId || '',
+      equipmentUsed: [] 
+    });
+
+    // Fetch patient appointments for the dropdown
+    if (patientId) {
+      try {
+        const res = await api.get(`/appointments/patient/${patientId}`);
+        // Filter to only confirmed or completed appointments
+        setPatientAppointments(res.data.filter(a => a.status === 'CONFIRMED' || a.status === 'COMPLETED' || a.status === 'PENDING'));
+      } catch (err) {
+        console.error("Failed to fetch patient appointments", err);
+      }
+    }
+    
     setSessionModalOpen(true);
   };
 
@@ -152,13 +198,21 @@ const Treatments = () => {
     }
   };
 
-  const handleMarkCompleted = async (treatmentId) => {
-    if(!window.confirm("Mark this entire treatment as fully completed?")) return;
+  const handleToggleStatus = async (treatmentId, currentStatus) => {
+    const isOngoing = currentStatus === 'ONGOING';
+    const confirmMsg = isOngoing 
+      ? "Mark this entire treatment as fully completed?" 
+      : "Reopen this case for further sessions?";
+    
+    if(!window.confirm(confirmMsg)) return;
+
     try {
-      await api.put(`/treatments/${treatmentId}/complete`);
+      const endpoint = isOngoing ? 'complete' : 'reopen';
+      await api.put(`/treatments/${treatmentId}/${endpoint}`);
       fetchTreatments();
     } catch (err) {
       console.error(err);
+      alert("Failed to update treatment status.");
     }
   };
 
@@ -196,6 +250,7 @@ const Treatments = () => {
                 <label className="block text-sm font-bold text-slate-700 mb-1">Diagnosis</label>
                 <input 
                     type="text" 
+                    required minLength="3"
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] transition-all text-sm" 
                     placeholder="e.g. Gingivitis" 
                     value={treatmentForm.diagnosis}
@@ -205,15 +260,27 @@ const Treatments = () => {
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Procedure Name</label>
+                   <label className="block text-sm font-bold text-slate-700 mb-1">Procedure Name</label>
+                   <input 
+                     type="text" 
+                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] text-sm" 
+                     placeholder="e.g. Root Canal" 
+                     value={treatmentForm.treatmentName}
+                     onChange={e => setTreatmentForm({...treatmentForm, treatmentName: e.target.value})}
+                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Planned Sessions</label>
                   <input 
-                    type="text" 
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] transition-all text-sm" 
-                    placeholder="e.g. Root Canal" 
-                    value={treatmentForm.treatmentName}
-                    onChange={e => setTreatmentForm({...treatmentForm, treatmentName: e.target.value})}
+                    type="number" 
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] text-sm" 
+                    value={treatmentForm.totalSessionsPlanned}
+                    onChange={e => setTreatmentForm({...treatmentForm, totalSessionsPlanned: e.target.value})}
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Initial Est. Cost (Rs.)</label>
                   <input 
@@ -221,6 +288,15 @@ const Treatments = () => {
                       className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] transition-all text-sm" 
                       value={treatmentForm.totalCost}
                       onChange={e => setTreatmentForm({...treatmentForm, totalCost: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Start Date</label>
+                  <input 
+                      type="date" 
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] transition-all text-sm" 
+                      value={treatmentForm.startDate}
+                      onChange={e => setTreatmentForm({...treatmentForm, startDate: e.target.value})}
                   />
                 </div>
               </div>
@@ -281,14 +357,15 @@ const Treatments = () => {
                         <p className="text-sm font-medium text-slate-500">Patient: <span className="text-slate-700">{t.patient?.name}</span></p>
                       </div>
                       <div className="flex flex-col gap-2 items-end">
-                        <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg border ${t.status === 'ONGOING' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
-                            {t.status}
-                        </span>
-                        {t.status === 'ONGOING' && (
-                          <button onClick={() => handleMarkCompleted(t.treatmentId)} className="text-xs text-green-600 hover:text-green-800 flex items-center font-bold">
-                            <CheckCircle fontSize="inherit" className="mr-1"/> Mark Done
-                          </button>
-                        )}
+                         <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg border ${t.status === 'ONGOING' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
+                             {t.status}
+                         </span>
+                         <button 
+                           onClick={() => handleToggleStatus(t.treatmentId, t.status)} 
+                           className={`text-xs flex items-center font-bold transition-colors ${t.status === 'ONGOING' ? 'text-green-600 hover:text-green-800' : 'text-orange-600 hover:text-orange-800'}`}
+                         >
+                             {t.status === 'ONGOING' ? <><CheckCircle fontSize="inherit" className="mr-1"/> Mark Completed</> : <><History fontSize="inherit" className="mr-1"/> Reopen Case</>}
+                         </button>
                       </div>
                     </div>
 
@@ -316,34 +393,45 @@ const Treatments = () => {
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse min-w-[400px]">
                               <thead>
-                                <tr className="border-b-2 border-slate-200 text-slate-400 text-[10px] uppercase">
-                                  <th className="pb-2 font-bold">Date</th>
-                                  <th className="pb-2 font-bold">Session Name</th>
-                                  <th className="pb-2 font-bold">Notes</th>
-                                  <th className="pb-2 font-bold">Cost</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-100">
-                                {t.sessions?.length === 0 ? <tr><td colSpan="4" className="py-4 text-center text-sm text-slate-500">No sessions logged yet.</td></tr> :
-                                 t.sessions?.map((session) => (
-                                  <tr key={session.sessionId} className="hover:bg-slate-100/50 transition-colors">
-                                    <td className="py-2 text-xs font-bold text-slate-600 pr-4">{session.sessionDate}</td>
-                                    <td className="py-2 text-xs font-medium text-slate-700 pr-4">{session.sessionName}</td>
-                                    <td className="py-2 text-xs text-slate-500 pr-4">{session.note}</td>
-                                    <td className="py-2 text-xs font-mono text-slate-600">Rs.{session.cost}</td>
+                                  <tr className="border-b-2 border-slate-200 text-slate-400 text-[10px] uppercase">
+                                    <th className="pb-2 font-bold">Session</th>
+                                    <th className="pb-2 font-bold text-[#0E4C5C]">Status</th>
+                                    <th className="pb-2 font-bold">Date</th>
+                                    <th className="pb-2 font-bold">Notes</th>
+                                    <th className="pb-2 font-bold text-blue-600">Next Due</th>
+                                    <th className="pb-2 font-bold">Action</th>
                                   </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                  {t.sessions?.length === 0 ? <tr><td colSpan="7" className="py-4 text-center text-sm text-slate-500">No sessions logs.</td></tr> :
+                                   t.sessions?.map((session) => (
+                                    <tr key={session.sessionId} className="hover:bg-slate-100/50 transition-colors">
+                                      <td className="py-2 text-xs font-bold text-slate-700 pr-4">{session.sessionName}</td>
+                                      <td className="py-2 text-[10px] pr-4">
+                                          <span className={`px-2 py-0.5 rounded-full font-bold uppercase ${session.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                                              {session.status}
+                                          </span>
+                                      </td>
+                                      <td className="py-2 text-xs font-medium text-slate-600 pr-4">{session.sessionDate || '-'}</td>
+                                      <td className="py-2 text-xs text-slate-500 pr-4 italic max-w-[150px] truncate">{session.note || '-'}</td>
+                                      <td className="py-2 text-xs font-bold text-blue-600 pr-4">{session.nextDate || '-'}</td>
+                                      <td className="py-2 text-xs font-bold">
+                                          {session.status !== 'COMPLETED' ? (
+                                              <button 
+                                                onClick={() => handleOpenSessionModal(t.treatmentId, session.sessionId, session.sessionName, t.patient?.id)}
+                                                className="text-[#0E4C5C] hover:underline"
+                                              >
+                                                  Update Session
+                                              </button>
+                                          ) : (
+                                              <span className="text-slate-400">Fixed</span>
+                                          )}
+                                      </td>
+                                    </tr>
                                 ))}
                               </tbody>
                             </table>
                         </div>
-                        {t.status === 'ONGOING' && (
-                          <button 
-                            onClick={() => handleOpenSessionModal(t.treatmentId)}
-                            className="mt-4 w-full bg-white border border-[#0E4C5C] text-[#0E4C5C] px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#E0F7FA] transition-all flex items-center justify-center shadow-sm"
-                          >
-                            <Event className="mr-2" fontSize="small" /> Log Next Session
-                          </button>
-                        )}
                       </div>
                     </div>
 
@@ -359,14 +447,35 @@ const Treatments = () => {
         <DialogTitle sx={{ fontWeight: 'bold', color: '#0E4C5C' }}>Log New Session</DialogTitle>
         <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-1">Session Name</label>
+            <input type="text" required className="w-full px-3 py-2 border rounded-lg" value={sessionForm.sessionName} onChange={e => setSessionForm({...sessionForm, sessionName: e.target.value})} placeholder="e.g. Wire Adjustment, Cleaning..." />
+          </div>
+
+           <div>
+            <label className="block text-sm font-bold text-slate-700 mb-1">Associated Appointment (Optional but Recommended)</label>
+            <select 
+              className="w-full px-3 py-2 border rounded-lg text-sm"
+              value={sessionForm.appointmentId}
+              onChange={e => setSessionForm({...sessionForm, appointmentId: e.target.value})}
+            >
+              <option value="">No specific appointment</option>
+              {patientAppointments.map(a => (
+                <option key={a.appointmentId} value={a.appointmentId}>
+                  {dayjs(a.appointmentDate).format('MMM D')} at {dayjs(`2000-01-01 ${a.appointmentTime}`).format('h:mm A')} - {a.reasonForVisit}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Session Name</label>
-              <input type="text" className="w-full px-3 py-2 border rounded-lg" value={sessionForm.sessionName} onChange={e => setSessionForm({...sessionForm, sessionName: e.target.value})} placeholder="e.g. Wire Adjustment" />
+              <label className="block text-sm font-bold text-slate-700 mb-1">Session Date</label>
+              <input type="date" className="w-full px-3 py-2 border rounded-lg" value={sessionForm.sessionDate} onChange={e => setSessionForm({...sessionForm, sessionDate: e.target.value})} />
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Date</label>
-              <input type="date" className="w-full px-3 py-2 border rounded-lg" value={sessionForm.sessionDate} onChange={e => setSessionForm({...sessionForm, sessionDate: e.target.value})} />
+              <label className="block text-sm font-bold text-blue-700 mb-1">Next Recommendation</label>
+              <input type="date" className="w-full px-3 py-2 border border-blue-200 rounded-lg bg-blue-50/30" value={sessionForm.nextDate} onChange={e => setSessionForm({...sessionForm, nextDate: e.target.value})} />
             </div>
           </div>
 
@@ -377,7 +486,7 @@ const Treatments = () => {
 
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-1">Session Cost (Rs.)</label>
-            <input type="number" className="w-full px-3 py-2 border rounded-lg" value={sessionForm.cost} onChange={e => setSessionForm({...sessionForm, cost: e.target.value})} />
+            <input type="number" required min="0" className="w-full px-3 py-2 border rounded-lg" value={sessionForm.cost} onChange={e => setSessionForm({...sessionForm, cost: e.target.value})} />
           </div>
 
           {/* DYNAMIC EQUIPMENT SELECTOR */}

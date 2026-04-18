@@ -46,7 +46,8 @@ public class AdminFinancialController {
         if ("BOOKING_FEE".equals(p.getPaymentType()) && p.getAppointment() != null) {
             dto.setDescription("Online Booking Fee - " + p.getAppointment().getReasonForVisit());
         } else if ("TREATMENT_PAYMENT".equals(p.getPaymentType()) && p.getTreatment() != null) {
-            dto.setDescription("Treatment Charge - " + p.getTreatment().getTreatmentName());
+            String suffix = (p.getSession() != null) ? " (" + p.getSession().getSessionName() + ")" : "";
+            dto.setDescription("Treatment: " + p.getTreatment().getTreatmentName() + suffix);
         } else {
             dto.setDescription("General Clinic Charge");
         }

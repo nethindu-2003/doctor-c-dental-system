@@ -36,6 +36,7 @@ public class DentistDashboardService {
 
         List<DashboardResponse.PatientSummary> todaysPatients = todaysAppointments.stream()
                 .map(appt -> new DashboardResponse.PatientSummary(
+                        appt.getAppointmentId(),
                         appt.getPatient().getId(),
                         appt.getPatient().getName(),
                         appt.getAppointmentTime(),
@@ -60,13 +61,22 @@ public class DentistDashboardService {
         List<Treatment> ongoingTreatmentsRaw = treatmentRepository.findByDentist_IdAndStatus(dentistId, "ONGOING");
 
         List<DashboardResponse.TreatmentSummary> ongoingTreatments = ongoingTreatmentsRaw.stream()
-                .map(t -> new DashboardResponse.TreatmentSummary(
+                .map(t -> {
+                    long completedCount = t.getSessions() != null ? t.getSessions().stream()
+                            .filter(s -> "COMPLETED".equalsIgnoreCase(s.getStatus()))
+                            .count() : 0;
+                    int progress = (t.getTotalSessionsPlanned() != null && t.getTotalSessionsPlanned() > 0)
+                            ? (int) ((completedCount * 100) / t.getTotalSessionsPlanned())
+                            : 0;
+                    
+                    return new DashboardResponse.TreatmentSummary(
                         t.getTreatmentId(),
                         t.getTreatmentName(),
                         t.getPatient().getName(),
-                        50,
+                        progress,
                         null
-                )).collect(Collectors.toList());
+                    );
+                }).collect(Collectors.toList());
 
         // 4. Notifications (100% Dynamic)
         List<DashboardResponse.NotificationSummary> dynamicNotifications = new ArrayList<>();

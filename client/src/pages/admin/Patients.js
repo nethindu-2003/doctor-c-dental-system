@@ -274,6 +274,7 @@ const Patients = () => {
                                   <input 
                                       type="text" 
                                       required
+                                      minLength="3"
                                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 outline-none focus:bg-white focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 transition-all"
                                       value={newPatient.name} 
                                       onChange={(e) => setNewPatient({...newPatient, name: e.target.value})} 
@@ -296,6 +297,8 @@ const Patients = () => {
                                   <input 
                                       type="tel" 
                                       required
+                                      pattern="[0-9]{10}"
+                                      title="Please enter a 10-digit phone number"
                                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 outline-none focus:bg-white focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 transition-all"
                                       value={newPatient.phone} 
                                       onChange={(e) => setNewPatient({...newPatient, phone: e.target.value})} 
@@ -330,6 +333,7 @@ const Patients = () => {
                                       <input 
                                           type="date" 
                                           required
+                                          max={new Date().toISOString().split('T')[0]}
                                           className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 outline-none focus:bg-white focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 transition-all uppercase text-sm"
                                           value={newPatient.dob} 
                                           onChange={(e) => setNewPatient({...newPatient, dob: e.target.value})} 

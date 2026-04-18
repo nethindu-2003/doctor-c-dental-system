@@ -35,7 +35,7 @@ public class AdminAppointmentController {
         Appointment appt = appointmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
-        validateFutureAppointment(appt);
+        validateModification(appt, request.getStatus());
 
         String oldDate = appt.getAppointmentDate().toString();
         String oldTime = appt.getAppointmentTime().toString();
@@ -76,7 +76,7 @@ public class AdminAppointmentController {
     public AdminAppointmentResponse cancelAppointment(@PathVariable Integer id) {
         Appointment appt = appointmentRepository.findById(id).orElseThrow(() -> new RuntimeException("Appointment not found"));
 
-        validateFutureAppointment(appt);
+        validateModification(appt, "CANCELLED");
 
         String oldDate = appt.getAppointmentDate().toString();
         String oldTime = appt.getAppointmentTime().toString();
@@ -96,22 +96,15 @@ public class AdminAppointmentController {
     // --- HELPER MAPPER ---
     private AdminAppointmentResponse mapToDTO(Appointment a) {
         AdminAppointmentResponse dto = new AdminAppointmentResponse();
-
-        // If your Appointment entity also uses 'id' instead of 'appointmentId', change this too:
         dto.setAppointmentId(a.getAppointmentId());
-
         if (a.getPatient() != null) {
-            // FIX: Changed from getPatientId() to getId()
             dto.setPatientId(a.getPatient().getId());
             dto.setPatientName(a.getPatient().getName());
         }
-
         if (a.getDentist() != null) {
-            // FIX: Changed from getDentistId() to getId()
             dto.setDentistId(a.getDentist().getId());
             dto.setDentistName(a.getDentist().getName());
         }
-
         dto.setReasonForVisit(a.getReasonForVisit());
         dto.setAppointmentDate(a.getAppointmentDate());
         dto.setAppointmentTime(a.getAppointmentTime());
@@ -119,10 +112,14 @@ public class AdminAppointmentController {
         return dto;
     }
 
-    // Helper to prevent modifying the past
-    private void validateFutureAppointment(Appointment appt) {
-        java.time.LocalDateTime apptDateTime = java.time.LocalDateTime.of(appt.getAppointmentDate(), appt.getAppointmentTime());
-        if (apptDateTime.isBefore(java.time.LocalDateTime.now())) {
+    // Helper to prevent modifying the past (Strictly before Today)
+    private void validateModification(Appointment appt, String targetStatus) {
+        java.time.LocalDate today = java.time.LocalDate.now();
+        if (appt.getAppointmentDate().isBefore(today)) {
+            // Allow only marking as COMPLETED for past confirmed appointments
+            if ("COMPLETED".equals(targetStatus) && "CONFIRMED".equals(appt.getStatus())) {
+                return; // Authorization granted
+            }
             throw new RuntimeException("Action denied: Cannot modify past appointments.");
         }
     }

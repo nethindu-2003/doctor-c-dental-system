@@ -17,12 +17,10 @@ public class Treatment {
 
     @ManyToOne
     @JoinColumn(name = "patient_id")
-    @JsonIgnore
     private Patient patient;
 
     @ManyToOne
     @JoinColumn(name = "dentist_id")
-    @JsonIgnore // Prevents looping issues when fetching dentists
     private Dentist dentist;
 
     @Column(name = "treatment_name")

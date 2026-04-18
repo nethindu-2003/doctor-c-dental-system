@@ -33,6 +33,9 @@ public class TreatmentSession {
     @Column(name = "session_date")
     private LocalDate sessionDate;
 
+    @Column(name = "next_date")
+    private LocalDate nextDate;
+
     private String status; // e.g., "COMPLETED", "SCHEDULED"
     private Double cost;
 

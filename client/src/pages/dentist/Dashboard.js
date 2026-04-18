@@ -253,16 +253,18 @@ const Dashboard = () => {
                                               </div>
                                           </div>
                                       </div>
+                                      {patient.appointmentStatus !== 'CANCELLED' && (
                                       <button 
                                           className="flex items-center justify-center sm:justify-start px-4 py-2.5 bg-[#0E4C5C] text-white hover:bg-[#0a3541] rounded-xl font-bold text-sm transition-all focus:outline-none shadow-md shadow-[#0E4C5C]/20 w-full sm:w-auto"
                                           onClick={() => {
                                               setPatientsModalOpen(false);
-                                              navigate(`/dentist/treatments?patientId=${patient.patientId}`);
+                                              navigate(`/dentist/treatments?patientId=${patient.patientId}&patientName=${encodeURIComponent(patient.name)}&appointmentId=${patient.appointmentId}`);
                                           }}
                                       >
                                           <AddCircleOutline fontSize="small" className="mr-2" />
                                           Add Treatment
                                       </button>
+                                      )}
                                   </div>
                               ))}
                           </div>

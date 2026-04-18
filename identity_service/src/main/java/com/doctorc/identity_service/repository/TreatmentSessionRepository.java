@@ -1,5 +1,6 @@
 package com.doctorc.identity_service.repository;
 
+import com.doctorc.identity_service.entity.Treatment;
 import com.doctorc.identity_service.entity.TreatmentSession;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -13,4 +14,7 @@ public interface TreatmentSessionRepository extends JpaRepository<TreatmentSessi
 
     // Get all sessions for a treatment ordered by date
     List<TreatmentSession> findByTreatmentTreatmentIdOrderBySessionDateDesc(Integer treatmentId);
+
+    // Get all sessions for a treatment ordered by ID (to maintain clinical sequence)
+    List<TreatmentSession> findAllByTreatmentOrderBySessionIdAsc(Treatment treatment);
 }

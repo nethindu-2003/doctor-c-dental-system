@@ -124,6 +124,7 @@ const AddDentist = () => {
                     name="name" 
                     placeholder="e.g. Dr. Sarah Smith" 
                     required
+                    minLength="3"
                     value={formData.name} 
                     onChange={handleChange}
                     className={`w-full pl-11 pr-4 py-3.5 bg-slate-50 border rounded-xl outline-none transition-all duration-300 text-slate-800 font-medium ${
@@ -172,6 +173,8 @@ const AddDentist = () => {
                     name="phone" 
                     placeholder="077 123 4567" 
                     required
+                    pattern="[0-9]{10}"
+                    title="10-digit phone number"
                     value={formData.phone} 
                     onChange={handleChange}
                     className={`w-full pl-11 pr-4 py-3.5 bg-slate-50 border rounded-xl outline-none transition-all duration-300 text-slate-800 font-medium ${

@@ -15,10 +15,28 @@ public class AdminInventoryController {
     @Autowired
     private EquipmentRepository equipmentRepository;
 
+    @Autowired
+    private com.doctorc.identity_service.repository.TreatmentEquipmentRepository usageRepository;
+
     // 1. GET ALL INVENTORY
     @GetMapping
     public List<Equipment> getAllEquipment() {
         return equipmentRepository.findAll();
+    }
+
+    // NEW: Get usage history for an item
+    @GetMapping("/{id}/usage")
+    public List<com.doctorc.identity_service.dto.InventoryUsageDTO> getUsageHistory(@PathVariable Integer id) {
+        return usageRepository.findByEquipment_EquipmentIdOrderBySession_SessionDateDesc(id)
+            .stream()
+            .map(usage -> new com.doctorc.identity_service.dto.InventoryUsageDTO(
+                usage.getSession().getTreatment().getPatient().getName(),
+                usage.getSession().getTreatment().getTreatmentName(),
+                usage.getSession().getSessionName(),
+                usage.getSession().getSessionDate(),
+                usage.getQuantityUsed()
+            ))
+            .toList();
     }
 
     // 2. ADD NEW ITEM

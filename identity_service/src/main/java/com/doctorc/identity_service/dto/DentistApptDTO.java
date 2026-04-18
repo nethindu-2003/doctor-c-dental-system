@@ -12,5 +12,6 @@ public class DentistApptDTO {
     private LocalDate appointmentDate;
     private LocalTime appointmentTime;
     private String reasonForVisit;
+    private String additionalNotes;
     private String status;
 }
