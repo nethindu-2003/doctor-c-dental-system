@@ -2,20 +2,26 @@ import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { LockReset } from '@mui/icons-material';
 import api from '../../api/axios';
+import { validatePasswordUpdate } from '../../utils/validation';
 
 const DentistSetup = () => {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token'); // Get token from URL
+  const token = searchParams.get('token'); 
   const navigate = useNavigate();
 
   const [passwords, setPasswords] = useState({ new: '', confirm: '' });
+  const [errors, setErrors] = useState({});
   const [status, setStatus] = useState({ type: '', msg: '' });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (passwords.new !== passwords.confirm) {
-      setStatus({ type: 'error', msg: 'Passwords do not match' });
+    setStatus({ type: '', msg: '' });
+    setErrors({});
+
+    const validationErrors = validatePasswordUpdate(passwords.new, passwords.confirm);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
@@ -70,6 +76,7 @@ const DentistSetup = () => {
               onChange={(e) => setPasswords({...passwords, new: e.target.value})}
               placeholder="Enter new password"
             />
+            {errors.new && <p className="text-red-500 text-xs mt-1.5 ml-1 font-bold">{errors.new}</p>}
           </div>
           
           <div className="text-left">
@@ -82,6 +89,7 @@ const DentistSetup = () => {
               onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
               placeholder="Confirm new password"
             />
+            {errors.confirm && <p className="text-red-500 text-xs mt-1.5 ml-1 font-bold">{errors.confirm}</p>}
           </div>
 
           <button 

@@ -1,7 +1,7 @@
 // Regular Expressions
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const PHONE_REGEX = /^\d{10}$/; 
-export const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
 
 // ===== REGISTRATION VALIDATION =====
 export const validateRegistration = (formData) => {
@@ -24,7 +24,7 @@ export const validateRegistration = (formData) => {
 
   // 4. Password Check (Strong)
   if (!PASSWORD_REGEX.test(formData.password)) {
-    errors.password = "Password must be 8+ chars, include a number and a symbol (@$!%*#?&).";
+    errors.password = "Password must be 8+ chars, include Uppercase, Lowercase, Number and Symbol (@$!%*#?&).";
   }
 
   // 5. Confirm Password
@@ -102,7 +102,7 @@ export const validatePasswordUpdate = (newPassword, confirmPassword) => {
   if (!newPassword || newPassword.length === 0) {
     errors.new = "New password is required.";
   } else if (!PASSWORD_REGEX.test(newPassword)) {
-    errors.new = "Password must be 8+ chars, include a number & symbol.";
+    errors.new = "Password must be 8+ chars, include Uppercase, Lowercase, Number and Symbol (@$!%*#?&).";
   }
 
   // 2. Check confirm password

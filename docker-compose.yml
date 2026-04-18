@@ -1,11 +1,14 @@
 services:
   mysql:
-    image: mysql:8.0
+    build:
+      context: .
+      dockerfile: mysql.Dockerfile
     container_name: mysql
+    image: dentalclinic-mysql:latest
     restart: always
     environment:
       MYSQL_DATABASE: DentalClinicDB
-      MYSQL_ROOT_PASSWORD: 2003@Nethindu
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
       - "3307:3306"
     volumes:
@@ -14,7 +17,8 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 20
+      start_period: 30s
     networks:
       - dental-network
 
@@ -23,6 +27,7 @@ services:
       context: ./discovery_server
       dockerfile: Dockerfile
     container_name: discovery-server
+    image: dentalclinic-discovery-server:latest
     ports:
       - "8761:8761"
     networks:
@@ -33,6 +38,7 @@ services:
       context: ./api_gateway
       dockerfile: Dockerfile
     container_name: api-gateway
+    image: dentalclinic-api-gateway:latest
     ports:
       - "8080:8080"
     environment:
@@ -48,12 +54,13 @@ services:
       context: ./identity_service
       dockerfile: Dockerfile
     container_name: identity-service
+    image: dentalclinic-identity-service:latest
     ports:
       - "8081:8081"
     environment:
       SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/DentalClinicDB?useSSL=false&allowPublicKeyRetrieval=true"
-      SPRING_DATASOURCE_USERNAME: "root"
-      SPRING_DATASOURCE_PASSWORD: "2003@Nethindu"
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://discovery-server:8761/eureka/"
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     depends_on:
@@ -69,12 +76,13 @@ services:
       context: ./chat_service
       dockerfile: Dockerfile
     container_name: chat-service
+    image: dentalclinic-chat-service:latest
     ports:
       - "8082:8082"
     environment:
       SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/DentalClinicDB?useSSL=false&allowPublicKeyRetrieval=true"
-      SPRING_DATASOURCE_USERNAME: "root"
-      SPRING_DATASOURCE_PASSWORD: "2003@Nethindu"
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://discovery-server:8761/eureka/"
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     depends_on:
@@ -90,6 +98,7 @@ services:
       context: ./client
       dockerfile: Dockerfile
     container_name: dental-client
+    image: dentalclinic-client:latest
     ports:
       - "3000:3000"
     depends_on:

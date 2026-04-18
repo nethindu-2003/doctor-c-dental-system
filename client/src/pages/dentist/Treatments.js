@@ -295,12 +295,13 @@ const Treatments = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Planned Sessions</label>
-                  <input 
-                    type="number" 
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] text-sm" 
-                    value={treatmentForm.totalSessionsPlanned}
-                    onChange={e => setTreatmentForm({...treatmentForm, totalSessionsPlanned: e.target.value})}
-                  />
+                    <input 
+                      type="number" 
+                      min="1"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] text-sm" 
+                      value={treatmentForm.totalSessionsPlanned}
+                      onChange={e => setTreatmentForm({...treatmentForm, totalSessionsPlanned: Math.max(1, parseInt(e.target.value) || 1)})}
+                    />
                 </div>
               </div>
 
@@ -309,9 +310,10 @@ const Treatments = () => {
                   <label className="block text-sm font-bold text-slate-700 mb-1">Initial Est. Cost (Rs.)</label>
                   <input 
                       type="number" 
+                      min="0"
                       className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0E4C5C] transition-all text-sm" 
                       value={treatmentForm.totalCost}
-                      onChange={e => setTreatmentForm({...treatmentForm, totalCost: e.target.value})}
+                      onChange={e => setTreatmentForm({...treatmentForm, totalCost: Math.max(0, parseFloat(e.target.value) || 0)})}
                   />
                 </div>
                 <div>
@@ -522,7 +524,7 @@ const Treatments = () => {
 
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-1">Session Cost (Rs.)</label>
-            <input type="number" required min="0" className="w-full px-3 py-2 border rounded-lg" value={sessionForm.cost} onChange={e => setSessionForm({...sessionForm, cost: e.target.value})} />
+            <input type="number" required min="0" className="w-full px-3 py-2 border rounded-lg" value={sessionForm.cost} onChange={e => setSessionForm({...sessionForm, cost: Math.max(0, parseFloat(e.target.value) || 0)})} />
           </div>
 
           {/* DYNAMIC EQUIPMENT SELECTOR */}
@@ -548,10 +550,10 @@ const Treatments = () => {
                     <option key={item.equipmentId} value={item.equipmentId}>{item.name} (In Stock: {item.stockQuantity})</option>
                   ))}
                 </select>
-                <input 
-                  type="number" min="1" placeholder="Qty" className="w-20 px-2 py-1 text-sm border rounded"
-                  value={equip.quantity} onChange={e => handleEquipmentChange(index, 'quantity', e.target.value)}
-                />
+                  <input 
+                    type="number" min="1" placeholder="Qty" className="w-20 px-2 py-1 text-sm border rounded"
+                    value={equip.quantity} onChange={e => handleEquipmentChange(index, 'quantity', Math.max(1, parseInt(e.target.value) || 1))}
+                  />
                 <button onClick={() => handleRemoveEquipment(index)} className="text-red-500 hover:text-red-700"><Delete fontSize="small"/></button>
               </div>
             ))}
@@ -575,14 +577,14 @@ const Treatments = () => {
           </p>
           <div className="flex items-center gap-3">
             <label className="text-sm font-bold text-slate-700 whitespace-nowrap">Number of Sessions</label>
-            <input
-              type="number"
-              min="1"
-              max="20"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:border-[#0E4C5C]"
-              value={addSessionsCount}
-              onChange={e => setAddSessionsCount(parseInt(e.target.value) || 1)}
-            />
+              <input
+                type="number"
+                min="1"
+                max="50"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:border-[#0E4C5C]"
+                value={addSessionsCount}
+                onChange={e => setAddSessionsCount(Math.max(1, Math.min(50, parseInt(e.target.value) || 1)))}
+              />
           </div>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>

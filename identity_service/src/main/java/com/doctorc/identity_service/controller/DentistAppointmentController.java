@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.doctorc.identity_service.dto.DentistApptDTO;
 import com.doctorc.identity_service.entity.Appointment;
 import com.doctorc.identity_service.repository.AppointmentRepository;
+import com.doctorc.identity_service.repository.TreatmentSessionRepository;
 import com.doctorc.identity_service.service.EmailService;
 
 @RestController
@@ -21,6 +22,7 @@ import com.doctorc.identity_service.service.EmailService;
 public class DentistAppointmentController {
 
     @Autowired private AppointmentRepository appointmentRepository;
+    @Autowired private TreatmentSessionRepository treatmentSessionRepository;
     @Autowired private EmailService emailService;
 
     // 1. GET ALL APPOINTMENTS FOR LOGGED-IN DENTIST
@@ -104,6 +106,11 @@ public class DentistAppointmentController {
         dto.setReasonForVisit(a.getReasonForVisit());
         dto.setAdditionalNotes(a.getAdditionalNotes());
         dto.setStatus(a.getStatus());
+
+        // Check if treatment already exists for this appointment
+        treatmentSessionRepository.findFirstByAppointment_AppointmentId(a.getAppointmentId())
+                .ifPresent(session -> dto.setTreatmentId(session.getTreatment().getTreatmentId()));
+
         return dto;
     }
 

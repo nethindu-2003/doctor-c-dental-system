@@ -20,6 +20,8 @@ const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState('SCHEDULE'); // SCHEDULE or HISTORY
   const [statusMsg, setStatusMsg] = useState(null);
 
   // Detail Modal State
@@ -44,7 +46,7 @@ const Appointments = () => {
 
   // --- HANDLERS ---
   const handleConfirm = async (e, id) => {
-    e.stopPropagation(); // Prevents row click modal from opening
+    e.stopPropagation();
     try {
       const res = await axios.put(`/dentist/appointments/${id}/confirm`);
       setAppointments(appointments.map(a => a.appointmentId === id ? res.data : a));
@@ -77,10 +79,20 @@ const Appointments = () => {
     setTimeout(() => setStatusMsg(null), 5000);
   };
 
-  // --- FILTER BY CALENDAR DATE ---
-  const filteredAppointments = appointments.filter(a => 
-    dayjs(a.appointmentDate).isSame(selectedDate, 'day')
-  );
+  // --- FILTER LOGIC ---
+  const filteredAppointments = appointments.filter(a => {
+    const matchesSearch = a.patientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          a.appointmentId.toString().includes(searchTerm);
+    
+    if (viewMode === 'HISTORY') {
+      // Show anything that happened before this exact moment
+      return matchesSearch && dayjs(`${a.appointmentDate}T${a.appointmentTime}`).isBefore(dayjs());
+    }
+    return matchesSearch && dayjs(a.appointmentDate).isSame(selectedDate, 'day');
+  }).sort((a, b) => {
+      if (viewMode === 'HISTORY') return dayjs(b.appointmentDate).diff(dayjs(a.appointmentDate));
+      return 0;
+  });
 
   if (loading) return (
       <div className="flex justify-center items-center h-48">
@@ -91,10 +103,31 @@ const Appointments = () => {
   return (
     <div className="font-sans text-slate-800 animate-fade-in p-2 md:p-6 lg:p-8 max-w-7xl mx-auto">
       
-      <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-           <h1 className="text-3xl md:text-4xl font-poppins font-bold text-[#0E4C5C] mb-2">Daily Schedule</h1>
-           <p className="text-slate-500 text-sm md:text-base">Select a date on the calendar to view and manage appointments.</p>
+           <h1 className="text-3xl md:text-4xl font-poppins font-bold text-[#0E4C5C] mb-2">
+              {viewMode === 'SCHEDULE' ? 'Appointment Schedule' : 'Appointment History'}
+           </h1>
+           <p className="text-slate-500 text-sm md:text-base">
+              {viewMode === 'SCHEDULE' 
+                ? 'Manage your daily visits and patient intake.' 
+                : 'Review past clinical sessions and patient records.'}
+           </p>
+        </div>
+
+        <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-sm shrink-0">
+            <button 
+              onClick={() => setViewMode('SCHEDULE')}
+              className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${viewMode === 'SCHEDULE' ? 'bg-[#0E4C5C] text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+               Daily Schedule
+            </button>
+            <button 
+              onClick={() => setViewMode('HISTORY')}
+              className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${viewMode === 'HISTORY' ? 'bg-[#0E4C5C] text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+               Full History
+            </button>
         </div>
       </div>
 
@@ -107,36 +140,48 @@ const Appointments = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* --- LEFT: REAL CALENDAR --- */}
-        <div className="lg:col-span-4">
-          <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center items-center">
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DateCalendar 
-                value={selectedDate} 
-                onChange={(newDate) => setSelectedDate(newDate)} 
-                sx={{ 
-                  width: '100%',
-                  '& .Mui-selected': { bgcolor: '#0E4C5C !important' }
-                }}
-              />
-            </LocalizationProvider>
-          </div>
-        </div>
+        {/* --- LEFT: REAL CALENDAR (Only in Schedule Mode) --- */}
+        {viewMode === 'SCHEDULE' && (
+            <div className="lg:col-span-4 translate-y-0 opacity-100 transition-all duration-500">
+              <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center items-center">
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DateCalendar 
+                    value={selectedDate} 
+                    onChange={(newDate) => setSelectedDate(newDate)} 
+                    sx={{ 
+                      width: '100%',
+                      '& .Mui-selected': { bgcolor: '#0E4C5C !important' }
+                    }}
+                  />
+                </LocalizationProvider>
+              </div>
+            </div>
+        )}
 
         {/* --- RIGHT: APPOINTMENT TABLE --- */}
-        <div className="lg:col-span-8">
+        <div className={viewMode === 'SCHEDULE' ? "lg:col-span-8" : "lg:col-span-12"}>
           <div className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm relative h-full flex flex-col">
             
-            <div className="bg-[#0E4C5C] px-6 py-4 flex justify-between items-center text-white shrink-0">
+            <div className="bg-[#0E4C5C] px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center text-white gap-4 shrink-0">
                <h2 className="font-bold text-lg font-poppins">
-                  Appointments for {selectedDate.format('MMMM D, YYYY')}
+                  {viewMode === 'SCHEDULE' ? `Appointments for ${selectedDate.format('MMM D, YYYY')}` : 'Full Appointment History'}
                </h2>
+               <div className="relative w-full sm:w-64">
+                   <input 
+                      type="text"
+                      placeholder="Search patient..."
+                      className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-1.5 text-sm outline-none focus:bg-white/20 transition-all placeholder:text-white/50"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                   />
+               </div>
             </div>
 
             <div className="overflow-x-auto flex-grow max-h-[500px]">
               <table className="w-full text-left border-collapse">
                 <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 z-10">
                   <tr className="text-slate-500 text-xs uppercase tracking-wider">
+                    {viewMode === 'HISTORY' && <th className="p-4 font-bold">Date</th>}
                     <th className="p-4 font-bold">Time</th>
                     <th className="p-4 font-bold">Patient</th>
                     <th className="p-4 font-bold">Status</th>
@@ -155,6 +200,13 @@ const Appointments = () => {
                           className={`hover:bg-slate-50/50 transition-colors group cursor-pointer ${isPast ? 'bg-slate-50/30' : ''}`}
                           onClick={() => handleRowClick(row)}
                         >
+                          {viewMode === 'HISTORY' && (
+                            <td className="p-4 align-middle">
+                               <p className="font-bold text-slate-600">
+                                  {dayjs(row.appointmentDate).format('MMM D, YYYY')}
+                               </p>
+                            </td>
+                          )}
                           <td className="p-4 align-middle">
                              <p className={`font-bold ${isPast ? 'text-slate-400' : 'text-[#0E4C5C]'}`}>
                                 {dayjs(`2024-01-01 ${row.appointmentTime}`).format('h:mm A')}
@@ -297,13 +349,20 @@ const Appointments = () => {
                   
                   {/* Footer */}
                   <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
-                      <button 
-                          onClick={() => window.location.href = `/dentist/treatments?appointmentId=${selectedAppt.appointmentId}&patientId=${selectedAppt.patientId}&patientName=${encodeURIComponent(selectedAppt.patientName)}`}
-                          className="px-4 py-2.5 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-colors focus:outline-none shadow-md flex items-center space-x-2"
-                      >
-                          <MedicalServices fontSize="small" />
-                          <span>Add Treatment</span>
-                      </button>
+                      {selectedAppt.status !== 'CANCELLED' && !selectedAppt.treatmentId ? (
+                          <button 
+                              onClick={() => window.location.href = `/dentist/treatments?appointmentId=${selectedAppt.appointmentId}&patientId=${selectedAppt.patientId}&patientName=${encodeURIComponent(selectedAppt.patientName)}`}
+                              className="px-4 py-2.5 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-colors focus:outline-none shadow-md flex items-center space-x-2"
+                          >
+                              <MedicalServices fontSize="small" />
+                              <span>Add Treatment</span>
+                          </button>
+                      ) : (
+                          <div className="flex items-center space-x-2 text-slate-400 font-bold text-xs uppercase italic px-4">
+                             {selectedAppt.status === 'CANCELLED' ? 'Appointment Cancelled' : 'Treatment Already Logged'}
+                          </div>
+                      )}
+                      
                       <button 
                           onClick={() => setOpenModal(false)}
                           className="px-6 py-2.5 rounded-xl bg-[#0E4C5C] text-white font-bold hover:bg-[#0a3541] transition-colors focus:outline-none shadow-md"

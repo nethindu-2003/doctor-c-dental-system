@@ -33,36 +33,87 @@ const Dashboard = () => {
       // 1. Set Profile
       setProfile(profileRes.data);
 
-      // 2. Calculate Next Appointment (Strictly future: Date > Today OR (Date == Today AND Time > Now))
+      // 2. Composite Upcoming Events (Appointments + Treatment Sessions)
       const now = dayjs();
-      const futureAppts = apptsRes.data.filter(a => {
-          const apptDateTime = dayjs(`${a.appointmentDate}T${a.appointmentTime}`);
-          return (a.status === 'PENDING' || a.status === 'CONFIRMED') && apptDateTime.isAfter(now);
-      });
-      // Sort to find the closest one
-      futureAppts.sort((a, b) => dayjs(a.appointmentDate).diff(dayjs(b.appointmentDate)));
-      setNextAppointment(futureAppts.length > 0 ? futureAppts[0] : null);
+      const upcomingEvents = [];
 
-      // 3. Calculate Active Treatment (Ensure status matches backend 'ONGOING')
+      // Add Formal Appointments
+      apptsRes.data.forEach(a => {
+        if (a.status === 'PENDING' || a.status === 'CONFIRMED') {
+          const apptDateTime = dayjs(`${a.appointmentDate}T${a.appointmentTime}`);
+          if (apptDateTime.isAfter(now)) {
+            upcomingEvents.push({
+              date: apptDateTime,
+              type: 'APPOINTMENT',
+              title: a.reasonForVisit,
+              subtitle: a.dentist ? `Dr. ${a.dentist.name}` : 'Clinic Admin',
+              displayTime: dayjs('2023-01-01 ' + a.appointmentTime).format('h:mm A'),
+              id: a.appointmentId
+            });
+          }
+        }
+      });
+
+      // Add Treatment Sessions (Planned slots or Next Recommendations)
+      treatmentsRes.data.forEach(t => {
+        // Only process sessions for treatments that are NOT completed yet
+        if (t.status !== 'COMPLETED') {
+          (t.sessions || []).forEach(s => {
+            // If a session is already scheduled for a future date
+            if (s.sessionDate && (s.status === 'PLANNED' || s.status === 'PENDING')) {
+              const sessionDT = dayjs(s.sessionDate).set('hour', 9).set('minute', 0);
+              if (sessionDT.isAfter(now)) {
+                upcomingEvents.push({
+                  date: sessionDT,
+                  type: 'SESSION',
+                  title: s.sessionName || 'Treatment Session',
+                  subtitle: `Process: ${t.treatmentName}`,
+                  displayTime: 'Morning (9:00 AM)',
+                  id: s.sessionId
+                });
+              }
+            }
+            // If a dentist set a "Next Recommendation" date in a completed session
+            else if (s.nextDate && s.status === 'COMPLETED') {
+              const nextDT = dayjs(s.nextDate).set('hour', 9).set('minute', 0);
+              if (nextDT.isAfter(now)) {
+                upcomingEvents.push({
+                  date: nextDT,
+                  type: 'RECOMMENDATION',
+                  title: 'Follow-up Recommended',
+                  subtitle: `For: ${t.treatmentName}`,
+                  displayTime: 'Recommended Date',
+                  id: s.sessionId
+                });
+              }
+            }
+          });
+        }
+      });
+
+      // Sort by date and take the earliest
+      upcomingEvents.sort((a, b) => a.date.diff(b.date));
+      setNextAppointment(upcomingEvents.length > 0 ? upcomingEvents[0] : null);
+
+      // 3. Calculate Active Treatment Progress
       const active = treatmentsRes.data.find(t => t.status === 'ONGOING');
       if (active) {
-          const sessions = active.sessions || [];
-          const completedCount = sessions.filter(s => s.status === 'COMPLETED').length;
-          const totalCount = sessions.length;
-          const progress = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
-          
-          // Find the name of the next pending session
-          const nextSession = sessions.find(s => s.status === 'PENDING');
+        const sessions = active.sessions || [];
+        const completedCount = sessions.filter(s => s.status === 'COMPLETED').length;
+        const totalCount = sessions.length;
+        const progress = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
+        
+        const nextSession = sessions.find(s => s.status === 'PENDING' || s.status === 'PLANNED');
 
-          setActiveTreatment({
-              name: active.treatmentName,
-              progress: progress,
-              completed: completedCount,
-              total: totalCount,
-              nextStep: nextSession 
-                  ? `${nextSession.sessionName}${nextSession.sessionDate ? ` (Scheduled: ${dayjs(nextSession.sessionDate).format('MMM D')})` : ''}` 
-                  : 'Awaiting Schedule'
-          });
+        setActiveTreatment({
+          name: active.treatmentName,
+          progress: progress,
+          completed: completedCount,
+          total: totalCount,
+          nextStep: nextSession 
+            ? `${nextSession.sessionName}${nextSession.sessionDate ? ` (Scheduled: ${dayjs(nextSession.sessionDate).format('MMM D')})` : ''}` 
+            : 'Awaiting Schedule'
+        });
       }
 
       // 4. Calculate True Payment Stats (Total Plan Gap)
@@ -128,18 +179,18 @@ const Dashboard = () => {
               {nextAppointment ? (
                   <>
                       <h2 className="text-3xl font-bold mb-1">
-                          {dayjs(nextAppointment.appointmentDate).format('MMM D, YYYY')}
+                          {nextAppointment.date.format('MMM D, YYYY')}
                       </h2>
                       <h3 className="text-2xl font-bold text-accent mb-4">
-                          {dayjs('2023-01-01 ' + nextAppointment.appointmentTime).format('h:mm A')}
+                          {nextAppointment.displayTime}
                       </h3>
                       <p className="text-slate-300 text-sm">
-                          {nextAppointment.dentist ? `Dr. ${nextAppointment.dentist.name}` : 'Clinic Admin'} • {nextAppointment.reasonForVisit}
+                          {nextAppointment.subtitle} • {nextAppointment.title}
                       </p>
                   </>
               ) : (
                   <div className="my-6">
-                      <h3 className="text-xl font-bold mb-1">No upcoming appointments</h3>
+                      <h3 className="text-xl font-bold mb-1">No upcoming visits</h3>
                       <p className="text-slate-300 text-sm">Time for a checkup?</p>
                   </div>
               )}
@@ -247,15 +298,15 @@ const Dashboard = () => {
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             
           {/* Dynamic Appointment Reminder Notification */}
-          {nextAppointment && dayjs(nextAppointment.appointmentDate).diff(dayjs(), 'day') <= 2 && (
+          {nextAppointment && nextAppointment.date.diff(dayjs(), 'day') <= 2 && (
              <div className="p-5 border-b border-slate-100 flex items-start sm:items-center gap-4 hover:bg-slate-50 transition-colors flex-col sm:flex-row">
                 <div className="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center shrink-0">
                   <NotificationsActive />
                 </div>
                 <div className="flex-grow">
-                  <h4 className="font-bold text-slate-800 text-sm mb-1">Upcoming Appointment Reminder</h4>
+                  <h4 className="font-bold text-slate-800 text-sm mb-1">Upcoming Visit Reminder</h4>
                   <p className="text-sm text-slate-500 leading-relaxed">
-                      Your {nextAppointment.reasonForVisit} is scheduled for <span className="font-semibold text-slate-700">{dayjs(nextAppointment.appointmentDate).format('MMM D')}</span> at <span className="font-semibold text-slate-700">{dayjs('2023-01-01 ' + nextAppointment.appointmentTime).format('h:mm A')}</span>.
+                      You have an {nextAppointment.type.toLowerCase().replace('_', ' ')} scheduled for <span className="font-semibold text-slate-700">{nextAppointment.date.format('MMM D')}</span> at <span className="font-semibold text-slate-700">{nextAppointment.displayTime}</span>.
                   </p>
                 </div>
                 <div className="shrink-0 mt-2 sm:mt-0">

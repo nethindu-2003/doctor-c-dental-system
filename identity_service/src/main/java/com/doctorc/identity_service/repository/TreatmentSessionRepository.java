@@ -12,6 +12,9 @@ public interface TreatmentSessionRepository extends JpaRepository<TreatmentSessi
     // Get the most recent session for a treatment
     Optional<TreatmentSession> findFirstByTreatmentTreatmentIdOrderByUpdatedAtDesc(Integer treatmentId);
 
+    Optional<TreatmentSession> findFirstByAppointment_AppointmentId(Integer appointmentId);
+
+
     // Get all sessions for a treatment ordered by date
     List<TreatmentSession> findByTreatmentTreatmentIdOrderBySessionDateDesc(Integer treatmentId);
 
