@@ -1,8 +1,9 @@
 package com.doctorc.identity_service.dto;
 
-import lombok.Data;
 import java.time.LocalDate;
 import java.util.List;
+
+import lombok.Data;
 
 public class TreatmentRequestDTO {
 
@@ -15,6 +16,7 @@ public class TreatmentRequestDTO {
         private LocalDate startDate;
         private Double totalCost; // Initial cost, if any
         private Integer totalSessionsPlanned;
+        private Integer appointmentId; // Optional: link sessions to this appointment
     }
 
     @Data

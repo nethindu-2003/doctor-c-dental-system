@@ -70,4 +70,19 @@ public class TreatmentController {
     public ResponseEntity<Treatment> reopenTreatment(@PathVariable Integer treatmentId) {
         return ResponseEntity.ok(treatmentService.reopenTreatment(treatmentId));
     }
+
+    // Add extra session slots to an existing treatment
+    @PostMapping("/{treatmentId}/add-sessions")
+    public ResponseEntity<?> addMoreSessions(
+            @PathVariable Integer treatmentId,
+            @RequestParam Integer count) {
+        try {
+            if (count == null || count <= 0) {
+                return ResponseEntity.badRequest().body("Count must be at least 1");
+            }
+            return ResponseEntity.ok(treatmentService.addMoreSessions(treatmentId, count));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

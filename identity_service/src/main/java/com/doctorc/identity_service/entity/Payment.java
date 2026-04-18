@@ -20,9 +20,9 @@ public class Payment {
     @JsonIgnore
     private Patient patient;
 
-    // For Booking Fees
+    // For Booking Fees or session-linked payments (multiple sessions can share one appointment)
     @ManyToOne
-    @JoinColumn(name = "appointment_id")
+    @JoinColumn(name = "appointment_id", unique = false)
     private Appointment appointment;
 
     // For Treatment Payments

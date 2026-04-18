@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { 
-  CheckCircle, Cancel, Visibility, Email, Phone, CalendarToday, AccessTime, Assignment, Close
+  CheckCircle, Cancel, Visibility, Email, Phone, CalendarToday, AccessTime, Assignment, Close, MedicalServices
 } from '@mui/icons-material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -296,7 +296,14 @@ const Appointments = () => {
                   </div>
                   
                   {/* Footer */}
-                  <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-end shrink-0">
+                  <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
+                      <button 
+                          onClick={() => window.location.href = `/dentist/treatments?appointmentId=${selectedAppt.appointmentId}&patientId=${selectedAppt.patientId}&patientName=${encodeURIComponent(selectedAppt.patientName)}`}
+                          className="px-4 py-2.5 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-colors focus:outline-none shadow-md flex items-center space-x-2"
+                      >
+                          <MedicalServices fontSize="small" />
+                          <span>Add Treatment</span>
+                      </button>
                       <button 
                           onClick={() => setOpenModal(false)}
                           className="px-6 py-2.5 rounded-xl bg-[#0E4C5C] text-white font-bold hover:bg-[#0a3541] transition-colors focus:outline-none shadow-md"

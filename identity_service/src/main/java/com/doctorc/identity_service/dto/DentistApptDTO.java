@@ -6,6 +6,7 @@ import java.time.LocalTime;
 @Data
 public class DentistApptDTO {
     private Integer appointmentId;
+    private Integer patientId;       // ← added: needed for "Add Treatment" navigation
     private String patientName;
     private String patientEmail;
     private String patientPhone;
@@ -14,4 +15,4 @@ public class DentistApptDTO {
     private String reasonForVisit;
     private String additionalNotes;
     private String status;
-}
+}

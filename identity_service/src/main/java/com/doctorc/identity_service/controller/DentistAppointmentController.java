@@ -30,6 +30,13 @@ public class DentistAppointmentController {
         return appts.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
+    // New: Get appointments for a specific patient (used in treatments session modal)
+    @GetMapping("/patient/{patientId}")
+    public List<DentistApptDTO> getPatientAppointments(@PathVariable Integer patientId) {
+        List<Appointment> appts = appointmentRepository.findByPatient_Id(patientId);
+        return appts.stream().map(this::mapToDTO).collect(Collectors.toList());
+    }
+
     // 2. CONFIRM APPOINTMENT
     @PutMapping("/{id}/confirm")
     public DentistApptDTO confirmAppointment(@PathVariable Integer id, @RequestAttribute("id") Integer dentistId) {
@@ -85,8 +92,9 @@ public class DentistAppointmentController {
 
     private DentistApptDTO mapToDTO(Appointment a) {
         DentistApptDTO dto = new DentistApptDTO();
-        dto.setAppointmentId(a.getAppointmentId()); // Adjust if your entity uses getId()
+        dto.setAppointmentId(a.getAppointmentId());
         if (a.getPatient() != null) {
+            dto.setPatientId(a.getPatient().getId());   // ← populate patientId
             dto.setPatientName(a.getPatient().getName());
             dto.setPatientEmail(a.getPatient().getEmail());
             dto.setPatientPhone(a.getPatient().getPhone());

@@ -66,8 +66,8 @@ const TreatmentHistory = () => {
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
     doc.setFont("helvetica", "normal");
-    doc.text('123 Smile Avenue, Colombo, Sri Lanka', 14, 30);
-    doc.text('Phone: +94 11 234 5678 | Email: contact@doctorcdental.com', 14, 35);
+    doc.text('No 20, Circular Road, Devinuwara, Sri Lanka', 14, 30);
+    doc.text('Phone: +94 70 513 9901 | Email: doctorcdentalsurgery@gmail.com', 14, 35);
 
     // Divider Line
     doc.setLineWidth(0.5);
@@ -123,7 +123,7 @@ const TreatmentHistory = () => {
         tableRows.push(sessionData);
       });
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: 110,
         head: [tableColumn],
         body: tableRows,

@@ -39,6 +39,13 @@ public class TreatmentManagementService {
         
         Treatment savedTreatment = treatmentRepository.save(treatment);
 
+        // Get appointment if provided
+        Appointment appointment = null;
+        if (req.getAppointmentId() != null) {
+            appointment = appointmentRepository.findById(req.getAppointmentId())
+                    .orElseThrow(() -> new RuntimeException("Appointment not found"));
+        }
+
         // Pre-create empty session slots
         for (int i = 1; i <= savedTreatment.getTotalSessionsPlanned(); i++) {
             TreatmentSession session = new TreatmentSession();
@@ -46,6 +53,9 @@ public class TreatmentManagementService {
             session.setSessionName("Session #" + i);
             session.setStatus("PLANNED"); // Initial status
             session.setSessionDate(null); // No date yet
+            if (appointment != null) {
+                session.setAppointment(appointment);
+            }
             sessionRepository.save(session);
         }
 
@@ -113,7 +123,7 @@ public class TreatmentManagementService {
             payment.setPatient(treatment.getPatient());
             payment.setTreatment(treatment);
             payment.setSession(session);
-            payment.setAppointment(session.getAppointment()); // Link the appointment if it exists!
+            // payment.setAppointment(session.getAppointment()); // REDUNDANT: Removed to bypass DB unique constraint on appointment_id
             payment.setAmount(session.getCost());
             payment.setPaymentType("TREATMENT_PAYMENT");
             payment.setStatus("COMPLETED"); // Payment is assumed collected at the session visit
@@ -155,10 +165,36 @@ public class TreatmentManagementService {
         treatment.setEndDate(LocalDate.now());
         return treatmentRepository.save(treatment);
     }
+
     public Treatment reopenTreatment(Integer treatmentId) {
         Treatment treatment = treatmentRepository.findById(treatmentId).orElseThrow();
         treatment.setStatus("ONGOING");
         treatment.setEndDate(null);
+        return treatmentRepository.save(treatment);
+    }
+
+    // 4. Add More Session Slots to an Existing Treatment
+    public Treatment addMoreSessions(Integer treatmentId, Integer count) {
+        Treatment treatment = treatmentRepository.findById(treatmentId)
+                .orElseThrow(() -> new RuntimeException("Treatment not found"));
+
+        // Count existing sessions to continue numbering correctly
+        List<TreatmentSession> existingSessions =
+                sessionRepository.findAllByTreatmentOrderBySessionIdAsc(treatment);
+        int existingCount = existingSessions.size();
+
+        // Append new empty PLANNED slots
+        for (int i = 1; i <= count; i++) {
+            TreatmentSession session = new TreatmentSession();
+            session.setTreatment(treatment);
+            session.setSessionName("Session #" + (existingCount + i));
+            session.setStatus("PLANNED");
+            session.setSessionDate(null);
+            sessionRepository.save(session);
+        }
+
+        // Keep totalSessionsPlanned in sync
+        treatment.setTotalSessionsPlanned(existingCount + count);
         return treatmentRepository.save(treatment);
     }
 }

@@ -53,6 +53,11 @@ const Treatments = () => {
 
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(paramAppointmentId || null);
 
+  // Add More Sessions dialog state
+  const [addSessionsDialogOpen, setAddSessionsDialogOpen] = useState(false);
+  const [addSessionsTreatmentId, setAddSessionsTreatmentId] = useState(null);
+  const [addSessionsCount, setAddSessionsCount] = useState(1);
+
   // --- FETCH DATA ---
   useEffect(() => {
     fetchInitialData();
@@ -120,7 +125,8 @@ const Treatments = () => {
         diagnosis: treatmentForm.diagnosis,
         startDate: treatmentForm.startDate,
         totalCost: parseFloat(treatmentForm.totalCost) || 0,
-        totalSessionsPlanned: parseInt(treatmentForm.totalSessionsPlanned) || 1
+        totalSessionsPlanned: parseInt(treatmentForm.totalSessionsPlanned) || 1,
+        appointmentId: selectedAppointmentId ? parseInt(selectedAppointmentId) : null
       };
 
       await api.post('/treatments', payload);
@@ -150,7 +156,7 @@ const Treatments = () => {
     // Fetch patient appointments for the dropdown
     if (patientId) {
       try {
-        const res = await api.get(`/appointments/patient/${patientId}`);
+        const res = await api.get(`/dentist/appointments/patient/${patientId}`);
         // Filter to only confirmed or completed appointments
         setPatientAppointments(res.data.filter(a => a.status === 'CONFIRMED' || a.status === 'COMPLETED' || a.status === 'PENDING'));
       } catch (err) {
@@ -213,6 +219,24 @@ const Treatments = () => {
     } catch (err) {
       console.error(err);
       alert("Failed to update treatment status.");
+    }
+  };
+
+  const handleOpenAddSessions = (treatmentId) => {
+    setAddSessionsTreatmentId(treatmentId);
+    setAddSessionsCount(1);
+    setAddSessionsDialogOpen(true);
+  };
+
+  const handleConfirmAddSessions = async () => {
+    if (!addSessionsCount || addSessionsCount < 1) return;
+    try {
+      await api.post(`/treatments/${addSessionsTreatmentId}/add-sessions?count=${addSessionsCount}`);
+      setAddSessionsDialogOpen(false);
+      fetchTreatments();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data || 'Failed to add sessions.');
     }
   };
 
@@ -380,12 +404,24 @@ const Treatments = () => {
                       </div>
                     </div>
 
-                    <button 
-                      onClick={() => setExpandedId(expandedId === t.treatmentId ? null : t.treatmentId)}
-                      className="text-[#0E4C5C] hover:bg-slate-50 px-2 py-1 -ml-2 rounded text-sm font-bold transition-colors flex items-center"
-                    >
-                      View Session Records {expandedId === t.treatmentId ? <ExpandLess fontSize="small" className="ml-1" /> : <ExpandMore fontSize="small" className="ml-1" />}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => setExpandedId(expandedId === t.treatmentId ? null : t.treatmentId)}
+                        className="text-[#0E4C5C] hover:bg-slate-50 px-2 py-1 -ml-2 rounded text-sm font-bold transition-colors flex items-center"
+                      >
+                        View Session Records {expandedId === t.treatmentId ? <ExpandLess fontSize="small" className="ml-1" /> : <ExpandMore fontSize="small" className="ml-1" />}
+                      </button>
+
+                      {t.status === 'ONGOING' && (
+                        <button
+                          onClick={() => handleOpenAddSessions(t.treatmentId)}
+                          title="Add more session slots to this treatment"
+                          className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-colors"
+                        >
+                          <Add fontSize="inherit" /> Add Sessions
+                        </button>
+                      )}
+                    </div>
 
                     {/* COLLAPSIBLE SESSION TABLE */}
                     <div className={`overflow-hidden transition-all duration-300 ${expandedId === t.treatmentId ? 'max-h-[800px] mt-4 opacity-100' : 'max-h-0 opacity-0'}`}>
@@ -525,6 +561,39 @@ const Treatments = () => {
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setSessionModalOpen(false)} color="inherit">Cancel</Button>
           <Button onClick={handleSaveSession} variant="contained" sx={{ bgcolor: '#0E4C5C' }}>Save Session</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* --- MINI DIALOG: ADD MORE SESSIONS --- */}
+      <Dialog open={addSessionsDialogOpen} onClose={() => setAddSessionsDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 'bold', color: '#0E4C5C', pb: 1 }}>
+          Add More Sessions
+        </DialogTitle>
+        <DialogContent dividers>
+          <p className="text-sm text-slate-500 mb-4">
+            How many additional session slots do you want to add to this treatment?
+          </p>
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-bold text-slate-700 whitespace-nowrap">Number of Sessions</label>
+            <input
+              type="number"
+              min="1"
+              max="20"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:border-[#0E4C5C]"
+              value={addSessionsCount}
+              onChange={e => setAddSessionsCount(parseInt(e.target.value) || 1)}
+            />
+          </div>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setAddSessionsDialogOpen(false)} color="inherit">Cancel</Button>
+          <Button
+            onClick={handleConfirmAddSessions}
+            variant="contained"
+            sx={{ bgcolor: '#3730a3', '&:hover': { bgcolor: '#312e81' } }}
+          >
+            Add {addSessionsCount} Session{addSessionsCount !== 1 ? 's' : ''}
+          </Button>
         </DialogActions>
       </Dialog>
     </div>
