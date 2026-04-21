@@ -15,6 +15,7 @@ public class DentistApptDTO {
     private String reasonForVisit;
     private String additionalNotes;
     private String status;
+    private Boolean cancelledByAdmin;
     private Integer treatmentId;
 
-}
+}

@@ -69,6 +69,9 @@ public class AuthService {
             case "patient":
                 Optional<Patient> patient = patientRepository.findByEmail(email);
                 if (patient.isEmpty()) throw new RuntimeException("Patient not found");
+                if (patient.get().getIsActive() == null || !patient.get().getIsActive()) {
+                    throw new RuntimeException("Your account has been deactivated by the administrator.");
+                }
                 dbPassword = patient.get().getPassword();
                 isVerified = patient.get().isVerified();
                 userId = patient.get().getId();

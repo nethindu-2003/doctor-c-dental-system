@@ -72,10 +72,12 @@ const PaymentHistory = () => {
   // --- Summary Calculations ---
   const totalPaid = payments.filter(p => p.status === 'COMPLETED').reduce((acc, curr) => acc + (curr.amount || 0), 0);
   
-  // Outstanding = (Total value of all treatments) - (Total amount already paid)
+  // Outstanding = (Total value of all treatments) - (Total amount already paid for treatments only)
   // This helps patients see how much of their treatment plan is left to pay
+  const treatmentPayments = payments.filter(p => p.status === 'COMPLETED' && p.paymentType === 'TREATMENT_PAYMENT');
+  const totalPaidOnTreatments = treatmentPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
   const totalTreatmentValue = treatments.reduce((acc, curr) => acc + (curr.totalCost || 0), 0);
-  const totalOutstanding = Math.max(0, totalTreatmentValue - totalPaid);
+  const totalOutstanding = Math.max(0, totalTreatmentValue - totalPaidOnTreatments);
   
   const lastPaymentDate = payments.length > 0 && payments[0].paymentDate 
     ? dayjs(payments[0].paymentDate).format('MMMM D, YYYY') 

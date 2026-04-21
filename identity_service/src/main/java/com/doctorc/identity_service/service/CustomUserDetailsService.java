@@ -29,16 +29,20 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // Check all 3 tables
         Optional<Patient> patient = patientRepository.findByEmail(username);
-        if (patient.isPresent())
-            return new CustomUserDetails(patient.get().getEmail(), patient.get().getPassword());
+        if (patient.isPresent()) {
+            if (patient.get().getIsActive() == null || !patient.get().getIsActive()) {
+                throw new UsernameNotFoundException("Account deactivated");
+            }
+            return new CustomUserDetails(patient.get().getEmail(), patient.get().getPassword(), true);
+        }
 
         Optional<Admin> admin = adminRepository.findByEmail(username);
         if (admin.isPresent())
-            return new CustomUserDetails(admin.get().getEmail(), admin.get().getPassword());
+            return new CustomUserDetails(admin.get().getEmail(), admin.get().getPassword(), true);
 
         Optional<Dentist> dentist = dentistRepository.findByEmail(username);
         if (dentist.isPresent())
-            return new CustomUserDetails(dentist.get().getEmail(), dentist.get().getPassword());
+            return new CustomUserDetails(dentist.get().getEmail(), dentist.get().getPassword(), true);
 
         throw new UsernameNotFoundException("User not found with email: " + username);
     }

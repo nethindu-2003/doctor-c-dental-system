@@ -103,6 +103,7 @@ public class PatientController {
             }
             
             appointment.setStatus("CANCELLED");
+            appointment.setCancelledByAdmin(false);
             appointmentRepository.save(appointment);
             return "Appointment cancelled successfully.";
         } else {

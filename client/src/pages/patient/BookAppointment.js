@@ -471,11 +471,11 @@ const BookAppointment = () => {
                           <div>
                               <div className="flex justify-between items-start mb-4">
                                   <div className="flex flex-col">
-                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{apt.status}</span>
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{apt.status === 'CANCELLED' && apt.cancelledByAdmin ? 'Canceled by admin' : apt.status}</span>
                                     <span className="font-black text-2xl text-slate-800">{dayjs('2000-01-01 ' + apt.appointmentTime).format('h:mm A')}</span>
                                   </div>
                                   <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-tighter ${apt.status === 'CANCELLED' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'}`}>
-                                    {apt.status === 'CONFIRMED' ? <><CheckCircle sx={{ fontSize: 10, mr: 0.5 }} /> {apt.status}</> : apt.status}
+                                    {apt.status === 'CONFIRMED' ? <><CheckCircle sx={{ fontSize: 10, mr: 0.5 }} /> {apt.status}</> : (apt.status === 'CANCELLED' && apt.cancelledByAdmin ? 'Canceled by admin' : apt.status)}
                                   </span>
                               </div>
                               <div className="bg-slate-50 p-3 rounded-2xl mb-4">

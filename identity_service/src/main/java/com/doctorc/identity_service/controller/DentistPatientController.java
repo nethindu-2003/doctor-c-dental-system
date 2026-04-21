@@ -78,7 +78,11 @@ public class DentistPatientController {
             TreatmentHistoryDTO dto = new TreatmentHistoryDTO();
             dto.setTreatmentId(t.getTreatmentId());
             dto.setTreatmentName(t.getTreatmentName());
+            dto.setDiagnosis(t.getDiagnosis());
             dto.setStatus(t.getStatus());
+            dto.setStartDate(t.getStartDate() != null ? t.getStartDate().toString() : null);
+            dto.setEndDate(t.getEndDate() != null ? t.getEndDate().toString() : null);
+            dto.setCost(t.getTotalCost());
 
             // Safe check for dentist name
             dto.setDentistName(t.getDentist() != null ? t.getDentist().getName() : "Unassigned");

@@ -106,6 +106,7 @@ public class DentistAppointmentController {
         dto.setReasonForVisit(a.getReasonForVisit());
         dto.setAdditionalNotes(a.getAdditionalNotes());
         dto.setStatus(a.getStatus());
+        dto.setCancelledByAdmin(a.getCancelledByAdmin());
 
         // Check if treatment already exists for this appointment
         treatmentSessionRepository.findFirstByAppointment_AppointmentId(a.getAppointmentId())

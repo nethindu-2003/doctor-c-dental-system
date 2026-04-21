@@ -46,6 +46,7 @@ public class AdminAppointmentController {
         appt.setAppointmentDate(request.getAppointmentDate());
         appt.setAppointmentTime(request.getAppointmentTime());
         appt.setStatus(request.getStatus());
+        appt.setCancelledByAdmin("CANCELLED".equals(request.getStatus()));
 
         if (request.getDentistId() != null) {
             Dentist dentist = dentistRepository.findById(request.getDentistId())
@@ -82,6 +83,7 @@ public class AdminAppointmentController {
         String oldTime = appt.getAppointmentTime().toString();
 
         appt.setStatus("CANCELLED");
+        appt.setCancelledByAdmin(true);
         Appointment savedAppt = appointmentRepository.save(appt);
 
         new Thread(() -> {
@@ -109,6 +111,7 @@ public class AdminAppointmentController {
         dto.setAppointmentDate(a.getAppointmentDate());
         dto.setAppointmentTime(a.getAppointmentTime());
         dto.setStatus(a.getStatus());
+        dto.setCancelledByAdmin(a.getCancelledByAdmin());
         return dto;
     }
 

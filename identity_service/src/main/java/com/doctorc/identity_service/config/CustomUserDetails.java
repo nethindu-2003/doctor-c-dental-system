@@ -8,10 +8,18 @@ import java.util.List; // Or Collections.emptyList()
 public class CustomUserDetails implements UserDetails {
     private String username;
     private String password;
+    private boolean enabled;
 
     public CustomUserDetails(String username, String password) {
         this.username = username;
         this.password = password;
+        this.enabled = true;
+    }
+
+    public CustomUserDetails(String username, String password, boolean enabled) {
+        this.username = username;
+        this.password = password;
+        this.enabled = enabled;
     }
 
     @Override
@@ -46,6 +54,6 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
     }
 }

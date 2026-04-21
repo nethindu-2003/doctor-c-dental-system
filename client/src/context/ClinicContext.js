@@ -80,47 +80,47 @@ export const ClinicProvider = ({ children }) => {
   const [scheduleMap, setScheduleMap] = useState(DEFAULT_SCHEDULE_MAP);
   const [clinicLoading, setClinicLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchClinicSettings = async () => {
-      try {
-        // Uses the public-facing settings endpoint (no auth required)
-        // Note: remove leading slash if using relative paths with baseURL
-        const res = await api.get('public/settings');
-        const data = res.data;
+  const fetchClinicSettings = useCallback(async () => {
+    try {
+      // Uses the public-facing settings endpoint (no auth required)
+      // Note: remove leading slash if using relative paths with baseURL
+      const res = await api.get('public/settings');
+      const data = res.data;
 
-        if (data) {
-          setConfig({
-            clinicName: data.clinicName || DEFAULT_CONFIG.clinicName,
-            clinicAddress: data.clinicAddress || DEFAULT_CONFIG.clinicAddress,
-            clinicPhone: data.clinicPhone || DEFAULT_CONFIG.clinicPhone,
-            clinicEmail: data.clinicEmail || DEFAULT_CONFIG.clinicEmail,
-            clinicLogo: data.clinicLogo || DEFAULT_CONFIG.clinicLogo,
-            standardBookingFee: data.standardBookingFee != null
-              ? data.standardBookingFee
-              : DEFAULT_CONFIG.standardBookingFee,
-          });
+      if (data) {
+        setConfig({
+          clinicName: data.clinicName || DEFAULT_CONFIG.clinicName,
+          clinicAddress: data.clinicAddress || DEFAULT_CONFIG.clinicAddress,
+          clinicPhone: data.clinicPhone || DEFAULT_CONFIG.clinicPhone,
+          clinicEmail: data.clinicEmail || DEFAULT_CONFIG.clinicEmail,
+          clinicLogo: data.clinicLogo || DEFAULT_CONFIG.clinicLogo,
+          standardBookingFee: data.standardBookingFee != null
+            ? data.standardBookingFee
+            : DEFAULT_CONFIG.standardBookingFee,
+        });
 
-          if (data.schedules && data.schedules.length > 0) {
-            const dayOrder = {
-              MONDAY: 1, TUESDAY: 2, WEDNESDAY: 3,
-              THURSDAY: 4, FRIDAY: 5, SATURDAY: 6, SUNDAY: 7,
-            };
-            const sorted = [...data.schedules].sort(
-              (a, b) => dayOrder[a.dayOfWeek] - dayOrder[b.dayOfWeek]
-            );
-            setSchedules(sorted);
-            setScheduleMap(buildScheduleMap(sorted));
-          }
+        if (data.schedules && data.schedules.length > 0) {
+          const dayOrder = {
+            MONDAY: 1, TUESDAY: 2, WEDNESDAY: 3,
+            THURSDAY: 4, FRIDAY: 5, SATURDAY: 6, SUNDAY: 7,
+          };
+          const sorted = [...data.schedules].sort(
+            (a, b) => dayOrder[a.dayOfWeek] - dayOrder[b.dayOfWeek]
+          );
+          setSchedules(sorted);
+          setScheduleMap(buildScheduleMap(sorted));
         }
-      } catch (err) {
-        console.warn('[ClinicContext] API fetch failed. Using built-in defaults.', err.message);
-      } finally {
-        setClinicLoading(false);
       }
-    };
-
-    fetchClinicSettings();
+    } catch (err) {
+      console.warn('[ClinicContext] API fetch failed. Using built-in defaults.', err.message);
+    } finally {
+      setClinicLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchClinicSettings();
+  }, [fetchClinicSettings]);
 
   /**
    * getScheduleForDayIndex(dayjsDayIndex)
@@ -143,6 +143,7 @@ export const ClinicProvider = ({ children }) => {
         scheduleMap,
         clinicLoading,
         getScheduleForDayIndex,
+        refreshClinicSettings: fetchClinicSettings,
       }}
     >
       {children}

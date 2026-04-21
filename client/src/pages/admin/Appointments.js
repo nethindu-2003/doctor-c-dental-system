@@ -256,6 +256,7 @@ const AdminAppointments = () => {
                                 const isToday = apptDate.isSame(today, 'day');
                                 const isFuture = apptDate.isAfter(today);
                                 const status = row.status;
+                                const displayStatus = row.status === 'CANCELLED' && row.cancelledByAdmin ? 'Canceled by admin' : row.status;
 
                                 let statusClasses = 'bg-slate-100 text-slate-700';
                                 if (status === 'CONFIRMED') statusClasses = 'bg-green-100 text-green-700 border-green-200';
@@ -264,7 +265,7 @@ const AdminAppointments = () => {
                                 else if (status === 'COMPLETED') statusClasses = 'bg-blue-100 text-blue-700 border border-blue-200';
 
                                 return (
-                                <tr key={row.appointmentId} className="hover:bg-slate-50/50 transition-colors group">
+                                <tr key={row.appointmentId} className="hover:bg-slate-50/50 transition-colors group cursor-pointer" onClick={() => handleEditClick(row)}>
                                     <td className="p-4 w-1/6 align-middle">
                                         <div className="flex items-center space-x-3">
                                             <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 text-slate-500">
@@ -291,11 +292,11 @@ const AdminAppointments = () => {
                                     </td>
                                     <td className="p-4 w-1/6 align-middle text-center md:text-left">
                                         <span className={`inline-block px-3 py-1.5 text-[0.65rem] font-bold uppercase tracking-wider rounded-lg ${statusClasses}`}>
-                                            {status}
+                                            {displayStatus}
                                         </span>
                                     </td>
                                     <td className="p-4 w-1/6 align-middle text-center">
-                                        <div className="flex justify-center items-center space-x-2">
+                                        <div className="flex justify-center items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                                             {/* 1. Mark Completed (Allowed on Appointment Day or Past if Confirmed) */}
                                             {(row.status === 'CONFIRMED' && (isToday || isPast)) && (
                                                 <button 
@@ -318,18 +319,16 @@ const AdminAppointments = () => {
                                                 </button>
                                             )}
                                             
-                                            {/* 3. Edit/Reschedule (Only Future) */}
-                                            {isFuture && (
-                                                <button 
-                                                    className={`p-1.5 rounded-lg transition-colors focus:outline-none text-blue-600 hover:bg-blue-50`}
-                                                    onClick={() => handleEditClick(row)}
-                                                    title="Edit / Reschedule"
-                                                >
-                                                    <Edit fontSize="small" />
-                                                </button>
-                                            )}
+                                            {/* 3. Edit/Reschedule (All appointments can be edited) */}
+                                            <button 
+                                                className={`p-1.5 rounded-lg transition-colors focus:outline-none text-blue-600 hover:bg-blue-50`}
+                                                onClick={() => handleEditClick(row)}
+                                                title="Edit / Reschedule"
+                                            >
+                                                <Edit fontSize="small" />
+                                            </button>
 
-                                            {/* 4. Cancel (Today or Future) */}
+                                            {/* 4. Cancel (Today or Future, not cancelled or completed) */}
                                             {(row.status !== 'CANCELLED' && row.status !== 'COMPLETED' && (isToday || isFuture)) && (
                                                 <button 
                                                     className={`p-1.5 rounded-lg transition-colors focus:outline-none text-red-500 hover:bg-red-50`}
@@ -413,7 +412,6 @@ const AdminAppointments = () => {
                                       <input 
                                           type="date"
                                           required
-                                          min={new Date().toISOString().split('T')[0]}
                                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 outline-none focus:border-[#1A237E] focus:ring-2 focus:ring-[#1A237E]/20 transition-all uppercase"
                                           value={currentAppt.appointmentDate} 
                                           onChange={(e) => setCurrentAppt({...currentAppt, appointmentDate: e.target.value})}

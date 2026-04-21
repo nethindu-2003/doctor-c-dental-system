@@ -69,6 +69,7 @@ CREATE TABLE `appointment` (
   `additional_notes` varchar(255) DEFAULT NULL,
   `appointment_date` date DEFAULT NULL,
   `appointment_time` time(6) DEFAULT NULL,
+  `cancelled_by_admin` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`appointment_id`),
   KEY `patient_id` (`patient_id`),
   KEY `dentist_id` (`dentist_id`),
@@ -83,7 +84,7 @@ CREATE TABLE `appointment` (
 
 LOCK TABLES `appointment` WRITE;
 /*!40000 ALTER TABLE `appointment` DISABLE KEYS */;
-INSERT INTO `appointment` VALUES (1,'CANCELLED','2026-02-12 20:07:08',15,6,'Tooth Pain','','2026-02-12','20:30:00.000000'),(2,'CANCELLED','2026-02-12 20:08:04',15,6,'Whitening','','2026-02-13','16:30:00.000000'),(3,'CONFIRMED','2026-02-12 20:28:42',15,6,'Tooth Pain','','2026-02-12','20:30:00.000000'),(4,'CONFIRMED','2026-02-13 14:09:34',15,6,'Extraction','','2026-02-15','09:00:00.000000'),(5,'CANCELLED','2026-04-17 13:58:06',15,6,'Tooth Pain','','2026-04-17','17:00:00.000000'),(6,'COMPLETED','2026-04-17 14:06:16',15,6,'Tooth Pain','Severe pain in lower right jaw when drinking cold water. I am slightly allergic to penicillin.','2026-04-17','18:00:00.000000');
+INSERT INTO `appointment` VALUES (1,'CANCELLED','2026-02-12 20:07:08',15,6,'Tooth Pain','','2026-02-12','20:30:00.000000',0),(2,'CANCELLED','2026-02-12 20:08:04',15,6,'Whitening','','2026-02-13','16:30:00.000000',0),(3,'CONFIRMED','2026-02-12 20:28:42',15,6,'Tooth Pain','','2026-02-12','20:30:00.000000',0),(4,'CONFIRMED','2026-02-13 14:09:34',15,6,'Extraction','','2026-02-15','09:00:00.000000',0),(5,'CANCELLED','2026-04-17 13:58:06',15,6,'Tooth Pain','','2026-04-17','17:00:00.000000',0),(6,'COMPLETED','2026-04-17 14:06:16',15,6,'Tooth Pain','Severe pain in lower right jaw when drinking cold water. I am slightly allergic to penicillin.','2026-04-17','18:00:00.000000',0);
 /*!40000 ALTER TABLE `appointment` ENABLE KEYS */;
 UNLOCK TABLES;
 

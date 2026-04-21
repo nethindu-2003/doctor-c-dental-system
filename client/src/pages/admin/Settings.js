@@ -4,8 +4,10 @@ import {
   CloudUpload, Settings as SettingsIcon 
 } from '@mui/icons-material';
 import axios from '../../api/axios';
+import { useClinic } from '../../context/ClinicContext';
 
 const Settings = () => {
+  const { refreshClinicSettings } = useClinic();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState(null);
@@ -91,6 +93,8 @@ const Settings = () => {
     try {
       const payload = { ...config, schedules };
       await axios.put('/admin/settings', payload);
+      // Refresh clinic settings in context to update all pages
+      await refreshClinicSettings();
       setStatus({ type: 'success', msg: 'Clinic settings updated successfully!' });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {

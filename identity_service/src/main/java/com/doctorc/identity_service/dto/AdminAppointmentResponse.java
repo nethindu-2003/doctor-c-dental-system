@@ -1,7 +1,8 @@
 package com.doctorc.identity_service.dto;
-import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalTime;
+
+import lombok.Data;
 
 @Data
 public class AdminAppointmentResponse {
@@ -14,4 +15,5 @@ public class AdminAppointmentResponse {
     private LocalDate appointmentDate;
     private LocalTime appointmentTime;
     private String status;
+    private Boolean cancelledByAdmin;
 }

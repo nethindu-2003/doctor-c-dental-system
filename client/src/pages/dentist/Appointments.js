@@ -217,7 +217,7 @@ const Appointments = () => {
                           </td>
                           <td className="p-4 align-middle">
                             <span className={`inline-block px-3 py-1 text-[0.65rem] font-bold uppercase tracking-wider rounded-lg border ${statusStyles.bg} ${statusStyles.text} ${statusStyles.border}`}>
-                              {row.status}
+                              {row.status === 'CANCELLED' && row.cancelledByAdmin ? 'Canceled by admin' : row.status}
                             </span>
                           </td>
                           <td className="p-4 align-middle text-center">
